@@ -36,5 +36,9 @@ class AuthRepository:
         }).eq("email", email).execute()
         return result.data[0]
 
+    def get_user_by_reset_token(self, token: str) -> dict | None:
+        result = self.supabase.table(TABLE).select("*").eq("reset_token", token).execute()
+        return result.data[0] if result.data else None
+
     def update_password(self, user_id: str, new_password_hash: str) -> dict:
         return self.update_user(user_id, {"password_hash": new_password_hash, "reset_token": None, "reset_token_expires_at": None})
