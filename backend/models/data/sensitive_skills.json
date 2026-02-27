@@ -1,0 +1,564 @@
+{
+    "C": {
+        "safe_patterns": [
+            "\\bc programming\\b", "\\bc language\\b", "\\bc/c\\+\\+", "\\bc \\+ c\\+\\+",
+            "\\bansi c\\b", "\\bc developer\\b", "\\bc engineer\\b", "\\bc#", "\\bc\\+\\+"
+        ],
+        "require_isolated_uppercase": true
+    },
+    "R": {
+        "safe_patterns": [
+            "\\br programming\\b", "\\br language\\b", "\\brstudio\\b", "\\br studio\\b",
+            "\\br statistical\\b", "\\br developer\\b", "\\br analyst\\b", "\\br package\\b"
+        ],
+        "require_isolated_uppercase": true
+    },
+    "D": {
+        "safe_patterns": [
+            "\\bd programming\\b", "\\bd language\\b", "\\bdlang\\b", "\\bd developer\\b"
+        ],
+        "require_isolated_uppercase": true
+    },
+    "Go": {
+        "safe_patterns": [
+            "\\bgolang\\b", "\\bgo programming\\b", "\\bgo language\\b", "\\bgo developer\\b",
+            "\\bgo engineer\\b", "\\bgo modules?\\b", "\\bgo routine\\b", "\\bgoroutine\\b"
+        ],
+        "require_isolated_uppercase": true
+    },
+    "Rust": {
+        "safe_patterns": [
+            "\\brustlang\\b", "\\brust programming\\b", "\\brust language\\b", "\\brust developer\\b",
+            "\\brust engineer\\b", "\\bcargo rust\\b", "\\brustacean\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Swift": {
+        "safe_patterns": [
+            "\\bswift programming\\b", "\\bswift language\\b", "\\bswiftlang\\b", "\\bswift developer\\b",
+            "\\bswift ios\\b", "\\bswiftui\\b", "\\bswift package\\b", "\\bios swift\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Ruby": {
+        "safe_patterns": [
+            "\\bruby on rails\\b", "\\bruby programming\\b", "\\bruby language\\b", "\\bruby developer\\b",
+            "\\brails\\b", "\\bror\\b", "\\brubygems\\b", "\\brubyist\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Julia": {
+        "safe_patterns": [
+            "\\bjulia programming\\b", "\\bjulia language\\b", "\\bjulialang\\b", "\\bjulia developer\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Ada": {
+        "safe_patterns": [
+            "\\bada programming\\b", "\\bada language\\b", "\\bada developer\\b", "\\bspark ada\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Make": {
+        "safe_patterns": [
+            "\\bmakefile\\b", "\\bgnu make\\b", "\\bmake build\\b", "\\bcmake\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Less": {
+        "safe_patterns": [
+            "\\bless css\\b", "\\bless\\.js\\b", "\\blesscss\\b", "\\bless preprocessor\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Ant": {
+        "safe_patterns": [
+            "\\bapache ant\\b", "\\bant build\\b", "\\bant script\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Nest": {
+        "safe_patterns": [
+            "\\bnestjs\\b", "\\bnest\\.js\\b", "\\bnest framework\\b", "\\bnest developer\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Flask": {
+        "safe_patterns": [
+            "\\bflask python\\b", "\\bflask framework\\b", "\\bflask api\\b", "\\bflask developer\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Slim": {
+        "safe_patterns": [
+            "\\bslim php\\b", "\\bslim framework\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Echo": {
+        "safe_patterns": [
+            "\\becho go\\b", "\\becho framework\\b", "\\becho golang\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Fiber": {
+        "safe_patterns": [
+            "\\bfiber go\\b", "\\bgofiber\\b", "\\bfiber framework\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Gin": {
+        "safe_patterns": [
+            "\\bgin-gonic\\b", "\\bgin go\\b", "\\bgin framework\\b", "\\bgin golang\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Chi": {
+        "safe_patterns": [
+            "\\bchi router\\b", "\\bchi go\\b", "\\bchi golang\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Rocket": {
+        "safe_patterns": [
+            "\\brocket rust\\b", "\\brocket framework\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Phoenix": {
+        "safe_patterns": [
+            "\\bphoenix elixir\\b", "\\bphoenix framework\\b", "\\bphoenix liveview\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Pyramid": {
+        "safe_patterns": [
+            "\\bpyramid python\\b", "\\bpyramid framework\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Tornado": {
+        "safe_patterns": [
+            "\\btornado python\\b", "\\btornado framework\\b", "\\btornado web\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Helm": {
+        "safe_patterns": [
+            "\\bhelm charts?\\b", "\\bhelm kubernetes\\b", "\\bhelm k8s\\b", "\\bhelm deploy\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Flux": {
+        "safe_patterns": [
+            "\\bfluxcd\\b", "\\bflux cd\\b", "\\bflux gitops\\b", "\\bflux kubernetes\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Salt": {
+        "safe_patterns": [
+            "\\bsaltstack\\b", "\\bsalt stack\\b", "\\bsalt minion\\b", "\\bsalt master\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Chef": {
+        "safe_patterns": [
+            "\\bchef infra\\b", "\\bchef automate\\b", "\\bchef cookbook\\b", "\\bchef recipe\\b",
+            "\\bopscode\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Puppet": {
+        "safe_patterns": [
+            "\\bpuppet labs\\b", "\\bpuppet manifest\\b", "\\bpuppeteer\\b", "\\bpuppet enterprise\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Consul": {
+        "safe_patterns": [
+            "\\bhashicorp consul\\b", "\\bconsul service\\b", "\\bconsul discovery\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Nomad": {
+        "safe_patterns": [
+            "\\bhashicorp nomad\\b", "\\bnomad orchestr\\b", "\\bnomad cluster\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Spark": {
+        "safe_patterns": [
+            "\\bapache spark\\b", "\\bpyspark\\b", "\\bspark sql\\b", "\\bspark streaming\\b",
+            "\\bspark ml\\b", "\\bspark cluster\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Ray": {
+        "safe_patterns": [
+            "\\bray\\.io\\b", "\\bray distributed\\b", "\\bray cluster\\b", "\\bray tune\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Hive": {
+        "safe_patterns": [
+            "\\bapache hive\\b", "\\bhive sql\\b", "\\bhive metastore\\b", "\\bhiveql\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Storm": {
+        "safe_patterns": [
+            "\\bapache storm\\b", "\\bstorm streaming\\b", "\\bstorm topology\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Linear": {
+        "safe_patterns": [
+            "\\blinear app\\b", "\\blinear\\.app\\b", "\\blinear issues\\b", "\\blinear project\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Notion": {
+        "safe_patterns": [
+            "\\bnotion app\\b", "\\bnotion\\.so\\b", "\\bnotion database\\b", "\\bnotion api\\b",
+            "\\bnotion workspace\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Unity": {
+        "safe_patterns": [
+            "\\bunity3d\\b", "\\bunity game\\b", "\\bunity engine\\b", "\\bunity developer\\b",
+            "\\bunity c#\\b", "\\bc# unity\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Near": {
+        "safe_patterns": [
+            "\\bnear protocol\\b", "\\bnear blockchain\\b", "\\bnear wallet\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Base": {
+        "safe_patterns": [
+            "\\bbase chain\\b", "\\bbase blockchain\\b", "\\bbase network\\b", "\\bcoinbase base\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Cosmos": {
+        "safe_patterns": [
+            "\\bcosmos sdk\\b", "\\bcosmos blockchain\\b", "\\bcosmos network\\b", "\\batom cosmos\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Anchor": {
+        "safe_patterns": [
+            "\\banchor protocol\\b", "\\banchor solana\\b", "\\banchor framework\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Ghost": {
+        "safe_patterns": [
+            "\\bghost cms\\b", "\\bghost blog\\b", "\\bghost\\.org\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Provider": {
+        "safe_patterns": [
+            "\\bflutter provider\\b", "\\bprovider package\\b", "\\briverpod\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Room": {
+        "safe_patterns": [
+            "\\broom database\\b", "\\bandroid room\\b", "\\broom persistence\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Realm": {
+        "safe_patterns": [
+            "\\brealm database\\b", "\\brealm mobile\\b", "\\brealm sync\\b", "\\bmongodb realm\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Bull": {
+        "safe_patterns": [
+            "\\bbullmq\\b", "\\bbull queue\\b", "\\bbull redis\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Render": {
+        "safe_patterns": [
+            "\\brender\\.com\\b", "\\brender cloud\\b", "\\brender deploy\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Abstract": {
+        "safe_patterns": [
+            "\\babstract design\\b", "\\babstract version\\b", "\\babstract app\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Cursor": {
+        "safe_patterns": [
+            "\\bcursor ide\\b", "\\bcursor editor\\b", "\\bcursor ai\\b", "\\bcursor code\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Gather": {
+        "safe_patterns": [
+            "\\bgather\\.town\\b", "\\bgather app\\b", "\\bgather video\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Foundation": {
+        "safe_patterns": [
+            "\\bzurb foundation\\b", "\\bfoundation css\\b", "\\bfoundation framework\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Emotion": {
+        "safe_patterns": [
+            "\\bemotion css\\b", "\\bemotion styled\\b", "\\bemotion react\\b", "\\b@emotion\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Poetry": {
+        "safe_patterns": [
+            "\\bpoetry python\\b", "\\bpyproject\\b", "\\bpoetry install\\b", "\\bpoetry add\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Bubble": {
+        "safe_patterns": [
+            "\\bbubble\\.io\\b", "\\bbubble app\\b", "\\bbubble no-?code\\b", "\\bbubble developer\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Rush": {
+        "safe_patterns": [
+            "\\brush monorepo\\b", "\\brush stack\\b", "\\brush\\.js\\b", "\\bmicrosoft rush\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Fork": {
+        "safe_patterns": [
+            "\\bfork git\\b", "\\bgit fork\\b", "\\bfork app\\b", "\\bfork client\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Loom": {
+        "safe_patterns": [
+            "\\bloom video\\b", "\\bloom screen\\b", "\\bloom record\\b", "\\bloom\\.com\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Sanity": {
+        "safe_patterns": [
+            "\\bsanity cms\\b", "\\bsanity\\.io\\b", "\\bsanity studio\\b", "\\bsanity headless\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Stitch": {
+        "safe_patterns": [
+            "\\bstitch data\\b", "\\bstitch etl\\b", "\\bstitch integration\\b", "\\btalend stitch\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Pact": {
+        "safe_patterns": [
+            "\\bpact contract\\b", "\\bpact testing\\b", "\\bpact broker\\b", "\\bpact\\.io\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Fleet": {
+        "safe_patterns": [
+            "\\bjetbrains fleet\\b", "\\bfleet ide\\b", "\\bfleet editor\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Sentry": {
+        "safe_patterns": [
+            "\\bsentry\\.io\\b", "\\bsentry error\\b", "\\bsentry monitoring\\b", "\\bsentry sdk\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Mocha": {
+        "safe_patterns": [
+            "\\bmocha test\\b", "\\bmocha\\.js\\b", "\\bmochajs\\b", "\\bmocha framework\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Jasmine": {
+        "safe_patterns": [
+            "\\bjasmine test\\b", "\\bjasmine\\.js\\b", "\\bjasminejs\\b", "\\bjasmine framework\\b", "\\bjasmine spec\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Percy": {
+        "safe_patterns": [
+            "\\bpercy visual\\b", "\\bpercy test\\b", "\\bpercy\\.io\\b", "\\bbrowserstack percy\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Bruno": {
+        "safe_patterns": [
+            "\\bbruno api\\b", "\\bbruno client\\b", "\\busebruno\\b", "\\bbruno postman\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Luigi": {
+        "safe_patterns": [
+            "\\bluigi pipeline\\b", "\\bluigi workflow\\b", "\\bspotify luigi\\b", "\\bluigi python\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Sinatra": {
+        "safe_patterns": [
+            "\\bsinatra ruby\\b", "\\bsinatra framework\\b", "\\bsinatra app\\b", "\\bsinatra api\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Crystal": {
+        "safe_patterns": [
+            "\\bcrystal lang\\b", "\\bcrystal programming\\b", "\\bcrystal language\\b", "\\bcrystal developer\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Groovy": {
+        "safe_patterns": [
+            "\\bgroovy lang\\b", "\\bgroovy script\\b", "\\bapache groovy\\b", "\\bgroovy programming\\b", "\\bjenkins groovy\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Lit": {
+        "safe_patterns": [
+            "\\blit-element\\b", "\\blit-html\\b", "\\blit component\\b", "\\blit web\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Dart": {
+        "safe_patterns": [
+            "\\bdart lang\\b", "\\bdartlang\\b", "\\bdart programming\\b", "\\bdart flutter\\b", "\\bflutter dart\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Cypress": {
+        "safe_patterns": [
+            "\\bcypress test\\b", "\\bcypress\\.io\\b", "\\bcypress e2e\\b", "\\bcypress automation\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Locust": {
+        "safe_patterns": [
+            "\\blocust load\\b", "\\blocust test\\b", "\\blocust\\.io\\b", "\\blocust performance\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Truffle": {
+        "safe_patterns": [
+            "\\btruffle ethereum\\b", "\\btruffle solidity\\b", "\\btruffle suite\\b", "\\btruffle blockchain\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Expo": {
+        "safe_patterns": [
+            "\\bexpo react\\b", "\\bexpo native\\b", "\\bexpo sdk\\b", "\\bexpo cli\\b", "\\bexpo go\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Remix": {
+        "safe_patterns": [
+            "\\bremix\\.run\\b", "\\bremix framework\\b", "\\bremix react\\b", "\\bremix router\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Glide": {
+        "safe_patterns": [
+            "\\bglide apps\\b", "\\bglide app\\b", "\\bglide no-?code\\b", "\\bglide mobile\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Coda": {
+        "safe_patterns": [
+            "\\bcoda\\.io\\b", "\\bcoda doc\\b", "\\bcoda app\\b", "\\bcoda workspace\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Lens": {
+        "safe_patterns": [
+            "\\bk8s lens\\b", "\\blens kubernetes\\b", "\\blens ide\\b", "\\blens app\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Tower": {
+        "safe_patterns": [
+            "\\btower git\\b", "\\bgit tower\\b", "\\btower app\\b", "\\btower client\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Warp": {
+        "safe_patterns": [
+            "\\bwarp terminal\\b", "\\bwarp\\.dev\\b", "\\bwarp shell\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Atom": {
+        "safe_patterns": [
+            "\\batom editor\\b", "\\batom ide\\b", "\\batom text\\b", "\\bgithub atom\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Bun": {
+        "safe_patterns": [
+            "\\bbun\\.sh\\b", "\\bbunjs\\b", "\\bbun runtime\\b", "\\bbun install\\b", "\\bbun run\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Vagrant": {
+        "safe_patterns": [
+            "\\bvagrant vm\\b", "\\bvagrantfile\\b", "\\bhashicorp vagrant\\b", "\\bvagrant box\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Detox": {
+        "safe_patterns": [
+            "\\bdetox test\\b", "\\bdetox e2e\\b", "\\bdetox react\\b", "\\bwix detox\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Bamboo": {
+        "safe_patterns": [
+            "\\batlassian bamboo\\b", "\\bbamboo ci\\b", "\\bbamboo build\\b", "\\bbamboo pipeline\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Honeycomb": {
+        "safe_patterns": [
+            "\\bhoneycomb\\.io\\b", "\\bhoneycomb observ\\b", "\\bhoneycomb monitor\\b", "\\bhoneycomb trace\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Tandem": {
+        "safe_patterns": [
+            "\\btandem app\\b", "\\btandem pair\\b", "\\btandem remote\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Alchemy": {
+        "safe_patterns": [
+            "\\balchemy web3\\b", "\\balchemy api\\b", "\\balchemy ethereum\\b", "\\balchemy blockchain\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Medusa": {
+        "safe_patterns": [
+            "\\bmedusajs\\b", "\\bmedusa commerce\\b", "\\bmedusa ecommerce\\b", "\\bmedusa headless\\b"
+        ],
+        "require_isolated_uppercase": false
+    },
+    "Bulma": {
+        "safe_patterns": [
+            "\\bbulma css\\b", "\\bbulma framework\\b", "\\bbulma\\.io\\b"
+        ],
+        "require_isolated_uppercase": false
+    }
+}
