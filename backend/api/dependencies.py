@@ -3,8 +3,10 @@ from fastapi.security import OAuth2PasswordBearer
 from core.database import supabase
 from core.security import Security
 from repositories.auth_repository import AuthRepository
+from repositories.career_repository import CareerRepository
 from services.auth.email_password import EmailPasswordAuth
 from services.users.users import UserService
+from services.onboarding.onboarding_service import OnboardingService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -15,6 +17,10 @@ def get_auth_service() -> EmailPasswordAuth:
 def get_user_service() -> UserService:
     repo = AuthRepository(supabase)
     return UserService(repo)
+
+def get_onboarding_service() -> OnboardingService:
+    repo = CareerRepository(supabase)
+    return OnboardingService(repo)
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     payload = Security.decode_token(token)

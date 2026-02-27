@@ -14,6 +14,12 @@ from models.schemas import (
     ResetPassword,
     VerifyEmail,
     ResendVerification,
+    UserSkillCreate,
+    OnboardingRequest,
+    OnboardingResponse,
+    SkillLevel,
+    UserLevel,
+    Language,
 )
 
 
@@ -132,3 +138,79 @@ class TestSimpleSchemas:
     def test_forgot_password_invalid_email(self):
         with pytest.raises(ValidationError):
             ForgotPassword(email="not-email")
+
+
+# ─── UserSkillCreate ────────────────────────────────────────────────
+
+class TestUserSkillCreate:
+    def test_valid(self):
+        s = UserSkillCreate(skill_name="Python", category="Programming", level="advanced")
+        assert s.skill_name == "Python"
+        assert s.level == SkillLevel.advanced
+
+    def test_empty_skill_name(self):
+        with pytest.raises(ValidationError, match="skill_name must not be empty"):
+            UserSkillCreate(skill_name="  ", category="Programming", level="advanced")
+
+    def test_invalid_level(self):
+        with pytest.raises(ValidationError):
+            UserSkillCreate(skill_name="Python", category="Programming", level="expert")
+
+
+# ─── OnboardingRequest ──────────────────────────────────────────────
+
+def _valid_onboarding(**overrides):
+    defaults = dict(
+        level="junior",
+        years_experience=2,
+        target_jobs=["Developer"],
+        city="Montreal",
+        province="Quebec",
+        language="fr",
+        skills=[{"skill_name": "Python", "category": "Programming", "level": "advanced"}],
+    )
+    defaults.update(overrides)
+    return OnboardingRequest(**defaults)
+
+
+class TestOnboardingRequest:
+    def test_valid_complete(self):
+        req = _valid_onboarding()
+        assert req.level == UserLevel.junior
+        assert req.language == Language.fr
+
+    def test_empty_skills(self):
+        with pytest.raises(ValidationError, match="At least one skill"):
+            _valid_onboarding(skills=[])
+
+    def test_too_many_target_jobs(self):
+        with pytest.raises(ValidationError, match="Maximum 3"):
+            _valid_onboarding(target_jobs=["A", "B", "C", "D"])
+
+    def test_empty_target_jobs(self):
+        with pytest.raises(ValidationError, match="At least one target job"):
+            _valid_onboarding(target_jobs=[])
+
+    def test_negative_years(self):
+        with pytest.raises(ValidationError, match="between 0 and 50"):
+            _valid_onboarding(years_experience=-1)
+
+    def test_invalid_level(self):
+        with pytest.raises(ValidationError):
+            _valid_onboarding(level="senior")
+
+    def test_strip_target_jobs(self):
+        req = _valid_onboarding(target_jobs=["  Dev  ", " PM "])
+        assert req.target_jobs == ["Dev", "PM"]
+
+    def test_whitespace_only_target_jobs_removed(self):
+        with pytest.raises(ValidationError, match="At least one target job"):
+            _valid_onboarding(target_jobs=["  ", ""])
+
+    def test_years_over_50(self):
+        with pytest.raises(ValidationError, match="between 0 and 50"):
+            _valid_onboarding(years_experience=51)
+
+    def test_three_target_jobs_valid(self):
+        req = _valid_onboarding(target_jobs=["Dev", "PM", "QA"])
+        assert len(req.target_jobs) == 3

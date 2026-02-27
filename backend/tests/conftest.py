@@ -113,6 +113,23 @@ def mock_auth_repo():
     return repo
 
 
+# ─── Mock CareerRepository ───────────────────────────────────────────
+
+FAKE_ROADMAP_ID = "22222222-2222-2222-2222-222222222222"
+
+@pytest.fixture
+def mock_career_repo():
+    from repositories.career_repository import CareerRepository
+    repo = MagicMock(spec=CareerRepository)
+    repo.get_career_profile_by_user_id.return_value = None
+    repo.create_career_profile.return_value = {"id": "profile-1", "user_id": FAKE_USER_ID}
+    repo.create_user_skills.return_value = []
+    repo.create_roadmap.return_value = {"id": FAKE_ROADMAP_ID, "user_id": FAKE_USER_ID, "status": "processing"}
+    repo.get_roadmap_by_user_id.return_value = None
+    repo.get_user_skills_by_user_id.return_value = []
+    return repo
+
+
 # ─── Auth service with mocked repo + email ───────────────────────────
 
 @pytest.fixture
@@ -177,10 +194,26 @@ def test_client(mock_auth_repo, fake_user_dict):
         auth_svc = EmailPasswordAuth(mock_auth_repo)
         user_svc = UserService(mock_auth_repo)
 
+        from api.dependencies import get_onboarding_service
+        from repositories.career_repository import CareerRepository
+        from services.onboarding.onboarding_service import OnboardingService
+
+        mock_career_repo = MagicMock(spec=CareerRepository)
+        mock_career_repo.get_career_profile_by_user_id.return_value = None
+        mock_career_repo.create_career_profile.return_value = {"id": "profile-1", "user_id": FAKE_USER_ID}
+        mock_career_repo.create_user_skills.return_value = []
+        mock_career_repo.create_roadmap.return_value = {"id": "roadmap-1", "user_id": FAKE_USER_ID, "status": "processing"}
+
+        onboarding_svc = OnboardingService(mock_career_repo)
+
         app.dependency_overrides[get_auth_service] = lambda: auth_svc
         app.dependency_overrides[get_user_service] = lambda: user_svc
         app.dependency_overrides[get_current_user] = lambda: fake_user_dict
+        app.dependency_overrides[get_onboarding_service] = lambda: onboarding_svc
 
-        yield TestClient(app)
+        client = TestClient(app)
+        client._mock_career_repo = mock_career_repo
+
+        yield client
 
         app.dependency_overrides.clear()
