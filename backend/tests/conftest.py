@@ -166,14 +166,19 @@ def _build_supabase_mock(data):
 def test_client(mock_auth_repo, fake_user_dict):
     from fastapi.testclient import TestClient
     from app import app
-    from api.dependencies import get_auth_service, get_current_user
+    from api.dependencies import get_auth_service, get_user_service, get_current_user
     from services.auth.email_password import EmailPasswordAuth
+    from services.users.users import UserService
 
-    with patch("services.auth.email_password.EmailSender") as MockEmailSender:
+    with patch("services.auth.email_password.EmailSender") as MockEmailSender, \
+         patch("services.users.users.EmailSender") as MockUserEmailSender:
         MockEmailSender.return_value = MagicMock()
-        service = EmailPasswordAuth(mock_auth_repo)
+        MockUserEmailSender.return_value = MagicMock()
+        auth_svc = EmailPasswordAuth(mock_auth_repo)
+        user_svc = UserService(mock_auth_repo)
 
-        app.dependency_overrides[get_auth_service] = lambda: service
+        app.dependency_overrides[get_auth_service] = lambda: auth_svc
+        app.dependency_overrides[get_user_service] = lambda: user_svc
         app.dependency_overrides[get_current_user] = lambda: fake_user_dict
 
         yield TestClient(app)

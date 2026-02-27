@@ -46,6 +46,7 @@ class ResendVerification(BaseModel):
 class UpdateProfile(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
+    avatar_url: str | None = None
 
 class ChangePassword(BaseModel):
     current_password: str

@@ -20,6 +20,7 @@ class TestRegisterRoute:
                 "last_name": "Doe",
                 "email": "john@example.com",
                 "password": "Secure1!x",
+                "avatar_url": "https://example.com/avatar.png",
             })
         assert resp.status_code == 200
         data = resp.json()
@@ -32,6 +33,7 @@ class TestRegisterRoute:
             "last_name": "Doe",
             "email": "bad-email",
             "password": "Secure1!x",
+            "avatar_url": "https://example.com/avatar.png",
         })
         assert resp.status_code == 422
 

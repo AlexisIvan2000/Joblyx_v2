@@ -19,3 +19,5 @@ RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "support@joblyx.com")
 RESEND_FROM_NAME  = os.getenv("RESEND_FROM_NAME", "Joblyx")
 
 FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")

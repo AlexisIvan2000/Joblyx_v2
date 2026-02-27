@@ -26,6 +26,7 @@ class TestUserCreate:
             last_name="Doe",
             email="john@example.com",
             password="Secure1!x",
+            avatar_url="https://example.com/avatar.png",
         )
         assert u.email == "john@example.com"
 
@@ -36,6 +37,7 @@ class TestUserCreate:
                 last_name="Doe",
                 email="not-an-email",
                 password="Secure1!x",
+                avatar_url="https://example.com/avatar.png",
             )
 
     def test_password_too_short(self):
@@ -45,6 +47,7 @@ class TestUserCreate:
                 last_name="Doe",
                 email="john@example.com",
                 password="Sh1!",
+                avatar_url="https://example.com/avatar.png",
             )
 
     def test_password_no_special_char(self):
@@ -54,6 +57,7 @@ class TestUserCreate:
                 last_name="Doe",
                 email="john@example.com",
                 password="NoSpecial123",
+                avatar_url="https://example.com/avatar.png",
             )
 
     def test_password_exactly_8_chars_with_special(self):
@@ -62,6 +66,7 @@ class TestUserCreate:
             last_name="B",
             email="a@b.com",
             password="12345!ab",
+            avatar_url="https://example.com/avatar.png",
         )
         assert u.password == "12345!ab"
 

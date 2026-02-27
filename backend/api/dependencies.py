@@ -4,12 +4,17 @@ from core.database import supabase
 from core.security import Security
 from repositories.auth_repository import AuthRepository
 from services.auth.email_password import EmailPasswordAuth
+from services.users.users import UserService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def get_auth_service() -> EmailPasswordAuth:
     repo = AuthRepository(supabase)
     return EmailPasswordAuth(repo)
+
+def get_user_service() -> UserService:
+    repo = AuthRepository(supabase)
+    return UserService(repo)
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     payload = Security.decode_token(token)

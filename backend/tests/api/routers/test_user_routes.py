@@ -35,7 +35,7 @@ class TestUpdateProfile:
 class TestChangePassword:
     def test_success(self, test_client, mock_auth_repo, fake_user_dict):
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
-        with patch("services.auth.email_password.Security") as MockSec:
+        with patch("services.users.users.Security") as MockSec:
             MockSec.verify_password.return_value = True
             MockSec.hash_password.return_value = "new-hash"
             resp = test_client.post("/users/me/change-password", json={
@@ -56,7 +56,7 @@ class TestChangeEmail:
     def test_success(self, test_client, mock_auth_repo, fake_user_dict):
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
         mock_auth_repo.get_user_by_email.return_value = None
-        with patch("services.auth.email_password.Security") as MockSec:
+        with patch("services.users.users.Security") as MockSec:
             MockSec.verify_password.return_value = True
             resp = test_client.post("/users/me/change-email", json={
                 "new_email": "new@example.com",
@@ -70,6 +70,19 @@ class TestChangeEmail:
             "password": "pass",
         })
         assert resp.status_code == 422
+
+
+class TestConfirmEmailChange:
+    def test_invalid_token_returns_400(self, test_client, mock_auth_repo):
+        mock_auth_repo.get_user_by_verification_token.return_value = None
+        resp = test_client.post("/users/me/confirm-email-change", json={"token": "bad"})
+        assert resp.status_code == 400
+
+    def test_success(self, test_client, mock_auth_repo, fake_user_with_pending_email):
+        mock_auth_repo.get_user_by_verification_token.return_value = fake_user_with_pending_email
+        resp = test_client.post("/users/me/confirm-email-change", json={"token": "email-change-token-456"})
+        assert resp.status_code == 200
+        assert "changed" in resp.json()["message"].lower()
 
 
 class TestResendEmailVerification:
