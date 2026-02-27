@@ -8,5 +8,6 @@ __pycache__
 *.pyd
 .Python
 CLAUDE.md
+.pytest_cache
 pytest_cache/
 coverage/

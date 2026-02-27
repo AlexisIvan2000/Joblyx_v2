@@ -18,11 +18,13 @@ class EmailPasswordAuth:
             )
 
         hashed_password = Security.hash_password(user.password)
+        avatar_url = f"https://ui-avatars.com/api/?name={user.first_name}+{user.last_name}&background=random&color=fff"
         new_user = self.repo.create_user({
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
-            "password_hash": hashed_password
+            "password_hash": hashed_password,
+            "avatar_url": avatar_url
         })
         user_id = str(new_user["id"])
         verification_token = secrets.token_urlsafe(32)
