@@ -15,6 +15,7 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "support@joblyx.com")
+RESEND_FROM_NAME  = os.getenv("RESEND_FROM_NAME", "Joblyx")
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "joblyx://")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
