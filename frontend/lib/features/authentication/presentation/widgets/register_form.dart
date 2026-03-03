@@ -23,7 +23,6 @@ class _RegisterFormState extends State<RegisterForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
-  // bool _isLoading = false;
 
   @override
   void dispose() {
@@ -46,57 +45,94 @@ class _RegisterFormState extends State<RegisterForm> {
     FocusScope.of(context).unfocus();
   }
 
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, size: 20.sp),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide(color: cs.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide(color: cs.error, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide(color: cs.error, width: 1.5),
+      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final t = AppLocalizations.of(context);
+
     return AutofillGroup(
       child: Form(
         key: _formKey,
         autovalidateMode: _autovalidateMode,
         child: Column(
           children: [
-            Semantics(
-              label: 'first_name_field',
-              child: TextFormField(
-                controller: _firstNameController,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.givenName],
-                decoration: InputDecoration(
-                  labelText: t.t('register.first_name'),
-                  prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(14.r)),
+            // First & Last name side by side
+            Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    label: 'first_name_field',
+                    child: TextFormField(
+                      controller: _firstNameController,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.givenName],
+                      decoration: _inputDecoration(
+                        label: t.t('register.first_name'),
+                        icon: Icons.person_outline,
+                      ),
+                      validator: (value) => (value == null || value.isEmpty)
+                          ? t.t('register.no_first_name')
+                          : null,
+                    ),
                   ),
                 ),
-                validator: (value) => (value == null || value.isEmpty)
-                    ? t.t('register.no_first_name')
-                    : null,
-              ),
-            ),
-            SizedBox(height: 10.h),
-            Semantics(
-              label: 'last_name_field',
-              child: TextFormField(
-                controller: _lastNameController,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.familyName],
-                decoration: InputDecoration(
-                  labelText: t.t('register.last_name'),
-                  prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(14.r)),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Semantics(
+                    label: 'last_name_field',
+                    child: TextFormField(
+                      controller: _lastNameController,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.familyName],
+                      decoration: _inputDecoration(
+                        label: t.t('register.last_name'),
+                        icon: Icons.person_outline,
+                      ),
+                      validator: (value) => (value == null || value.isEmpty)
+                          ? t.t('register.no_last_name')
+                          : null,
+                    ),
                   ),
                 ),
-                validator: (value) => (value == null || value.isEmpty)
-                    ? t.t('register.no_last_name')
-                    : null,
-              ),
+              ],
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: 14.h),
+            // Email
             Semantics(
               label: 'email_field',
               child: TextFormField(
@@ -104,12 +140,9 @@ class _RegisterFormState extends State<RegisterForm> {
                 autofillHints: const [AutofillHints.email],
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: t.t('register.email'),
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(14.r)),
-                  ),
+                decoration: _inputDecoration(
+                  label: t.t('register.email'),
+                  icon: Icons.email_outlined,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -122,7 +155,8 @@ class _RegisterFormState extends State<RegisterForm> {
                 },
               ),
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: 14.h),
+            // Password
             Semantics(
               label: 'password_field',
               child: TextFormField(
@@ -130,17 +164,15 @@ class _RegisterFormState extends State<RegisterForm> {
                 obscureText: !_isPasswordVisible,
                 textInputAction: TextInputAction.done,
                 autofillHints: const [AutofillHints.newPassword],
-                decoration: InputDecoration(
-                  labelText: t.t('register.password'),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(14.r)),
-                  ),
+                decoration: _inputDecoration(
+                  label: t.t('register.password'),
+                  icon: Icons.lock_outline,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
+                      size: 20.sp,
                     ),
                     onPressed: () {
                       setState(() {
@@ -160,19 +192,27 @@ class _RegisterFormState extends State<RegisterForm> {
                 },
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: 24.h),
+            // Register button
             SizedBox(
               width: double.infinity,
-              height: 52.h,
+              height: 54.h,
               child: FilledButton(
                 onPressed: _submit,
-                child: Text(
-                  t.t('register.register'),
-                  style: const TextStyle(fontSize: 16),
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  textStyle: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
+                child: Text(t.t('register.register')),
               ),
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: 20.h),
+            // Login link
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -182,16 +222,13 @@ class _RegisterFormState extends State<RegisterForm> {
                     color: cs.onSurfaceVariant,
                   ),
                 ),
-                SizedBox(width: 4.w),
                 GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                  },
+                  onTap: () => Navigator.of(context).pop(),
                   child: Text(
                     t.t('register.login'),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: cs.primary,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),

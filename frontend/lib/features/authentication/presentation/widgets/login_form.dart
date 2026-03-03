@@ -20,7 +20,6 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
-  // bool _isLoading = false;
 
   @override
   void dispose() {
@@ -41,6 +40,38 @@ class _LoginFormState extends State<LoginForm> {
     FocusScope.of(context).unfocus();
   }
 
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, size: 20.sp),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide(color: cs.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide(color: cs.error, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16.r),
+        borderSide: BorderSide(color: cs.error, width: 1.5),
+      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -53,6 +84,7 @@ class _LoginFormState extends State<LoginForm> {
         autovalidateMode: _autovalidateMode,
         child: Column(
           children: [
+            // Email
             Semantics(
               label: 'email_field',
               child: TextFormField(
@@ -60,12 +92,9 @@ class _LoginFormState extends State<LoginForm> {
                 autofillHints: const [AutofillHints.username],
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: t.t('login.email'),
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(14.r)),
-                  ),
+                decoration: _inputDecoration(
+                  label: t.t('login.email'),
+                  icon: Icons.email_outlined,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -78,7 +107,8 @@ class _LoginFormState extends State<LoginForm> {
                 },
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 14.h),
+            // Password
             Semantics(
               label: 'password_field',
               child: TextFormField(
@@ -86,17 +116,15 @@ class _LoginFormState extends State<LoginForm> {
                 obscureText: !_isPasswordVisible,
                 textInputAction: TextInputAction.done,
                 autofillHints: const [AutofillHints.password],
-                decoration: InputDecoration(
-                  labelText: t.t('login.password'),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(14.r)),
-                  ),
+                decoration: _inputDecoration(
+                  label: t.t('login.password'),
+                  icon: Icons.lock_outline,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
+                      size: 20.sp,
                     ),
                     onPressed: () {
                       setState(() {
@@ -117,6 +145,7 @@ class _LoginFormState extends State<LoginForm> {
               ),
             ),
             SizedBox(height: 8.h),
+            // Forgot password
             Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
@@ -125,53 +154,60 @@ class _LoginFormState extends State<LoginForm> {
                   t.t('login.forgot_password'),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: cs.primary,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: 24.h),
+            // Login button
             Semantics(
               label: 'login_button',
               child: SizedBox(
                 width: double.infinity,
-                height: 52.h,
+                height: 54.h,
                 child: FilledButton(
                   onPressed: _submit,
-                  child: Text(
-                    t.t('login.login'),
-                    style: const TextStyle(fontSize: 16)
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16.r),
+                    ),
+                    textStyle: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  child: Text(t.t('login.login')),
+                ),
+              ),
+            ),
+            SizedBox(height: 20.h),
+            // Register link
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  t.t('login.no_account'),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
-              )
-            ),
-            SizedBox(height: 16.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    t.t('login.no_account'),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                    );
+                  },
+                  child: Text(
+                    t.t('login.register'),
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: cs.onSurfaceVariant,
+                      color: cs.primary,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  SizedBox(width: 4.w),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                      );
-                    },
-                    child: Text(
-                      t.t('login.register'),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: cs.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              )
+                ),
+              ],
+            ),
           ],
         ),
       ),
