@@ -29,6 +29,7 @@ flutter:
     - assets/images/first_page_icon.svg
     - assets/images/email_icon.svg
     - assets/images/linkedin_logo.svg
+    - assets/images/joblyx_logo.png
 
   fonts:
     - family: Lato

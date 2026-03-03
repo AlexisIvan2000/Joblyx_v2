@@ -11,8 +11,18 @@ class LoginScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final t = AppLocalizations.of(context);
-
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        elevation: 0,
+        title: Text(
+          t.t('login.login'),
+          style: theme.textTheme.headlineSmall?.copyWith(
+            color: cs.onSurface,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(24.w),
@@ -22,21 +32,21 @@ class LoginScreen extends StatelessWidget {
             children: [
               Text(
                 t.t('login.title'),
-                style: theme.textTheme.headlineSmall?.copyWith(
+                style: theme.textTheme.titleLarge?.copyWith(
                   color: cs.onSurface,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               SizedBox(height: 5.h),
               Text(
                 t.t('login.subtitle'),
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   color: cs.onSurfaceVariant,
                 ),
               ),
               SizedBox(height: 20.h),
-              const LoginForm(),
-            ],
+              const LoginForm()
+              ],
           ),
         ),
       ),

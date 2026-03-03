@@ -21,7 +21,11 @@
         "login_button": "Login",
         "no_account": "Don't have an account? ",
         "register": "Register",
-        "login": "Log in"
+        "login": "Log in",
+        "email_required": "Email is required",
+        "email_invalid": "Please enter a valid email",
+        "no_password": "Password is required",
+        "invalid_password": "Password must be at least 8 characters\nand contain a special character"
 
     },
 
@@ -34,7 +38,13 @@
         "password": "Password",
         "have_account": "Already have an account? ",
         "login": "Login",
-        "register": "Register"
+        "register": "Register",
+        "no_first_name": "First name is required",
+        "no_last_name": "Last name is required",
+        "email_required": "Email is required",
+        "email_invalid": "Please enter a valid email",
+        "no_password": "Password is required",
+        "invalid_password": "Password must be at least 8 characters\nand contain a special character"
 
     }
 }

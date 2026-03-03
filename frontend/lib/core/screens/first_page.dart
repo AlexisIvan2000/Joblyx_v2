@@ -48,7 +48,11 @@ class FirstPage extends StatelessWidget {
                 width: double.infinity,
                 height: 52.h,
                 child: FilledButton.icon(
-                  onPressed: () {}, 
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  }, 
                   label: Text(
                     t.t("first_page.continue_with_email"),
                     style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),
@@ -66,9 +70,6 @@ class FirstPage extends StatelessWidget {
                 height: 52.h,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
                   }, 
                   label: Text(
                     t.t("first_page.continue_with_linkedin"),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/features/authentication/presentation/screens/register_screen.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -12,7 +13,7 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   static final _emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-  static final _passwordRegex = RegExp(r"^[!@#$%^&*(),.?"":{}|<>_\-+=\[\]\\;'`~]");
+  static final _passwordRegex = RegExp(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''');
 
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
   final _formKey = GlobalKey<FormState>();
@@ -156,9 +157,13 @@ class _LoginFormState extends State<LoginForm> {
                   ),
                   SizedBox(width: 4.w),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                      );
+                    },
                     child: Text(
-                      t.t('login.sign_up'),
+                      t.t('login.register'),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: cs.primary,
                         fontWeight: FontWeight.w500,
