@@ -10,5 +10,31 @@
         "terms_of_use": "Terms of Use",
         "legal_separator": " and our ",
         "privacy_policy": "Privacy Policy"
+    },
+
+    "login": {
+        "title": "Welcome back!",
+        "subtitle": "Login to your account",
+        "email": "Email",
+        "password": "Password",
+        "forgot_password": "Forgot password?",
+        "login_button": "Login",
+        "no_account": "Don't have an account? ",
+        "register": "Register",
+        "login": "Log in"
+
+    },
+
+    "register": {
+        "title": "Create your account",
+        "subtitle": "Register to get started",
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "email": "Email",
+        "password": "Password",
+        "have_account": "Already have an account? ",
+        "login": "Login",
+        "register": "Register"
+
     }
 }

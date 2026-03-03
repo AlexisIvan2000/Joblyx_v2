@@ -10,5 +10,31 @@
         "terms_of_use": "Conditions d'utilisation",
         "legal_separator": " et notre ",
         "privacy_policy": "Politique de confidentialité"
+    },
+
+    "login": {
+        "title": "Bon retour !",
+        "subtitle": "Connectez-vous à votre compte",
+        "email": "Email",
+        "password": "Mot de passe",
+        "forgot_password": "Mot de passe oublié ?",
+        "login_button": "Connexion",
+        "no_account": "Vous n'avez pas de compte ? ",
+        "register": "Inscrivez-vous",
+        "login": "Se connecter"
+
+    },
+
+    "register": {
+        "title": "Créez votre compte",
+        "subtitle": "Inscrivez-vous pour commencer",
+        "first_name": "Prénom",
+        "last_name": "Nom",
+        "email": "Email",
+        "password": "Mot de passe",
+        "have_account": "Vous avez déjà un compte ? ",
+        "login": "Connectez-vous",
+        "register": "S'inscrire"
+
     }
 }
