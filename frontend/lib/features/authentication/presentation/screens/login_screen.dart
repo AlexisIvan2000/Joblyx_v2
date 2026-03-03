@@ -49,7 +49,7 @@ class LoginScreen extends StatelessWidget {
               // Title
               Text(
                 t.t('login.title'),
-                style: theme.textTheme.headlineMedium?.copyWith(
+                style: theme.textTheme.titleLarge?.copyWith(
                   color: cs.onSurface,
                   fontWeight: FontWeight.bold,
                 ),
@@ -62,7 +62,7 @@ class LoginScreen extends StatelessWidget {
                   color: cs.onSurfaceVariant,
                 ),
               ),
-              SizedBox(height: 28.h),
+              SizedBox(height: 20.h),
               // Form
               const LoginForm(),
               SizedBox(height: 24.h),

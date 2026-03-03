@@ -49,7 +49,7 @@ class RegisterScreen extends StatelessWidget {
               // Title
               Text(
                 t.t('register.title'),
-                style: theme.textTheme.headlineMedium?.copyWith(
+                style: theme.textTheme.titleLarge?.copyWith(
                   color: cs.onSurface,
                   fontWeight: FontWeight.bold,
                 ),
@@ -62,7 +62,7 @@ class RegisterScreen extends StatelessWidget {
                   color: cs.onSurfaceVariant,
                 ),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 20.h),
               // Form
               const RegisterForm(),
               SizedBox(height: 24.h),

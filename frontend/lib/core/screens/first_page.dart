@@ -24,10 +24,10 @@ class FirstPage extends StatelessWidget {
         title: Center(
           child: Text(
             'Joblyx',
-            style: theme.textTheme.headlineMedium?.copyWith(
+            style: theme.textTheme.headlineLarge?.copyWith(
               color: cs.primary,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1,
+              letterSpacing: 1.5,
             ),
           ),
         ),
