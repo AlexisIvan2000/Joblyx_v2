@@ -18,6 +18,7 @@ class _LoadingTransitionState  extends State<LoadingTransition>{
     final t = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
+        maintainBottomViewPadding: false,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -27,12 +28,12 @@ class _LoadingTransitionState  extends State<LoadingTransition>{
                 width: 280.w,
                 height: 280.h,             
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 10.h),
               Text(
                 t.t('loading.loading'),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: cs.onSurface,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
