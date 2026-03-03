@@ -15,7 +15,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: cs.secondary,
+      backgroundColor: cs.primary,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

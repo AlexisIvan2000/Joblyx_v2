@@ -11,6 +11,10 @@ dependencies:
     sdk: flutter
   flutter_screenutil: ^5.9.3
   google_fonts: ^8.0.2
+  flutter_localizations:
+    sdk: flutter
+  flutter_svg: ^2.2.3
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -19,6 +23,12 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/i18n/en.json
+    - assets/i18n/fr.json
+    - assets/images/first_page_icon.svg
+    - assets/images/email_icon.svg
+    - assets/images/linkedin_logo.svg
 
   fonts:
     - family: Lato

@@ -1,5 +1,14 @@
 {
     "splash": {
         "tagline": "Votre assistant de carrière intelligent"
+    },
+
+    "first_page": {
+        "continue_with_email": "Continuer avec email",
+        "continue_with_linkedin": "Continuer avec LinkedIn",
+        "legal_prefix": "En continuant, vous acceptez nos ",
+        "terms_of_use": "Conditions d'utilisation",
+        "legal_separator": " et notre ",
+        "privacy_policy": "Politique de confidentialité"
     }
 }

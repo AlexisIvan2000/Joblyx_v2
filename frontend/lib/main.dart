@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:frontend/core/screens/splash_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:frontend/core/screens/first_page.dart';
 import 'package:frontend/core/theme/theme_color.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:frontend/core/l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,7 +40,14 @@ class MainApp extends StatelessWidget {
           theme: themeColor.lightTheme,
           darkTheme: themeColor.darkTheme,
           themeMode: ThemeMode.system,
-          home: SplashScreen()
+          home: FirstPage(),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizationsDelegate(),
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
         );
       },
     );

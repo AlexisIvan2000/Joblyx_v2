@@ -1,5 +1,14 @@
 {
     "splash": {
         "tagline": "Your smart carreer assistant"
+    },
+
+    "first_page": {
+        "continue_with_email": "Continue with email",
+        "continue_with_linkedin": "Continue with LinkedIn",
+        "legal_prefix": "By continuing, you agree to our ",
+        "terms_of_use": "Terms of Use",
+        "legal_separator": " and our ",
+        "privacy_policy": "Privacy Policy"
     }
 }
