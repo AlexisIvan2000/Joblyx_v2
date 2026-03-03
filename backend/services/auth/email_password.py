@@ -1,6 +1,6 @@
 import secrets
 from fastapi import HTTPException, status
-from models.schemas import UserCreate, UserLogin, UpdateProfile
+from models.schemas import UserCreate, UserLogin
 from core.security import Security
 from repositories.auth_repository import AuthRepository
 from services.emailing.email_sender import EmailSender
