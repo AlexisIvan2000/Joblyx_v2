@@ -30,6 +30,7 @@ flutter:
     - assets/images/email_icon.svg
     - assets/images/linkedin_logo.svg
     - assets/images/joblyx_logo.png
+    - assets/images/processing.svg
 
   fonts:
     - family: Lato
