@@ -1,9 +1,18 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from core.database import engine
 from api.routers.auth import router as auth_router
 from api.routers.users import router as users_router
 from api.routers.onboarding import router as onboarding_router
 
-app = FastAPI(title="Joblyx API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await engine.dispose()
+
+
+app = FastAPI(title="Joblyx API", lifespan=lifespan)
 
 app.include_router(auth_router)
 app.include_router(users_router)

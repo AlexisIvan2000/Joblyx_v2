@@ -4,15 +4,15 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from tests.conftest import FAKE_USER_ID
+from tests.conftest import FAKE_USER_ID, FAKE_OTP_CODE, FAKE_OTP_HASH, _make_user_obj
 
 
 class TestGetMe:
-    def test_returns_user_without_password(self, test_client, fake_user_dict):
+    def test_returns_user_without_password(self, test_client):
         resp = test_client.get("/users/me")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["email"] == fake_user_dict["email"]
+        assert data["email"] == "john@example.com"
         assert "password_hash" not in data
 
     def test_returns_200(self, test_client):
@@ -58,6 +58,8 @@ class TestChangeEmail:
         mock_auth_repo.get_user_by_email.return_value = None
         with patch("services.users.users.Security") as MockSec:
             MockSec.verify_password.return_value = True
+            MockSec.generate_otp_code.return_value = "654321"
+            MockSec.hash_token.return_value = "hashed-code"
             resp = test_client.post("/users/me/change-email", json={
                 "new_email": "new@example.com",
                 "password": "Secure1!x",
@@ -73,16 +75,20 @@ class TestChangeEmail:
 
 
 class TestConfirmEmailChange:
-    def test_invalid_token_returns_400(self, test_client, mock_auth_repo):
-        mock_auth_repo.get_user_by_verification_token.return_value = None
-        resp = test_client.post("/users/me/confirm-email-change", json={"token": "bad"})
-        assert resp.status_code == 400
-
     def test_success(self, test_client, mock_auth_repo, fake_user_with_pending_email):
-        mock_auth_repo.get_user_by_verification_token.return_value = fake_user_with_pending_email
-        resp = test_client.post("/users/me/confirm-email-change", json={"token": "email-change-token-456"})
+        mock_auth_repo.get_user_by_id.return_value = fake_user_with_pending_email
+        with patch("services.users.users.Security") as MockSec:
+            MockSec.hash_token.return_value = FAKE_OTP_HASH
+            resp = test_client.post("/users/me/confirm-email-change", json={"code": FAKE_OTP_CODE})
         assert resp.status_code == 200
         assert "changed" in resp.json()["message"].lower()
+
+    def test_invalid_code_returns_400(self, test_client, mock_auth_repo, fake_user_with_pending_email):
+        mock_auth_repo.get_user_by_id.return_value = fake_user_with_pending_email
+        with patch("services.users.users.Security") as MockSec:
+            MockSec.hash_token.return_value = "wrong-hash"
+            resp = test_client.post("/users/me/confirm-email-change", json={"code": "000000"})
+        assert resp.status_code == 400
 
 
 class TestResendEmailVerification:

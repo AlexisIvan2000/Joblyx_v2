@@ -1,9 +1,9 @@
 import os
+import uuid
+import hashlib
 
 # Set env vars BEFORE any app import (core/config.py reads them at import time)
-os.environ.setdefault("SUPABASE_URL", "https://fake.supabase.co")
-os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "fake-service-key")
-os.environ.setdefault("SUPABASE_ANON_KEY", "fake-anon-key")
+os.environ.setdefault("DB_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
 os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
 os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
@@ -14,102 +14,117 @@ os.environ.setdefault("RESEND_FROM_EMAIL", "test@joblyx.com")
 os.environ.setdefault("RESEND_FROM_NAME", "Joblyx")
 os.environ.setdefault("FRONTEND_URL", "http://localhost:3000")
 
-# Patch supabase.create_client before core.database is imported
-from unittest.mock import MagicMock, patch
-
-_mock_supabase_client = MagicMock()
-patch("supabase.create_client", return_value=_mock_supabase_client).start()
-
 import pytest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from httpx import ASGITransport, AsyncClient
+from models.db_models import User
 
 
 # ─── User fixture data ───────────────────────────────────────────────
 
 FAKE_USER_ID = "11111111-1111-1111-1111-111111111111"
 FAKE_PASSWORD_HASH = "$argon2id$v=19$m=65536,t=3,p=4$fakesalt$fakehash"
+FAKE_OTP_CODE = "123456"
+FAKE_OTP_HASH = hashlib.sha256(FAKE_OTP_CODE.encode()).hexdigest()
 
 
-@pytest.fixture
-def fake_user_dict():
-    return {
-        "id": FAKE_USER_ID,
+def _make_user_obj(**overrides) -> User:
+    """Build a User ORM object (detached, no DB session needed)."""
+    defaults = {
+        "id": uuid.UUID(FAKE_USER_ID),
         "first_name": "John",
         "last_name": "Doe",
         "email": "john@example.com",
         "password_hash": FAKE_PASSWORD_HASH,
         "is_verified": True,
-        "verification_token": None,
-        "verification_token_expires_at": None,
+        "verification_code_hash": None,
+        "verification_code_expires_at": None,
         "pending_email": None,
-        "reset_token": None,
-        "reset_token_expires_at": None,
+        "reset_code_hash": None,
+        "reset_code_expires_at": None,
+        "email_change_code_hash": None,
+        "email_change_code_expires_at": None,
+        "verification_attempts": 0,
+        "last_code_sent_at": None,
+        "code_resend_count": 0,
+        "avatar_url": None,
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
     }
+    defaults.update(overrides)
+    return User(**defaults)
 
 
 @pytest.fixture
-def fake_unverified_user_dict(fake_user_dict):
-    return {
-        **fake_user_dict,
-        "is_verified": False,
-        "verification_token": "verify-token-123",
-        "verification_token_expires_at": (
-            datetime.now(timezone.utc) + timedelta(hours=24)
-        ).isoformat(),
-    }
+def fake_user_dict():
+    return _make_user_obj()
 
 
 @pytest.fixture
-def fake_user_with_pending_email(fake_user_dict):
-    return {
-        **fake_user_dict,
-        "pending_email": "newemail@example.com",
-        "verification_token": "email-change-token-456",
-        "verification_token_expires_at": (
-            datetime.now(timezone.utc) + timedelta(hours=24)
-        ).isoformat(),
-    }
+def fake_unverified_user_dict():
+    return _make_user_obj(
+        is_verified=False,
+        verification_code_hash=FAKE_OTP_HASH,
+        verification_code_expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
+        verification_attempts=0,
+    )
 
 
 @pytest.fixture
-def fake_user_with_reset_token(fake_user_dict):
-    return {
-        **fake_user_dict,
-        "reset_token": "reset-token-789",
-        "reset_token_expires_at": (
-            datetime.now(timezone.utc) + timedelta(hours=1)
-        ).isoformat(),
-    }
+def fake_user_with_pending_email():
+    return _make_user_obj(
+        pending_email="newemail@example.com",
+        email_change_code_hash=FAKE_OTP_HASH,
+        email_change_code_expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
+        verification_attempts=0,
+    )
 
 
 @pytest.fixture
-def fake_user_with_expired_reset_token(fake_user_dict):
-    return {
-        **fake_user_dict,
-        "reset_token": "expired-reset-token",
-        "reset_token_expires_at": (
-            datetime.now(timezone.utc) - timedelta(hours=1)
-        ).isoformat(),
-    }
+def fake_user_with_reset_code():
+    return _make_user_obj(
+        reset_code_hash=FAKE_OTP_HASH,
+        reset_code_expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
+        verification_attempts=0,
+    )
+
+
+@pytest.fixture
+def fake_user_with_expired_reset_code():
+    return _make_user_obj(
+        reset_code_hash=FAKE_OTP_HASH,
+        reset_code_expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
+        verification_attempts=0,
+    )
 
 
 # ─── Mock AuthRepository ─────────────────────────────────────────────
 
 @pytest.fixture
 def mock_auth_repo():
-    repo = MagicMock()
+    repo = AsyncMock()
     repo.get_user_by_email.return_value = None
     repo.get_user_by_id.return_value = None
-    repo.get_user_by_verification_token.return_value = None
-    repo.get_user_by_reset_token.return_value = None
-    repo.create_user.return_value = {"id": FAKE_USER_ID}
-    repo.update_user.return_value = {"id": FAKE_USER_ID}
-    repo.update_verification_status.return_value = {"id": FAKE_USER_ID}
-    repo.save_reset_token.return_value = {"id": FAKE_USER_ID}
-    repo.update_password.return_value = {"id": FAKE_USER_ID}
+    repo.create_user.return_value = _make_user_obj()
+    repo.update_user.return_value = _make_user_obj()
+    repo.update_verification_status.return_value = _make_user_obj()
+    repo.save_reset_code.return_value = _make_user_obj()
+    repo.update_password.return_value = _make_user_obj()
+    repo.increment_verification_attempts.return_value = None
+    repo.reset_verification_attempts.return_value = None
+    return repo
+
+
+# ─── Mock RefreshTokenRepository ────────────────────────────────────
+
+@pytest.fixture
+def mock_refresh_token_repo():
+    repo = AsyncMock()
+    repo.create.return_value = MagicMock()
+    repo.get_by_token_hash.return_value = None
+    repo.revoke.return_value = None
+    repo.revoke_all_for_user.return_value = None
     return repo
 
 
@@ -119,8 +134,7 @@ FAKE_ROADMAP_ID = "22222222-2222-2222-2222-222222222222"
 
 @pytest.fixture
 def mock_career_repo():
-    from repositories.career_repository import CareerRepository
-    repo = MagicMock(spec=CareerRepository)
+    repo = AsyncMock()
     repo.get_career_profile_by_user_id.return_value = None
     repo.create_career_profile.return_value = {"id": "profile-1", "user_id": FAKE_USER_ID}
     repo.create_user_skills.return_value = []
@@ -133,12 +147,12 @@ def mock_career_repo():
 # ─── Auth service with mocked repo + email ───────────────────────────
 
 @pytest.fixture
-def auth_service(mock_auth_repo):
+def auth_service(mock_auth_repo, mock_refresh_token_repo):
     with patch("services.auth.email_password.EmailSender") as MockEmailSender:
         MockEmailSender.return_value = MagicMock()
         from services.auth.email_password import EmailPasswordAuth
 
-        service = EmailPasswordAuth(mock_auth_repo)
+        service = EmailPasswordAuth(mock_auth_repo, mock_refresh_token_repo)
         service._mock_email_sender = MockEmailSender
         yield service
 
@@ -158,32 +172,13 @@ def _patch_config(monkeypatch):
     monkeypatch.setattr("core.security.REFRESH_TOKEN_EXPIRE_DAYS", 30)
 
 
-# ─── Supabase mock helper ────────────────────────────────────────────
-
-def _build_supabase_mock(data):
-    """Build a chained mock for supabase.table().select().eq().execute()"""
-    mock_client = MagicMock()
-    mock_execute = MagicMock()
-    mock_execute.data = data
-
-    mock_table = MagicMock()
-    mock_table.select.return_value = mock_table
-    mock_table.insert.return_value = mock_table
-    mock_table.update.return_value = mock_table
-    mock_table.eq.return_value = mock_table
-    mock_table.execute.return_value = mock_execute
-
-    mock_client.table.return_value = mock_table
-    return mock_client, mock_table
-
-
 # ─── FastAPI TestClient ──────────────────────────────────────────────
 
 @pytest.fixture
-def test_client(mock_auth_repo, fake_user_dict):
+def test_client(mock_auth_repo, mock_refresh_token_repo, fake_user_dict):
     from fastapi.testclient import TestClient
     from app import app
-    from api.dependencies import get_auth_service, get_user_service, get_current_user
+    from api.dependencies import get_auth_service, get_user_service, get_current_user, get_onboarding_service
     from services.auth.email_password import EmailPasswordAuth
     from services.users.users import UserService
 
@@ -191,28 +186,38 @@ def test_client(mock_auth_repo, fake_user_dict):
          patch("services.users.users.EmailSender") as MockUserEmailSender:
         MockEmailSender.return_value = MagicMock()
         MockUserEmailSender.return_value = MagicMock()
-        auth_svc = EmailPasswordAuth(mock_auth_repo)
+        auth_svc = EmailPasswordAuth(mock_auth_repo, mock_refresh_token_repo)
         user_svc = UserService(mock_auth_repo)
 
-        from api.dependencies import get_onboarding_service
-        from repositories.career_repository import CareerRepository
         from services.onboarding.onboarding_service import OnboardingService
 
-        mock_career_repo = MagicMock(spec=CareerRepository)
-        mock_career_repo.get_career_profile_by_user_id.return_value = None
-        mock_career_repo.create_career_profile.return_value = {"id": "profile-1", "user_id": FAKE_USER_ID}
-        mock_career_repo.create_user_skills.return_value = []
-        mock_career_repo.create_roadmap.return_value = {"id": "roadmap-1", "user_id": FAKE_USER_ID, "status": "processing"}
+        onboarding_mock_career_repo = AsyncMock()
+        onboarding_mock_career_repo.get_career_profile_by_user_id.return_value = None
+        onboarding_mock_career_repo.create_career_profile.return_value = {"id": "profile-1", "user_id": FAKE_USER_ID}
+        onboarding_mock_career_repo.create_user_skills.return_value = []
+        onboarding_mock_career_repo.create_roadmap.return_value = {"id": "roadmap-1", "user_id": FAKE_USER_ID, "status": "processing"}
 
-        onboarding_svc = OnboardingService(mock_career_repo)
+        onboarding_svc = OnboardingService(onboarding_mock_career_repo)
 
-        app.dependency_overrides[get_auth_service] = lambda: auth_svc
-        app.dependency_overrides[get_user_service] = lambda: user_svc
-        app.dependency_overrides[get_current_user] = lambda: fake_user_dict
-        app.dependency_overrides[get_onboarding_service] = lambda: onboarding_svc
+        async def override_auth_service():
+            return auth_svc
+
+        async def override_user_service():
+            return user_svc
+
+        async def override_current_user():
+            return fake_user_dict
+
+        async def override_onboarding_service():
+            return onboarding_svc
+
+        app.dependency_overrides[get_auth_service] = override_auth_service
+        app.dependency_overrides[get_user_service] = override_user_service
+        app.dependency_overrides[get_current_user] = override_current_user
+        app.dependency_overrides[get_onboarding_service] = override_onboarding_service
 
         client = TestClient(app)
-        client._mock_career_repo = mock_career_repo
+        client._mock_career_repo = onboarding_mock_career_repo
 
         yield client
 

@@ -1,8 +1,10 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from core.database import supabase
+from sqlalchemy.ext.asyncio import AsyncSession
+from core.database import get_db_session
 from core.security import Security
 from repositories.auth_repository import AuthRepository
+from repositories.refresh_token_repository import RefreshTokenRepository
 from repositories.career_repository import CareerRepository
 from services.auth.email_password import EmailPasswordAuth
 from services.users.users import UserService
@@ -10,19 +12,23 @@ from services.onboarding.onboarding_service import OnboardingService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-def get_auth_service() -> EmailPasswordAuth:
-    repo = AuthRepository(supabase)
-    return EmailPasswordAuth(repo)
+async def get_auth_service(session: AsyncSession = Depends(get_db_session)) -> EmailPasswordAuth:
+    auth_repo = AuthRepository(session)
+    rt_repo = RefreshTokenRepository(session)
+    return EmailPasswordAuth(auth_repo, rt_repo)
 
-def get_user_service() -> UserService:
-    repo = AuthRepository(supabase)
+async def get_user_service(session: AsyncSession = Depends(get_db_session)) -> UserService:
+    repo = AuthRepository(session)
     return UserService(repo)
 
-def get_onboarding_service() -> OnboardingService:
-    repo = CareerRepository(supabase)
+async def get_onboarding_service(session: AsyncSession = Depends(get_db_session)) -> OnboardingService:
+    repo = CareerRepository(session)
     return OnboardingService(repo)
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    session: AsyncSession = Depends(get_db_session),
+):
     payload = Security.decode_token(token)
     if not payload or payload.get("type") != "access":
         raise HTTPException(
@@ -31,8 +37,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     user_id = payload.get("sub")
-    repo = AuthRepository(supabase)
-    user = repo.get_user_by_id(user_id)
+    repo = AuthRepository(session)
+    user = await repo.get_user_by_id(user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Depends
 from models.schemas import OnboardingRequest, OnboardingResponse
+from models.db_models import User
 from services.onboarding.onboarding_service import OnboardingService
 from api.dependencies import get_onboarding_service, get_current_user
 
@@ -12,12 +13,12 @@ def _generate_roadmap_stub(user_id: str) -> None:
 
 
 @router.post("", status_code=202, response_model=OnboardingResponse)
-def onboarding(
+async def onboarding(
     body: OnboardingRequest,
     background_tasks: BackgroundTasks,
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     svc: OnboardingService = Depends(get_onboarding_service),
 ):
-    result = svc.complete_onboarding(str(current_user["id"]), body)
-    background_tasks.add_task(_generate_roadmap_stub, str(current_user["id"]))
+    result = await svc.complete_onboarding(str(current_user.id), body)
+    background_tasks.add_task(_generate_roadmap_stub, str(current_user.id))
     return result

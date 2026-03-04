@@ -1,3 +1,6 @@
+import hashlib
+import secrets
+
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from jose import jwt, JWTError
@@ -39,5 +42,12 @@ class Security:
             return payload
         except JWTError:
             return None
-        
+
+    @staticmethod
+    def hash_token(token: str) -> str:
+        return hashlib.sha256(token.encode()).hexdigest()
+
+    @staticmethod
+    def generate_otp_code() -> str:
+        return str(secrets.randbelow(900000) + 100000)
 

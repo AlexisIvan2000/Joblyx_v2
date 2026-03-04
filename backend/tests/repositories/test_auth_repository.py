@@ -1,144 +1,127 @@
-"""Tests for repositories/auth_repository.py — Supabase data access."""
+"""Tests for repositories/auth_repository.py — async SQLAlchemy data access.
 
-from unittest.mock import MagicMock
+These are unit tests that mock the AsyncSession to verify the repository
+calls the correct SQLAlchemy operations.
+"""
+
+import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from repositories.auth_repository import AuthRepository
+from models.db_models import User
+from tests.conftest import _make_user_obj, FAKE_USER_ID
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────
-
-def _make_repo_and_client(data=None):
-    """Return (repo, mock_client, mock_chain) with chained table mock."""
-    mock_client = MagicMock()
-
-    mock_execute = MagicMock()
-    mock_execute.data = data if data is not None else []
-
-    mock_chain = MagicMock()
-    mock_chain.select.return_value = mock_chain
-    mock_chain.insert.return_value = mock_chain
-    mock_chain.update.return_value = mock_chain
-    mock_chain.eq.return_value = mock_chain
-    mock_chain.execute.return_value = mock_execute
-
-    mock_client.table.return_value = mock_chain
-
-    return AuthRepository(mock_client), mock_client, mock_chain
+@pytest.fixture
+def mock_session():
+    session = AsyncMock()
+    return session
 
 
-# ─── get_user_by_email ────────────────────────────────────────────────
+@pytest.fixture
+def repo(mock_session):
+    return AuthRepository(mock_session)
+
 
 class TestGetUserByEmail:
-    def test_found(self, fake_user_dict):
-        repo, client, chain = _make_repo_and_client([fake_user_dict])
-        result = repo.get_user_by_email("john@example.com")
+    @pytest.mark.asyncio
+    async def test_found(self, repo, mock_session, fake_user_dict):
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = fake_user_dict
+        mock_session.execute.return_value = mock_result
+
+        result = await repo.get_user_by_email("john@example.com")
         assert result == fake_user_dict
-        chain.eq.assert_called_with("email", "john@example.com")
+        mock_session.execute.assert_called_once()
 
-    def test_not_found(self):
-        repo, _, _ = _make_repo_and_client([])
-        assert repo.get_user_by_email("nope@example.com") is None
+    @pytest.mark.asyncio
+    async def test_not_found(self, repo, mock_session):
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = mock_result
 
+        result = await repo.get_user_by_email("nope@example.com")
+        assert result is None
 
-# ─── get_user_by_id ──────────────────────────────────────────────────
 
 class TestGetUserById:
-    def test_found(self, fake_user_dict):
-        repo, _, chain = _make_repo_and_client([fake_user_dict])
-        result = repo.get_user_by_id("11111111-1111-1111-1111-111111111111")
+    @pytest.mark.asyncio
+    async def test_found(self, repo, mock_session, fake_user_dict):
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = fake_user_dict
+        mock_session.execute.return_value = mock_result
+
+        result = await repo.get_user_by_id(FAKE_USER_ID)
         assert result == fake_user_dict
-        chain.eq.assert_called_with("id", "11111111-1111-1111-1111-111111111111")
 
-    def test_not_found(self):
-        repo, _, _ = _make_repo_and_client([])
-        assert repo.get_user_by_id("nonexistent") is None
+    @pytest.mark.asyncio
+    async def test_not_found(self, repo, mock_session):
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = mock_result
 
+        result = await repo.get_user_by_id("nonexistent")
+        assert result is None
 
-# ─── create_user ──────────────────────────────────────────────────────
 
 class TestCreateUser:
-    def test_returns_created_user(self, fake_user_dict):
-        repo, _, chain = _make_repo_and_client([fake_user_dict])
-        result = repo.create_user({"email": "john@example.com"})
-        assert result == fake_user_dict
-        chain.insert.assert_called_once_with({"email": "john@example.com"})
+    @pytest.mark.asyncio
+    async def test_returns_created_user(self, repo, mock_session):
+        result = await repo.create_user({"email": "john@example.com", "first_name": "John", "last_name": "Doe", "password_hash": "hashed"})
+        mock_session.add.assert_called_once()
+        mock_session.flush.assert_called_once()
+        assert isinstance(result, User)
 
-
-# ─── update_user ──────────────────────────────────────────────────────
 
 class TestUpdateUser:
-    def test_calls_update_and_eq(self, fake_user_dict):
-        repo, _, chain = _make_repo_and_client([fake_user_dict])
-        data = {"first_name": "Jane"}
-        repo.update_user("user-1", data)
-        chain.update.assert_called_once_with(data)
-        chain.eq.assert_called_with("id", "user-1")
+    @pytest.mark.asyncio
+    async def test_calls_update(self, repo, mock_session, fake_user_dict):
+        mock_result = MagicMock()
+        mock_result.scalar_one.return_value = fake_user_dict
+        mock_session.execute.return_value = mock_result
 
+        await repo.update_user(FAKE_USER_ID, {"first_name": "Jane"})
+        assert mock_session.execute.call_count == 2  # update + select
+        mock_session.flush.assert_called_once()
 
-# ─── get_user_by_verification_token ──────────────────────────────────
-
-class TestGetUserByVerificationToken:
-    def test_found(self, fake_unverified_user_dict):
-        repo, _, chain = _make_repo_and_client([fake_unverified_user_dict])
-        result = repo.get_user_by_verification_token("verify-token-123")
-        assert result == fake_unverified_user_dict
-        chain.eq.assert_called_with("verification_token", "verify-token-123")
-
-    def test_not_found(self):
-        repo, _, _ = _make_repo_and_client([])
-        assert repo.get_user_by_verification_token("bad-token") is None
-
-
-# ─── update_verification_status ───────────────────────────────────────
 
 class TestUpdateVerificationStatus:
-    def test_calls_update_with_correct_data(self, fake_user_dict):
-        repo, _, chain = _make_repo_and_client([fake_user_dict])
-        repo.update_verification_status("user-1")
-        chain.update.assert_called_once_with({
-            "is_verified": True,
-            "verification_token": None,
-            "verification_token_expires_at": None,
-        })
+    @pytest.mark.asyncio
+    async def test_clears_verification_fields(self, repo, mock_session, fake_user_dict):
+        mock_result = MagicMock()
+        mock_result.scalar_one.return_value = fake_user_dict
+        mock_session.execute.return_value = mock_result
+
+        await repo.update_verification_status(FAKE_USER_ID)
+        assert mock_session.execute.call_count == 2
+        mock_session.flush.assert_called_once()
 
 
-# ─── save_reset_token ────────────────────────────────────────────────
+class TestSaveResetCode:
+    @pytest.mark.asyncio
+    async def test_saves_code(self, repo, mock_session, fake_user_dict):
+        mock_result = MagicMock()
+        mock_result.scalar_one.return_value = fake_user_dict
+        mock_session.execute.return_value = mock_result
 
-class TestSaveResetToken:
-    def test_calls_update_with_token_and_expiry(self, fake_user_dict):
-        repo, _, chain = _make_repo_and_client([fake_user_dict])
-        repo.save_reset_token("john@example.com", "tok", "2026-01-01T00:00:00")
-        chain.update.assert_called_once_with({
-            "reset_token": "tok",
-            "reset_token_expires_at": "2026-01-01T00:00:00",
-        })
-        chain.eq.assert_called_with("email", "john@example.com")
-
-
-# ─── get_user_by_reset_token ─────────────────────────────────────────
-
-class TestGetUserByResetToken:
-    def test_found(self, fake_user_with_reset_token):
-        repo, _, chain = _make_repo_and_client([fake_user_with_reset_token])
-        result = repo.get_user_by_reset_token("reset-token-789")
-        assert result == fake_user_with_reset_token
-        chain.eq.assert_called_with("reset_token", "reset-token-789")
-
-    def test_not_found(self):
-        repo, _, _ = _make_repo_and_client([])
-        assert repo.get_user_by_reset_token("nope") is None
+        await repo.save_reset_code("john@example.com", "hash123", "2026-01-01T00:00:00Z")
+        assert mock_session.execute.call_count == 2  # update + select
+        mock_session.flush.assert_called_once()
 
 
-# ─── update_password ──────────────────────────────────────────────────
+class TestIncrementVerificationAttempts:
+    @pytest.mark.asyncio
+    async def test_increments(self, repo, mock_session):
+        await repo.increment_verification_attempts(FAKE_USER_ID)
+        mock_session.execute.assert_called_once()
+        mock_session.flush.assert_called_once()
 
-class TestUpdatePassword:
-    def test_calls_update_with_hash_and_clears_token(self, fake_user_dict):
-        repo, _, chain = _make_repo_and_client([fake_user_dict])
-        repo.update_password("user-1", "new-hash")
-        chain.update.assert_called_once_with({
-            "password_hash": "new-hash",
-            "reset_token": None,
-            "reset_token_expires_at": None,
-        })
+
+class TestResetVerificationAttempts:
+    @pytest.mark.asyncio
+    async def test_resets(self, repo, mock_session):
+        await repo.reset_verification_attempts(FAKE_USER_ID)
+        mock_session.execute.assert_called_once()
+        mock_session.flush.assert_called_once()
