@@ -58,8 +58,6 @@ class TestChangeEmail:
         mock_auth_repo.get_user_by_email.return_value = None
         with patch("services.users.users.Security") as MockSec:
             MockSec.verify_password.return_value = True
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
             resp = test_client.post("/users/me/change-email", json={
                 "new_email": "new@example.com",
                 "password": "Secure1!x",

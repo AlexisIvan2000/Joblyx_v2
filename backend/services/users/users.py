@@ -3,15 +3,15 @@ from fastapi import HTTPException, status
 from core.security import Security
 from models.schemas import UpdateProfile
 from repositories.auth_repository import AuthRepository
-from services.emailing.email_sender import EmailSender
+from services.emailing.otp_service import OtpService
 
 MAX_VERIFICATION_ATTEMPTS = 5
-OTP_EXPIRY_MINUTES = 15
 
 
 class UserService:
-    def __init__(self, auth_repo: AuthRepository):
+    def __init__(self, auth_repo: AuthRepository, otp_service: OtpService):
         self.repo = auth_repo
+        self.otp_svc = otp_service
 
     async def update_profile(self, user_id: str, data: UpdateProfile):
         data_dict = data.model_dump(exclude_none=True)
@@ -37,11 +37,7 @@ class UserService:
     async def forgot_password(self, email: str):
         db_user = await self.repo.get_user_by_email(email)
         if db_user:
-            otp_code = Security.generate_otp_code()
-            code_hash = Security.hash_token(otp_code)
-            expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)
-            await self.repo.save_reset_code(email, code_hash, expires_at)
-            EmailSender().send_reset_password_email(email, code=otp_code)
+            await self.otp_svc.send_reset_otp(email)
         return {"message": "If this email is registered, a reset code has been sent"}
 
     async def reset_password(self, email: str, code: str, new_password: str):
@@ -91,16 +87,8 @@ class UserService:
                 detail="Email already in use"
             )
 
-        otp_code = Security.generate_otp_code()
-        code_hash = Security.hash_token(otp_code)
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)
-        await self.repo.update_user(user_id, {
-            "pending_email": new_email,
-            "email_change_code_hash": code_hash,
-            "email_change_code_expires_at": expires_at,
-            "verification_attempts": 0,
-        })
-        EmailSender().send_email_change_email(new_email, code=otp_code)
+        await self.repo.update_user(user_id, {"pending_email": new_email})
+        await self.otp_svc.send_email_change_otp(new_email, user_id)
         return {"message": "Verification code sent to new address"}
 
     async def confirm_email_change(self, user_id: str, code: str):

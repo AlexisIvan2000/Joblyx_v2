@@ -3,18 +3,17 @@ from models.schemas import UserCreate, UserLogin
 from core.security import Security
 from repositories.auth_repository import AuthRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
-from services.emailing.email_sender import EmailSender
+from services.emailing.otp_service import OtpService
 from datetime import datetime, timedelta, timezone
 
 MAX_VERIFICATION_ATTEMPTS = 5
-MAX_RESEND_PER_HOUR = 5
-OTP_EXPIRY_MINUTES = 15
 
 
 class EmailPasswordAuth:
-    def __init__(self, auth_repo: AuthRepository, refresh_token_repo: RefreshTokenRepository):
+    def __init__(self, auth_repo: AuthRepository, refresh_token_repo: RefreshTokenRepository, otp_service: OtpService):
         self.repo = auth_repo
         self.rt_repo = refresh_token_repo
+        self.otp_svc = otp_service
 
     async def register_user(self, user: UserCreate):
         if await self.repo.get_user_by_email(user.email):
@@ -31,19 +30,8 @@ class EmailPasswordAuth:
             "email": user.email,
             "password_hash": hashed_password,
         })
-        user_id = str(new_user.id)
 
-        otp_code = Security.generate_otp_code()
-        code_hash = Security.hash_token(otp_code)
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)
-        await self.repo.update_user(user_id, {
-            "verification_code_hash": code_hash,
-            "verification_code_expires_at": expires_at,
-            "verification_attempts": 0,
-            "last_code_sent_at": datetime.now(timezone.utc),
-            "code_resend_count": 1,
-        })
-        EmailSender().send_verification_email(user.email, code=otp_code)
+        await self.otp_svc.send_verification_otp(user.email, str(new_user.id))
 
         return {"message": "Account created. Please check your email for the verification code."}
 
@@ -127,23 +115,7 @@ class EmailPasswordAuth:
     async def resend_verification_email(self, email: str):
         db_user = await self.repo.get_user_by_email(email)
         if db_user and not db_user.is_verified:
-            self._check_resend_rate_limit(db_user)
-
-            otp_code = Security.generate_otp_code()
-            code_hash = Security.hash_token(otp_code)
-            expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)
-            now = datetime.now(timezone.utc)
-
-            new_resend_count = self._compute_resend_count(db_user, now)
-
-            await self.repo.update_user(str(db_user.id), {
-                "verification_code_hash": code_hash,
-                "verification_code_expires_at": expires_at,
-                "verification_attempts": 0,
-                "last_code_sent_at": now,
-                "code_resend_count": new_resend_count,
-            })
-            EmailSender().send_verification_email(email, code=otp_code)
+            await self.otp_svc.send_verification_otp(email, str(db_user.id), db_user=db_user)
         return {"message": "If this email is registered and unverified, a new verification code has been sent"}
 
     async def resend_email_change_verification(self, user_id: str):
@@ -155,23 +127,7 @@ class EmailPasswordAuth:
                 detail="No pending email change"
             )
 
-        self._check_resend_rate_limit(db_user)
-
-        otp_code = Security.generate_otp_code()
-        code_hash = Security.hash_token(otp_code)
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)
-        now = datetime.now(timezone.utc)
-
-        new_resend_count = self._compute_resend_count(db_user, now)
-
-        await self.repo.update_user(user_id, {
-            "email_change_code_hash": code_hash,
-            "email_change_code_expires_at": expires_at,
-            "verification_attempts": 0,
-            "last_code_sent_at": now,
-            "code_resend_count": new_resend_count,
-        })
-        EmailSender().send_email_change_email(pending_email, code=otp_code)
+        await self.otp_svc.send_email_change_otp(pending_email, user_id, db_user=db_user)
         return {"message": "Verification code resent to new address"}
 
     async def refresh_access_token(self, refresh_token: str):
@@ -211,20 +167,3 @@ class EmailPasswordAuth:
         token_hash = Security.hash_token(refresh_token)
         await self.rt_repo.revoke(token_hash)
         return {"message": "User logged out successfully"}
-
-    @staticmethod
-    def _check_resend_rate_limit(db_user):
-        if db_user.last_code_sent_at:
-            one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-            if db_user.last_code_sent_at > one_hour_ago and db_user.code_resend_count >= MAX_RESEND_PER_HOUR:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Too many code requests, please try again later"
-                )
-
-    @staticmethod
-    def _compute_resend_count(db_user, now: datetime) -> int:
-        one_hour_ago = now - timedelta(hours=1)
-        if db_user.last_code_sent_at and db_user.last_code_sent_at > one_hour_ago:
-            return db_user.code_resend_count + 1
-        return 1

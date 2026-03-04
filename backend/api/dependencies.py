@@ -6,6 +6,7 @@ from core.security import Security
 from repositories.auth_repository import AuthRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
 from repositories.career_repository import CareerRepository
+from services.emailing.otp_service import OtpService
 from services.auth.email_password import EmailPasswordAuth
 from services.users.users import UserService
 from services.onboarding.onboarding_service import OnboardingService
@@ -15,11 +16,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 async def get_auth_service(session: AsyncSession = Depends(get_db_session)) -> EmailPasswordAuth:
     auth_repo = AuthRepository(session)
     rt_repo = RefreshTokenRepository(session)
-    return EmailPasswordAuth(auth_repo, rt_repo)
+    otp_svc = OtpService(auth_repo)
+    return EmailPasswordAuth(auth_repo, rt_repo, otp_svc)
 
 async def get_user_service(session: AsyncSession = Depends(get_db_session)) -> UserService:
     repo = AuthRepository(session)
-    return UserService(repo)
+    otp_svc = OtpService(repo)
+    return UserService(repo, otp_svc)
 
 async def get_onboarding_service(session: AsyncSession = Depends(get_db_session)) -> OnboardingService:
     repo = CareerRepository(session)

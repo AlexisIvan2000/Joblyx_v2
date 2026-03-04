@@ -116,6 +116,17 @@ def mock_auth_repo():
     return repo
 
 
+# ─── Mock OtpService ─────────────────────────────────────────────────
+
+@pytest.fixture
+def mock_otp_service():
+    svc = AsyncMock()
+    svc.send_verification_otp.return_value = None
+    svc.send_reset_otp.return_value = None
+    svc.send_email_change_otp.return_value = None
+    return svc
+
+
 # ─── Mock RefreshTokenRepository ────────────────────────────────────
 
 @pytest.fixture
@@ -144,17 +155,12 @@ def mock_career_repo():
     return repo
 
 
-# ─── Auth service with mocked repo + email ───────────────────────────
+# ─── Auth service with mocked deps ───────────────────────────────────
 
 @pytest.fixture
-def auth_service(mock_auth_repo, mock_refresh_token_repo):
-    with patch("services.auth.email_password.EmailSender") as MockEmailSender:
-        MockEmailSender.return_value = MagicMock()
-        from services.auth.email_password import EmailPasswordAuth
-
-        service = EmailPasswordAuth(mock_auth_repo, mock_refresh_token_repo)
-        service._mock_email_sender = MockEmailSender
-        yield service
+def auth_service(mock_auth_repo, mock_refresh_token_repo, mock_otp_service):
+    from services.auth.email_password import EmailPasswordAuth
+    return EmailPasswordAuth(mock_auth_repo, mock_refresh_token_repo, mock_otp_service)
 
 
 # ─── Patch config for security module ─────────────────────────────────
@@ -175,50 +181,47 @@ def _patch_config(monkeypatch):
 # ─── FastAPI TestClient ──────────────────────────────────────────────
 
 @pytest.fixture
-def test_client(mock_auth_repo, mock_refresh_token_repo, fake_user_dict):
+def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_user_dict):
     from fastapi.testclient import TestClient
     from app import app
     from api.dependencies import get_auth_service, get_user_service, get_current_user, get_onboarding_service
     from services.auth.email_password import EmailPasswordAuth
     from services.users.users import UserService
 
-    with patch("services.auth.email_password.EmailSender") as MockEmailSender, \
-         patch("services.users.users.EmailSender") as MockUserEmailSender:
-        MockEmailSender.return_value = MagicMock()
-        MockUserEmailSender.return_value = MagicMock()
-        auth_svc = EmailPasswordAuth(mock_auth_repo, mock_refresh_token_repo)
-        user_svc = UserService(mock_auth_repo)
+    auth_svc = EmailPasswordAuth(mock_auth_repo, mock_refresh_token_repo, mock_otp_service)
+    user_svc = UserService(mock_auth_repo, mock_otp_service)
 
-        from services.onboarding.onboarding_service import OnboardingService
+    from services.onboarding.onboarding_service import OnboardingService
 
-        onboarding_mock_career_repo = AsyncMock()
-        onboarding_mock_career_repo.get_career_profile_by_user_id.return_value = None
-        onboarding_mock_career_repo.create_career_profile.return_value = {"id": "profile-1", "user_id": FAKE_USER_ID}
-        onboarding_mock_career_repo.create_user_skills.return_value = []
-        onboarding_mock_career_repo.create_roadmap.return_value = {"id": "roadmap-1", "user_id": FAKE_USER_ID, "status": "processing"}
+    onboarding_mock_career_repo = AsyncMock()
+    onboarding_mock_career_repo.get_career_profile_by_user_id.return_value = None
+    onboarding_mock_career_repo.create_career_profile.return_value = {"id": "profile-1", "user_id": FAKE_USER_ID}
+    onboarding_mock_career_repo.create_user_skills.return_value = []
+    onboarding_mock_career_repo.create_roadmap.return_value = {"id": "roadmap-1", "user_id": FAKE_USER_ID, "status": "processing"}
 
-        onboarding_svc = OnboardingService(onboarding_mock_career_repo)
+    onboarding_svc = OnboardingService(onboarding_mock_career_repo)
 
-        async def override_auth_service():
-            return auth_svc
+    async def override_auth_service():
+        return auth_svc
 
-        async def override_user_service():
-            return user_svc
+    async def override_user_service():
+        return user_svc
 
-        async def override_current_user():
-            return fake_user_dict
+    async def override_current_user():
+        return fake_user_dict
 
-        async def override_onboarding_service():
-            return onboarding_svc
+    async def override_onboarding_service():
+        return onboarding_svc
 
-        app.dependency_overrides[get_auth_service] = override_auth_service
-        app.dependency_overrides[get_user_service] = override_user_service
-        app.dependency_overrides[get_current_user] = override_current_user
-        app.dependency_overrides[get_onboarding_service] = override_onboarding_service
+    app.dependency_overrides[get_auth_service] = override_auth_service
+    app.dependency_overrides[get_user_service] = override_user_service
+    app.dependency_overrides[get_current_user] = override_current_user
+    app.dependency_overrides[get_onboarding_service] = override_onboarding_service
 
-        client = TestClient(app)
-        client._mock_career_repo = onboarding_mock_career_repo
+    client = TestClient(app)
+    client._mock_career_repo = onboarding_mock_career_repo
+    client._mock_otp_service = mock_otp_service
 
-        yield client
+    yield client
 
-        app.dependency_overrides.clear()
+    app.dependency_overrides.clear()

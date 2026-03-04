@@ -13,8 +13,6 @@ class TestRegisterRoute:
         mock_auth_repo.get_user_by_email.return_value = None
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.hash_password.return_value = "hashed"
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
             resp = test_client.post("/auth/register", json={
                 "first_name": "John",
                 "last_name": "Doe",

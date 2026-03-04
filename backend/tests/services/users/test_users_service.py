@@ -12,12 +12,8 @@ from tests.conftest import FAKE_USER_ID, FAKE_OTP_CODE, FAKE_OTP_HASH, _make_use
 
 
 @pytest.fixture
-def user_service(mock_auth_repo):
-    with patch("services.users.users.EmailSender") as MockEmail:
-        MockEmail.return_value = MagicMock()
-        svc = UserService(mock_auth_repo)
-        svc._mock_email_sender = MockEmail
-        yield svc
+def user_service(mock_auth_repo, mock_otp_service):
+    return UserService(mock_auth_repo, mock_otp_service)
 
 
 # ─── update_profile ──────────────────────────────────────────────────
@@ -64,22 +60,18 @@ class TestChangePassword:
 
 class TestForgotPassword:
     @pytest.mark.asyncio
-    async def test_sends_if_user_exists(self, user_service, mock_auth_repo, fake_user_dict):
+    async def test_sends_if_user_exists(self, user_service, mock_auth_repo, mock_otp_service, fake_user_dict):
         mock_auth_repo.get_user_by_email.return_value = fake_user_dict
-        with patch("services.users.users.Security") as MockSec:
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
-            result = await user_service.forgot_password("john@example.com")
+        result = await user_service.forgot_password("john@example.com")
         assert "message" in result
-        mock_auth_repo.save_reset_code.assert_called_once()
-        user_service._mock_email_sender.return_value.send_reset_password_email.assert_called_once()
+        mock_otp_service.send_reset_otp.assert_called_once_with("john@example.com")
 
     @pytest.mark.asyncio
-    async def test_no_send_if_not_found(self, user_service, mock_auth_repo):
+    async def test_no_send_if_not_found(self, user_service, mock_auth_repo, mock_otp_service):
         mock_auth_repo.get_user_by_email.return_value = None
         result = await user_service.forgot_password("nope@example.com")
         assert "message" in result
-        mock_auth_repo.save_reset_code.assert_not_called()
+        mock_otp_service.send_reset_otp.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_generic_message_always(self, user_service, mock_auth_repo):
@@ -149,11 +141,12 @@ class TestConfirmEmailChange:
             MockSec.hash_token.return_value = FAKE_OTP_HASH
             result = await user_service.confirm_email_change(FAKE_USER_ID, FAKE_OTP_CODE)
         assert "changed" in result["message"].lower()
-        mock_auth_repo.update_user.assert_called_once()
-        call_data = mock_auth_repo.update_user.call_args[0][1]
-        assert call_data["email"] == "newemail@example.com"
-        assert call_data["pending_email"] is None
-        assert call_data["email_change_code_hash"] is None
+        mock_auth_repo.update_user.assert_called()
+        # Find the confirm call (not the pending_email set)
+        last_call_data = mock_auth_repo.update_user.call_args[0][1]
+        assert last_call_data["email"] == "newemail@example.com"
+        assert last_call_data["pending_email"] is None
+        assert last_call_data["email_change_code_hash"] is None
 
     @pytest.mark.asyncio
     async def test_no_pending_email_raises_400(self, user_service, mock_auth_repo, fake_user_dict):
@@ -204,16 +197,14 @@ class TestConfirmEmailChange:
 
 class TestRequestEmailChange:
     @pytest.mark.asyncio
-    async def test_success(self, user_service, mock_auth_repo, fake_user_dict):
+    async def test_success(self, user_service, mock_auth_repo, mock_otp_service, fake_user_dict):
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
         mock_auth_repo.get_user_by_email.return_value = None
         with patch("services.users.users.Security") as MockSec:
             MockSec.verify_password.return_value = True
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
             result = await user_service.request_email_change(FAKE_USER_ID, "new@example.com", "Secure1!x")
         assert "verification" in result["message"].lower() or "sent" in result["message"].lower()
-        user_service._mock_email_sender.return_value.send_email_change_email.assert_called_once()
+        mock_otp_service.send_email_change_otp.assert_called_once_with("new@example.com", FAKE_USER_ID)
 
     @pytest.mark.asyncio
     async def test_wrong_password_raises_401(self, user_service, mock_auth_repo, fake_user_dict):

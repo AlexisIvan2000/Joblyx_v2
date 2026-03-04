@@ -14,11 +14,9 @@ from tests.conftest import FAKE_USER_ID, FAKE_OTP_CODE, FAKE_OTP_HASH, _make_use
 
 class TestRegisterUser:
     @pytest.mark.asyncio
-    async def test_success_returns_message(self, auth_service, mock_auth_repo):
+    async def test_success_returns_message(self, auth_service, mock_auth_repo, mock_otp_service):
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.hash_password.return_value = "hashed"
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
 
             user = UserCreate(
                 first_name="John",
@@ -30,6 +28,7 @@ class TestRegisterUser:
 
         assert "message" in result
         assert "access_token" not in result
+        mock_otp_service.send_verification_otp.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_email_already_taken_raises_400(self, auth_service, mock_auth_repo, fake_user_dict):
@@ -48,8 +47,6 @@ class TestRegisterUser:
     async def test_calls_hash_password(self, auth_service, mock_auth_repo):
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.hash_password.return_value = "hashed"
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
 
             user = UserCreate(
                 first_name="A", last_name="B",
@@ -63,8 +60,6 @@ class TestRegisterUser:
     async def test_calls_create_user(self, auth_service, mock_auth_repo):
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.hash_password.return_value = "hashed"
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
 
             user = UserCreate(
                 first_name="A", last_name="B",
@@ -78,11 +73,9 @@ class TestRegisterUser:
         assert call_data["password_hash"] == "hashed"
 
     @pytest.mark.asyncio
-    async def test_sends_verification_email(self, auth_service, mock_auth_repo):
+    async def test_sends_verification_otp(self, auth_service, mock_auth_repo, mock_otp_service):
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.hash_password.return_value = "hashed"
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
 
             user = UserCreate(
                 first_name="A", last_name="B",
@@ -90,7 +83,7 @@ class TestRegisterUser:
             )
             await auth_service.register_user(user)
 
-        auth_service._mock_email_sender.return_value.send_verification_email.assert_called_once()
+        mock_otp_service.send_verification_otp.assert_called_once_with("a@b.com", FAKE_USER_ID)
 
 
 # ─── login_user ──────────────────────────────────────────────────────
@@ -215,30 +208,27 @@ class TestVerifyEmail:
 
 class TestResendVerificationEmail:
     @pytest.mark.asyncio
-    async def test_sends_if_unverified(self, auth_service, mock_auth_repo, fake_unverified_user_dict):
+    async def test_sends_if_unverified(self, auth_service, mock_auth_repo, mock_otp_service, fake_unverified_user_dict):
         mock_auth_repo.get_user_by_email.return_value = fake_unverified_user_dict
-        with patch("services.auth.email_password.Security") as MockSec:
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
-            result = await auth_service.resend_verification_email("john@example.com")
+        result = await auth_service.resend_verification_email("john@example.com")
         assert "message" in result
-        auth_service._mock_email_sender.return_value.send_verification_email.assert_called_once()
+        mock_otp_service.send_verification_otp.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_no_send_if_verified(self, auth_service, mock_auth_repo, fake_user_dict):
+    async def test_no_send_if_verified(self, auth_service, mock_auth_repo, mock_otp_service, fake_user_dict):
         mock_auth_repo.get_user_by_email.return_value = fake_user_dict
         result = await auth_service.resend_verification_email("john@example.com")
         assert "message" in result
-        auth_service._mock_email_sender.return_value.send_verification_email.assert_not_called()
+        mock_otp_service.send_verification_otp.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_generic_message_if_not_found(self, auth_service, mock_auth_repo):
+    async def test_generic_message_if_not_found(self, auth_service, mock_auth_repo, mock_otp_service):
         mock_auth_repo.get_user_by_email.return_value = None
         result = await auth_service.resend_verification_email("nope@example.com")
         assert "message" in result
 
     @pytest.mark.asyncio
-    async def test_rate_limit_raises_429(self, auth_service, mock_auth_repo):
+    async def test_rate_limit_raises_429(self, auth_service, mock_auth_repo, mock_otp_service):
         rate_limited = _make_user_obj(
             is_verified=False,
             verification_code_hash=FAKE_OTP_HASH,
@@ -247,6 +237,9 @@ class TestResendVerificationEmail:
             code_resend_count=5,
         )
         mock_auth_repo.get_user_by_email.return_value = rate_limited
+        mock_otp_service.send_verification_otp.side_effect = HTTPException(
+            status_code=429, detail="Too many code requests, please try again later"
+        )
         with pytest.raises(HTTPException) as exc_info:
             await auth_service.resend_verification_email("john@example.com")
         assert exc_info.value.status_code == 429
@@ -256,14 +249,11 @@ class TestResendVerificationEmail:
 
 class TestResendEmailChangeVerification:
     @pytest.mark.asyncio
-    async def test_success_if_pending_email(self, auth_service, mock_auth_repo, fake_user_with_pending_email):
+    async def test_success_if_pending_email(self, auth_service, mock_auth_repo, mock_otp_service, fake_user_with_pending_email):
         mock_auth_repo.get_user_by_id.return_value = fake_user_with_pending_email
-        with patch("services.auth.email_password.Security") as MockSec:
-            MockSec.generate_otp_code.return_value = "654321"
-            MockSec.hash_token.return_value = "hashed-code"
-            result = await auth_service.resend_email_change_verification(FAKE_USER_ID)
+        result = await auth_service.resend_email_change_verification(FAKE_USER_ID)
         assert "resent" in result["message"].lower()
-        auth_service._mock_email_sender.return_value.send_email_change_email.assert_called_once()
+        mock_otp_service.send_email_change_otp.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_raises_400_if_no_pending(self, auth_service, mock_auth_repo, fake_user_dict):
