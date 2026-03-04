@@ -48,6 +48,49 @@
 
     },
 
+    "verify_email": {
+        "title": "Verify your email",
+        "subtitle": "We sent a 6-digit code to",
+        "verify": "Verify",
+        "no_code": "Didn't receive a code? ",
+        "resend": "Resend",
+        "sending": "Sending...",
+        "code_resent": "A new code has been sent to your email",
+        "close": "Close"
+    },
+
+    "auth_error": {
+        "email_already_registered": "This email is already registered",
+        "invalid_credentials": "Invalid email or password",
+        "email_not_verified": "Please verify your email before logging in",
+        "invalid_verification_request": "Invalid verification request",
+        "invalid_code": "Invalid verification code",
+        "code_expired": "Code expired. Please request a new one",
+        "too_many_attempts": "Too many attempts, please request a new code",
+        "rate_limited": "Too many requests. Please try again later",
+        "invalid_or_expired_code": "Invalid or expired code",
+        "no_pending_email_change": "No pending email change",
+        "no_email_change_code": "No email change code found",
+        "email_already_in_use": "This email is already in use",
+        "wrong_current_password": "Current password is incorrect",
+        "invalid_password": "Invalid password",
+        "session_expired": "Your session has expired. Please log in again",
+        "user_not_found": "User not found",
+        "no_fields_to_update": "No fields to update",
+        "bad_request": "Something went wrong. Please try again",
+        "unauthorized": "Please log in to continue",
+        "forbidden": "You don't have permission to do this",
+        "server_error": "Server error. Please try again later",
+        "connection_timeout": "Connection timeout. Please check your internet",
+        "connection_error": "Cannot connect to server. Please try again",
+        "unknown": "An unexpected error occurred"
+    },
+
+    "dashboard": {
+        "title": "Dashboard",
+        "welcome": "Welcome to Joblyx!"
+    },
+
     "loading": {
         "loading": "Loading your workspace..."
     }

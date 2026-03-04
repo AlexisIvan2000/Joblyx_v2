@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:frontend/core/screens/first_page.dart';
+import 'package:frontend/core/router/app_router.dart';
 import 'package:frontend/core/theme/theme_color.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
@@ -34,13 +34,13 @@ class MainApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp(
+        return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'Joblyx',
           theme: themeColor.lightTheme,
           darkTheme: themeColor.darkTheme,
           themeMode: ThemeMode.system,
-          home: FirstPage(),
+          routerConfig: appRouter,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [
             AppLocalizationsDelegate(),

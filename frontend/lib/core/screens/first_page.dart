@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:frontend/core/l10n/app_localizations.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/core/screens/loading_transition.dart';
-import 'package:frontend/features/authentication/presentation/screens/login_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FirstPage extends StatelessWidget {
   const FirstPage({super.key});
@@ -49,11 +48,7 @@ class FirstPage extends StatelessWidget {
                 width: double.infinity,
                 height: 52.h,
                 child: FilledButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
-                  }, 
+                  onPressed: () => context.push('/login'),
                   label: Text(
                     t.t("first_page.continue_with_email"),
                     style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),
@@ -70,11 +65,7 @@ class FirstPage extends StatelessWidget {
                 width: double.infinity,
                 height: 52.h,
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const LoadingTransition()),
-                    );
-                  }, 
+                  onPressed: () => context.push('/loading'),
                   label: Text(
                     t.t("first_page.continue_with_linkedin"),
                     style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),

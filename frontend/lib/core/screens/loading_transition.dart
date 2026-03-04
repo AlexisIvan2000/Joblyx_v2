@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:frontend/core/l10n/app_localizations.dart';
 
 class LoadingTransition extends StatefulWidget {
   const LoadingTransition({super.key});
@@ -10,7 +11,16 @@ class LoadingTransition extends StatefulWidget {
   State<LoadingTransition> createState() => _LoadingTransitionState();
 }
 
-class _LoadingTransitionState  extends State<LoadingTransition>{
+class _LoadingTransitionState extends State<LoadingTransition> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      context.go('/dashboard');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

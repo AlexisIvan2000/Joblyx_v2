@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/core/widgets/app_snackbar.dart';
+import 'package:frontend/features/authentication/data/auth_service.dart';
+import 'package:frontend/features/authentication/presentation/widgets/verify_email_dialog.dart';
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
@@ -16,6 +20,7 @@ class _RegisterFormState extends State<RegisterForm> {
     r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''',
   );
 
+  final _authService = AuthService();
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
@@ -23,6 +28,7 @@ class _RegisterFormState extends State<RegisterForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -43,6 +49,32 @@ class _RegisterFormState extends State<RegisterForm> {
     }
     TextInput.finishAutofillContext();
     FocusScope.of(context).unfocus();
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.register(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      if (!mounted) return;
+      final verified = await showVerifyEmailDialog(
+        context,
+        _emailController.text.trim(),
+      );
+      if (!mounted) return;
+      if (verified) {
+        context.go('/loading');
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      final t = AppLocalizations.of(context);
+      AppSnackbar.error(context, t.t(e.key));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   InputDecoration _inputDecoration({
@@ -198,7 +230,7 @@ class _RegisterFormState extends State<RegisterForm> {
               width: double.infinity,
               height: 54.h,
               child: FilledButton(
-                onPressed: _submit,
+                onPressed: _isLoading ? null : _submit,
                 style: FilledButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16.r),
@@ -208,7 +240,16 @@ class _RegisterFormState extends State<RegisterForm> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: Text(t.t('register.register')),
+                child: _isLoading
+                    ? SizedBox(
+                        width: 22.sp,
+                        height: 22.sp,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: cs.onPrimary,
+                        ),
+                      )
+                    : Text(t.t('register.register')),
               ),
             ),
             SizedBox(height: 20.h),
@@ -223,7 +264,7 @@ class _RegisterFormState extends State<RegisterForm> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: () => context.pop(),
                   child: Text(
                     t.t('register.login'),
                     style: theme.textTheme.bodyMedium?.copyWith(

@@ -1,0 +1,131 @@
+import 'package:dio/dio.dart';
+import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/features/authentication/data/auth_storage.dart';
+import 'package:frontend/features/authentication/domain/auth_failure.dart';
+
+class AuthService {
+  final Dio _dio = ApiClient().dio;
+  final AuthStorage _storage = AuthStorage();
+
+  /// Register a new user. Returns the success message.
+  /// Throws [AuthException] on failure.
+  Future<String> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _dio.post('/auth/register', data: {
+        'first_name': firstName,
+        'last_name': lastName,
+        'email': email,
+        'password': password,
+      });
+      return response.data['message'] as String;
+    } on DioException catch (e) {
+      throw AuthException.fromDioError(e);
+    }
+  }
+
+  /// Verify email with OTP code. Saves tokens on success.
+  Future<void> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final response = await _dio.post('/auth/verify-email', data: {
+        'email': email,
+        'code': code,
+      });
+      await _storage.saveTokens(
+        accessToken: response.data['access_token'],
+        refreshToken: response.data['refresh_token'],
+      );
+    } on DioException catch (e) {
+      throw AuthException.fromDioError(e);
+    }
+  }
+
+  /// Login with email and password. Saves tokens on success.
+  Future<void> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _dio.post('/auth/login', data: {
+        'email': email,
+        'password': password,
+      });
+      await _storage.saveTokens(
+        accessToken: response.data['access_token'],
+        refreshToken: response.data['refresh_token'],
+      );
+    } on DioException catch (e) {
+      throw AuthException.fromDioError(e);
+    }
+  }
+
+  /// Resend verification code.
+  Future<String> resendVerification({required String email}) async {
+    try {
+      final response = await _dio.post('/auth/resend-verification', data: {
+        'email': email,
+      });
+      return response.data['message'] as String;
+    } on DioException catch (e) {
+      throw AuthException.fromDioError(e);
+    }
+  }
+
+  /// Logout the current user.
+  Future<void> logout() async {
+    final refreshToken = await _storage.getRefreshToken();
+    if (refreshToken != null) {
+      try {
+        await _dio.post('/auth/logout', data: {
+          'refresh_token': refreshToken,
+        });
+      } catch (_) {}
+    }
+    await _storage.clearTokens();
+  }
+}
+
+class AuthException implements Exception {
+  /// i18n key resolved via [AuthFailure].
+  final String key;
+  final int? statusCode;
+
+  AuthException(this.key, {this.statusCode});
+
+  factory AuthException.fromDioError(DioException e) {
+    final data = e.response?.data;
+    final statusCode = e.response?.statusCode;
+
+    if (data is Map && data.containsKey('detail')) {
+      final detail = data['detail'] as String;
+      return AuthException(
+        AuthFailure.resolve(detail, statusCode: statusCode),
+        statusCode: statusCode,
+      );
+    }
+
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return AuthException('auth_error.connection_timeout', statusCode: statusCode);
+    }
+
+    if (e.type == DioExceptionType.connectionError) {
+      return AuthException('auth_error.connection_error', statusCode: statusCode);
+    }
+
+    return AuthException(
+      AuthFailure.resolve(null, statusCode: statusCode),
+      statusCode: statusCode,
+    );
+  }
+
+  @override
+  String toString() => key;
+}

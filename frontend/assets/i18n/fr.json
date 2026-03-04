@@ -49,6 +49,49 @@
 
     },
 
+    "verify_email": {
+        "title": "Vérifiez votre email",
+        "subtitle": "Nous avons envoyé un code à 6 chiffres à",
+        "verify": "Vérifier",
+        "no_code": "Vous n'avez pas reçu de code ? ",
+        "resend": "Renvoyer",
+        "sending": "Envoi...",
+        "code_resent": "Un nouveau code a été envoyé à votre email",
+        "close": "Fermer"
+    },
+
+    "auth_error": {
+        "email_already_registered": "Cet email est déjà enregistré",
+        "invalid_credentials": "Email ou mot de passe invalide",
+        "email_not_verified": "Veuillez vérifier votre email avant de vous connecter",
+        "invalid_verification_request": "Demande de vérification invalide",
+        "invalid_code": "Code de vérification invalide",
+        "code_expired": "Code expiré. Veuillez en demander un nouveau",
+        "too_many_attempts": "Trop de tentatives, veuillez demander un nouveau code",
+        "rate_limited": "Trop de demandes. Veuillez réessayer plus tard",
+        "invalid_or_expired_code": "Code invalide ou expiré",
+        "no_pending_email_change": "Aucun changement d'email en attente",
+        "no_email_change_code": "Aucun code de changement d'email trouvé",
+        "email_already_in_use": "Cet email est déjà utilisé",
+        "wrong_current_password": "Le mot de passe actuel est incorrect",
+        "invalid_password": "Mot de passe invalide",
+        "session_expired": "Votre session a expiré. Veuillez vous reconnecter",
+        "user_not_found": "Utilisateur introuvable",
+        "no_fields_to_update": "Aucun champ à mettre à jour",
+        "bad_request": "Une erreur est survenue. Veuillez réessayer",
+        "unauthorized": "Veuillez vous connecter pour continuer",
+        "forbidden": "Vous n'avez pas la permission d'effectuer cette action",
+        "server_error": "Erreur serveur. Veuillez réessayer plus tard",
+        "connection_timeout": "Connexion expirée. Vérifiez votre connexion internet",
+        "connection_error": "Impossible de se connecter au serveur. Veuillez réessayer",
+        "unknown": "Une erreur inattendue s'est produite"
+    },
+
+    "dashboard": {
+        "title": "Tableau de bord",
+        "welcome": "Bienvenue sur Joblyx !"
+    },
+
     "loading": {
         "loading": "Chargement de votre espace de travail..."
     }

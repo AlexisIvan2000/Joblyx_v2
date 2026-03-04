@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
-import 'package:frontend/features/authentication/presentation/screens/register_screen.dart';
+import 'package:frontend/core/widgets/app_snackbar.dart';
+import 'package:frontend/features/authentication/data/auth_service.dart';
+import 'package:frontend/features/authentication/presentation/widgets/verify_email_dialog.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -15,11 +18,13 @@ class _LoginFormState extends State<LoginForm> {
   static final _emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
   static final _passwordRegex = RegExp(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''');
 
+  final _authService = AuthService();
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -38,6 +43,36 @@ class _LoginFormState extends State<LoginForm> {
     }
     TextInput.finishAutofillContext();
     FocusScope.of(context).unfocus();
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      if (!mounted) return;
+      context.go('/loading');
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      if (e.key == 'auth_error.email_not_verified') {
+        final email = _emailController.text.trim();
+        try {
+          await _authService.resendVerification(email: email);
+        } on AuthException catch (_) {}
+        if (!mounted) return;
+        final verified = await showVerifyEmailDialog(context, email);
+        if (!mounted) return;
+        if (verified) {
+          context.go('/loading');
+        }
+      } else {
+        final t = AppLocalizations.of(context);
+        AppSnackbar.error(context, t.t(e.key));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   InputDecoration _inputDecoration({
@@ -167,7 +202,7 @@ class _LoginFormState extends State<LoginForm> {
                 width: double.infinity,
                 height: 54.h,
                 child: FilledButton(
-                  onPressed: _submit,
+                  onPressed: _isLoading ? null : _submit,
                   style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16.r),
@@ -177,7 +212,16 @@ class _LoginFormState extends State<LoginForm> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: Text(t.t('login.login')),
+                  child: _isLoading
+                      ? SizedBox(
+                          width: 22.sp,
+                          height: 22.sp,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: cs.onPrimary,
+                          ),
+                        )
+                      : Text(t.t('login.login')),
                 ),
               ),
             ),
@@ -193,11 +237,7 @@ class _LoginFormState extends State<LoginForm> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                    );
-                  },
+                  onTap: () => context.push('/register'),
                   child: Text(
                     t.t('login.register'),
                     style: theme.textTheme.bodyMedium?.copyWith(

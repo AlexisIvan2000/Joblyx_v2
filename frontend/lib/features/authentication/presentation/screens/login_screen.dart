@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/features/authentication/presentation/widgets/login_form.dart';
 
@@ -26,7 +26,7 @@ class LoginScreen extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => context.pop(),
                   icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20.sp),
                   style: IconButton.styleFrom(
                     backgroundColor: cs.surfaceContainerHighest.withValues(alpha: 0.5),
