@@ -139,19 +139,41 @@ def mock_refresh_token_repo():
     return repo
 
 
-# ─── Mock CareerRepository ───────────────────────────────────────────
-
-FAKE_ROADMAP_ID = "22222222-2222-2222-2222-222222222222"
+# ─── Mock OnboardingRepository ──────────────────────────────────────
 
 @pytest.fixture
-def mock_career_repo():
+def mock_onboarding_repo():
     repo = AsyncMock()
-    repo.get_career_profile_by_user_id.return_value = None
-    repo.create_career_profile.return_value = {"id": "profile-1", "user_id": FAKE_USER_ID}
-    repo.create_user_skills.return_value = []
-    repo.create_roadmap.return_value = {"id": FAKE_ROADMAP_ID, "user_id": FAKE_USER_ID, "status": "processing"}
-    repo.get_roadmap_by_user_id.return_value = None
-    repo.get_user_skills_by_user_id.return_value = []
+    repo.has_profile.return_value = False
+    repo.create_career.return_value = MagicMock(
+        user_id=FAKE_USER_ID,
+        level="junior",
+        years_experience=2,
+        target_jobs=["Developer"],
+        city="Montreal",
+        province="Quebec",
+        language="fr",
+        previous_field=None,
+        onboarding_completed=True,
+    )
+    repo.create_user_skills.return_value = [
+        MagicMock(skill_name="Python", category="Programming", proficiency="advanced"),
+    ]
+    repo.get_career_by_user_id.return_value = MagicMock(
+        level="junior",
+        years_experience=2,
+        target_jobs=["Developer"],
+        city="Montreal",
+        province="Quebec",
+        language="fr",
+        previous_field=None,
+        onboarding_completed=True,
+    )
+    repo.get_skills_by_user_id.return_value = [
+        MagicMock(skill_name="Python", category="Programming", proficiency="advanced"),
+    ]
+    repo.update_career.return_value = MagicMock()
+    repo.delete_skills_by_user_id.return_value = None
     return repo
 
 
@@ -193,13 +215,28 @@ def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_
 
     from services.onboarding.onboarding_service import OnboardingService
 
-    onboarding_mock_career_repo = AsyncMock()
-    onboarding_mock_career_repo.get_career_profile_by_user_id.return_value = None
-    onboarding_mock_career_repo.create_career_profile.return_value = {"id": "profile-1", "user_id": FAKE_USER_ID}
-    onboarding_mock_career_repo.create_user_skills.return_value = []
-    onboarding_mock_career_repo.create_roadmap.return_value = {"id": "roadmap-1", "user_id": FAKE_USER_ID, "status": "processing"}
+    onboarding_mock_repo = AsyncMock()
+    onboarding_mock_repo.has_profile.return_value = False
+    onboarding_mock_repo.create_career.return_value = MagicMock(
+        user_id=FAKE_USER_ID, level="junior", years_experience=2,
+        target_jobs=["Developer"], city="Montreal", province="Quebec",
+        language="fr", previous_field=None, onboarding_completed=True,
+    )
+    onboarding_mock_repo.create_user_skills.return_value = [
+        MagicMock(skill_name="Python", category="Programming", proficiency="advanced"),
+    ]
+    onboarding_mock_repo.get_career_by_user_id.return_value = MagicMock(
+        level="junior", years_experience=2, target_jobs=["Developer"],
+        city="Montreal", province="Quebec", language="fr",
+        previous_field=None, onboarding_completed=True,
+    )
+    onboarding_mock_repo.get_skills_by_user_id.return_value = [
+        MagicMock(skill_name="Python", category="Programming", proficiency="advanced"),
+    ]
+    onboarding_mock_repo.update_career.return_value = MagicMock()
+    onboarding_mock_repo.delete_skills_by_user_id.return_value = None
 
-    onboarding_svc = OnboardingService(onboarding_mock_career_repo)
+    onboarding_svc = OnboardingService(onboarding_mock_repo)
 
     async def override_auth_service():
         return auth_svc
@@ -219,7 +256,7 @@ def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_
     app.dependency_overrides[get_onboarding_service] = override_onboarding_service
 
     client = TestClient(app)
-    client._mock_career_repo = onboarding_mock_career_repo
+    client._mock_onboarding_repo = onboarding_mock_repo
     client._mock_otp_service = mock_otp_service
 
     yield client

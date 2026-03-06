@@ -85,6 +85,7 @@ class SkillLevel(str, Enum):
 class UserLevel(str, Enum):
     junior = "junior"
     mid = "mid"
+    senior = "senior"
     reconversion = "reconversion"
 
 class Language(str, Enum):
@@ -93,10 +94,10 @@ class Language(str, Enum):
     bilingual = "bilingual"
 
 
-class UserSkillCreate(BaseModel):
+class SkillItem(BaseModel):
     skill_name: str
     category: str
-    level: SkillLevel
+    proficiency: SkillLevel
 
     @field_validator("skill_name")
     @classmethod
@@ -122,7 +123,8 @@ class OnboardingRequest(BaseModel):
     city: str
     province: str
     language: Language
-    skills: List[UserSkillCreate]
+    previous_field: str | None = None
+    skills: List[SkillItem]
 
     @field_validator("years_experience")
     @classmethod
@@ -151,5 +153,16 @@ class OnboardingRequest(BaseModel):
 
 
 class OnboardingResponse(BaseModel):
-    message: str
-    roadmap_id: str
+    level: UserLevel
+    years_experience: int
+    target_jobs: List[str]
+    city: str
+    province: str
+    language: Language
+    previous_field: str | None = None
+    skills: List[SkillItem]
+    onboarding_completed: bool
+
+
+class OnboardingStatus(BaseModel):
+    has_profile: bool

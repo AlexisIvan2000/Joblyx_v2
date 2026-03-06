@@ -14,9 +14,10 @@ from models.schemas import (
     ResetPassword,
     VerifyEmail,
     ResendVerification,
-    UserSkillCreate,
+    SkillItem,
     OnboardingRequest,
     OnboardingResponse,
+    OnboardingStatus,
     SkillLevel,
     UserLevel,
     Language,
@@ -140,21 +141,21 @@ class TestSimpleSchemas:
             ForgotPassword(email="not-email")
 
 
-# ─── UserSkillCreate ────────────────────────────────────────────────
+# ─── SkillItem ─────────────────────────────────────────────────────
 
-class TestUserSkillCreate:
+class TestSkillItem:
     def test_valid(self):
-        s = UserSkillCreate(skill_name="Python", category="Programming", level="advanced")
+        s = SkillItem(skill_name="Python", category="Programming", proficiency="advanced")
         assert s.skill_name == "Python"
-        assert s.level == SkillLevel.advanced
+        assert s.proficiency == SkillLevel.advanced
 
     def test_empty_skill_name(self):
         with pytest.raises(ValidationError, match="skill_name must not be empty"):
-            UserSkillCreate(skill_name="  ", category="Programming", level="advanced")
+            SkillItem(skill_name="  ", category="Programming", proficiency="advanced")
 
-    def test_invalid_level(self):
+    def test_invalid_proficiency(self):
         with pytest.raises(ValidationError):
-            UserSkillCreate(skill_name="Python", category="Programming", level="expert")
+            SkillItem(skill_name="Python", category="Programming", proficiency="expert")
 
 
 # ─── OnboardingRequest ──────────────────────────────────────────────
@@ -167,7 +168,7 @@ def _valid_onboarding(**overrides):
         city="Montreal",
         province="Quebec",
         language="fr",
-        skills=[{"skill_name": "Python", "category": "Programming", "level": "advanced"}],
+        skills=[{"skill_name": "Python", "category": "Programming", "proficiency": "advanced"}],
     )
     defaults.update(overrides)
     return OnboardingRequest(**defaults)
@@ -197,7 +198,7 @@ class TestOnboardingRequest:
 
     def test_invalid_level(self):
         with pytest.raises(ValidationError):
-            _valid_onboarding(level="senior")
+            _valid_onboarding(level="expert")
 
     def test_strip_target_jobs(self):
         req = _valid_onboarding(target_jobs=["  Dev  ", " PM "])

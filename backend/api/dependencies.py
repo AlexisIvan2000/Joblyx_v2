@@ -5,7 +5,7 @@ from core.database import get_db_session
 from core.security import Security
 from repositories.auth_repository import AuthRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
-from repositories.career_repository import CareerRepository
+from repositories.onboarding_repository import OnboardingRepository
 from services.emailing.otp_service import OtpService
 from services.auth.email_password import EmailPasswordAuth
 from services.users.users import UserService
@@ -25,7 +25,7 @@ async def get_user_service(session: AsyncSession = Depends(get_db_session)) -> U
     return UserService(repo, otp_svc)
 
 async def get_onboarding_service(session: AsyncSession = Depends(get_db_session)) -> OnboardingService:
-    repo = CareerRepository(session)
+    repo = OnboardingRepository(session)
     return OnboardingService(repo)
 
 async def get_current_user(
