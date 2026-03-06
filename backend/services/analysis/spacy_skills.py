@@ -20,7 +20,7 @@ class SpacySkillsExtractor:
     
     # Charge sensitive_skills.json
     def _load_sensitive_skills(self) -> dict:
-        sensitive_path = Path(__file__).parent.parent.parent / "data" / "sensitive_skills.json"
+        sensitive_path = Path(__file__).parent.parent.parent / "models" / "data" / "sensitive_skills.json"
         with open(sensitive_path, "r", encoding="utf-8") as f:
             return json.load(f)
     
@@ -33,7 +33,7 @@ class SpacySkillsExtractor:
 
     # Charge skills.json et construit les mappings de variantes
     def _load_skills_reference(self) -> tuple[dict, list, dict]:
-        skills_path = Path(__file__).parent.parent.parent / "data" / "skills.json"
+        skills_path = Path(__file__).parent.parent.parent / "models" / "data" / "skills.json"
         with open(skills_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
@@ -171,6 +171,32 @@ class SpacySkillsExtractor:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         return [r for r in results if isinstance(r, list)]
+
+    # Extrait les skills de N descriptions et les classe par fréquence d'apparition
+    async def extract_and_rank(self, descriptions: list[str]) -> list[dict]:
+        from collections import Counter
+
+        total = len(descriptions)
+        if total == 0:
+            return []
+
+        # Compte chaque skill une fois par description (set pour dédupliquer par offre)
+        skill_counter: Counter[str] = Counter()
+        for desc in descriptions:
+            skills = await self.extract_skills(desc)
+            skill_counter.update(set(skills))
+
+        # Retourne les skills triés par fréquence décroissante
+        ranked = [
+            {
+                "name": name,
+                "category": self._get_category(name),
+                "count": count,
+                "percentage": round((count / total) * 100),
+            }
+            for name, count in skill_counter.most_common()
+        ]
+        return ranked
 
 
 spacy_extractor = SpacySkillsExtractor()
