@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dio/dio.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
@@ -16,11 +18,17 @@ class AuthService {
     required String password,
   }) async {
     try {
+      final color = Random().nextInt(0xFFFFFF).toRadixString(16).padLeft(6, '0');
+      final name = Uri.encodeComponent('$firstName $lastName');
+      final avatarUrl =
+          'https://ui-avatars.com/api/?name=$name&background=$color&color=fff&size=128&bold=true';
+
       final response = await _dio.post('/auth/register', data: {
         'first_name': firstName,
         'last_name': lastName,
         'email': email,
         'password': password,
+        'avatar_url': avatarUrl,
       });
       return response.data['message'] as String;
     } on DioException catch (e) {
@@ -125,6 +133,7 @@ class AuthException implements Exception {
       statusCode: statusCode,
     );
   }
+  
 
   @override
   String toString() => key;

@@ -24,12 +24,16 @@ class EmailPasswordAuth:
 
         hashed_password = Security.hash_password(user.password)
 
-        new_user = await self.repo.create_user({
+        user_data = {
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
             "password_hash": hashed_password,
-        })
+        }
+        if user.avatar_url:
+            user_data["avatar_url"] = user.avatar_url
+
+        new_user = await self.repo.create_user(user_data)
 
         await self.otp_svc.send_verification_otp(user.email, str(new_user.id))
 

@@ -26,3 +26,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(onboarding_router)
+
+@app.route("/health", methods=["GET"])
+async def health_check():
+    return {"status": "ok"}

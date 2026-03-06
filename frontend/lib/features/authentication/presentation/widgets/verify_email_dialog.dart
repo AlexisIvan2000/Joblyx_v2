@@ -143,51 +143,51 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
               SizedBox(height: 24.h),
               // OTP fields
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(6, (i) {
-                  return Container(
-                    width: 40.w,
-                    margin: EdgeInsets.symmetric(horizontal: 3.w),
-                    child: TextFormField(
-                      controller: _controllers[i],
-                      focusNode: _focusNodes[i],
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      maxLength: 1,
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        filled: true,
-                        fillColor:
-                            cs.surfaceContainerHighest.withValues(alpha: 0.4),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.r),
-                          borderSide: BorderSide.none,
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 3.w),
+                      child: TextFormField(
+                        controller: _controllers[i],
+                        focusNode: _focusNodes[i],
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        maxLength: 1,
+                        style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.bold,
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.r),
-                          borderSide:
-                              BorderSide(color: cs.primary, width: 1.5),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          filled: true,
+                          fillColor:
+                              cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                            borderSide:
+                                BorderSide(color: cs.primary, width: 1.5),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 12.h),
                         ),
-                        contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (value) {
+                          if (value.isNotEmpty && i < 5) {
+                            _focusNodes[i + 1].requestFocus();
+                          }
+                          if (value.isEmpty && i > 0) {
+                            _focusNodes[i - 1].requestFocus();
+                          }
+                          if (_code.length == 6) {
+                            _verify();
+                          }
+                        },
                       ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      onChanged: (value) {
-                        if (value.isNotEmpty && i < 5) {
-                          _focusNodes[i + 1].requestFocus();
-                        }
-                        if (value.isEmpty && i > 0) {
-                          _focusNodes[i - 1].requestFocus();
-                        }
-                        if (_code.length == 6) {
-                          _verify();
-                        }
-                      },
                     ),
                   );
                 }),
@@ -244,16 +244,6 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                     ),
                   ),
                 ],
-              ),
-              SizedBox(height: 8.h),
-              TextButton(
-                onPressed: _isVerifying
-                    ? null
-                    : () => Navigator.of(context).pop(false),
-                child: Text(
-                  t.t('verify_email.close'),
-                  style: TextStyle(color: cs.onSurfaceVariant),
-                ),
               ),
             ],
           ),
