@@ -1,13 +1,18 @@
+import os
 import httpx
-from core.config import RAPIDAPI_KEY
 
 class JSearchService:
     BASE_URL = "https://jsearch.p.rapidapi.com/search"
-    
+
     def __init__(self):
-        self.headers = {
-            "X-RapidAPI-Key": RAPIDAPI_KEY,
-            "X-RapidAPI-Host": "jsearch.p.rapidapi.com"
+        # Lecture directe depuis os.environ pour toujours avoir la clé à jour
+        self.api_key = os.getenv("RAPIDAPI_KEY")
+
+    @property
+    def headers(self):
+        return {
+            "X-RapidAPI-Key": self.api_key or os.getenv("RAPIDAPI_KEY", ""),
+            "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
         }
 
     async def search_jobs(self, query: str, location: str = "", num_pages: int = 3) -> list[dict]:
@@ -35,6 +40,7 @@ class JSearchService:
                 return jobs
             except httpx.HTTPStatusError as e:
                 print(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
+                return []
             except httpx.RequestError as e:
                 print(f"An error occurred while requesting: {e}")
                 return []

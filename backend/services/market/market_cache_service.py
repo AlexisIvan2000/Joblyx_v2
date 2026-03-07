@@ -1,5 +1,4 @@
 import json
-import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -10,8 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.db_models import Career, MarketSkillsCache
 from services.analysis.jsearch_service import JSearchService
 from services.analysis.spacy_skills import SpacySkillsExtractor
-
-logger = logging.getLogger(__name__)
 
 # Villes IT canadiennes principales
 CANADIAN_IT_CITIES = [
@@ -97,36 +94,43 @@ class MarketCacheService:
     async def refresh_cache(self) -> dict:
         # Source 1 : combos prédéfinies (job_titles_it.json × villes IT)
         predefined = self._build_predefined_combos()
-        logger.info("Source 1 (prédéfinie) : %d combos", len(predefined))
+        print(f"[CACHE] Source 1 (prédéfinie) : {len(predefined)} combos")
 
         # Source 2 : combos depuis la table career (utilisateurs)
         career_combos = await self._get_career_combos()
-        logger.info("Source 2 (career) : %d combos", len(career_combos))
+        print(f"[CACHE] Source 2 (career) : {len(career_combos)} combos")
 
         # Fusion et déduplication (career ajoute celles qui manquent)
         all_combos = predefined | career_combos
         extra = len(all_combos) - len(predefined)
-        logger.info("Total après déduplication : %d combos (%d extras depuis career)", len(all_combos), extra)
+        print(f"[CACHE] Total après déduplication : {len(all_combos)} combos ({extra} extras depuis career)")
 
         processed = 0
         skipped = 0
 
-        for job_title, city, province in all_combos:
+        for i, (job_title, city, province) in enumerate(all_combos, 1):
             location = f"{city}, {province}, Canada"
+            print(f"\n[{i}/{len(all_combos)}] '{job_title}' à {location}")
 
             try:
                 # Appel JSearch pour récupérer les descriptions d'offres
                 descriptions = await self.jsearch.get_job_descriptions(
                     query=job_title, location=location, num_pages=3
                 )
+                print(f"  -> JSearch: {len(descriptions)} descriptions récupérées")
 
                 if not descriptions:
-                    logger.warning("Aucune description pour '%s' à %s", job_title, location)
+                    print("  -> SKIP: aucune description")
                     skipped += 1
                     continue
 
                 # Extraction et classement des skills par fréquence
                 ranked_skills = await self.extractor.extract_and_rank(descriptions)
+                print(f"  -> Skills extraits: {len(ranked_skills)} skills uniques")
+
+                if ranked_skills:
+                    top3 = [s['name'] for s in ranked_skills[:3]]
+                    print(f"  -> Top 3: {', '.join(top3)}")
 
                 # Upsert dans le cache
                 await self._upsert_cache(
@@ -137,16 +141,17 @@ class MarketCacheService:
                     job_count=len(descriptions),
                 )
                 processed += 1
-                logger.info(
-                    "Caché %d skills pour '%s' à %s (%d offres)",
-                    len(ranked_skills), job_title, location, len(descriptions),
-                )
+                print(f"  -> OK: inséré/mis à jour dans le cache")
 
-            except Exception:
-                logger.exception("Erreur pour '%s' à %s", job_title, location)
+            except Exception as e:
+                print(f"  -> ERREUR: {e}")
+                import traceback
+                traceback.print_exc()
                 skipped += 1
 
         await self.session.commit()
+        print(f"\n[CACHE] Commit effectué")
+
         summary = {"processed": processed, "skipped": skipped, "total": len(all_combos)}
-        logger.info("Refresh terminé : %s", summary)
+        print(f"[CACHE] Refresh terminé : {summary}")
         return summary
