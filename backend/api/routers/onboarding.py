@@ -1,9 +1,10 @@
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.schemas import OnboardingRequest, OnboardingResponse, OnboardingStatus
 from models.db_models import User
 from services.onboarding.onboarding_service import OnboardingService
 from services.roadmap.roadmap_service import RoadmapService
+from services.ai.cv_parser import extract_skills_from_cv
 from core.database import AsyncSessionLocal
 from api.dependencies import get_onboarding_service, get_current_user
 
@@ -48,6 +49,23 @@ async def get_profile(
     svc: OnboardingService = Depends(get_onboarding_service),
 ):
     return await svc.get_profile(str(current_user.id))
+
+
+@router.post("/extract-skills")
+async def extract_skills(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Extrait les compétences d'un CV uploadé (PDF uniquement)."""
+    if not file.content_type or "pdf" not in file.content_type:
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:  # 5 MB max
+        raise HTTPException(status_code=400, detail="File too large (max 5 MB)")
+
+    skills = await extract_skills_from_cv(content)
+    return {"skills": skills}
 
 
 @router.put("", response_model=OnboardingResponse)

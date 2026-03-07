@@ -10,7 +10,7 @@ final userProvider = AsyncNotifierProvider<UserNotifier, Map<String, dynamic>>(
 class UserNotifier extends AsyncNotifier<Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> build() async {
-    final svc = ref.read(userServiceProvider);
+    final svc = ref.watch(userServiceProvider);
     return svc.getMe();
   }
 
