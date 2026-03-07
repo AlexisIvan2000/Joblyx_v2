@@ -3,18 +3,22 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/core/router/routes.dart';
 import 'package:frontend/core/screens/first_page.dart';
 import 'package:frontend/core/screens/loading_transition.dart';
-import 'package:frontend/core/screens/dashboard.dart';
 import 'package:frontend/features/authentication/presentation/screens/login_screen.dart';
 import 'package:frontend/features/authentication/presentation/screens/register_screen.dart';
+import 'package:frontend/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:frontend/features/roadmap/presentation/screens/roadmap_screen.dart';
+import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
 
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.firstPage,
+  initialLocation: AppRoutes.loading,
   routes: [
     _slideRoute(AppRoutes.firstPage, (_) => const FirstPage()),
     _slideRoute(AppRoutes.login, (_) => const LoginScreen()),
     _slideRoute(AppRoutes.register, (_) => const RegisterScreen()),
     _slideRoute(AppRoutes.loading, (_) => const LoadingTransition()),
-    _slideRoute(AppRoutes.dashboard, (_) => const DashboardScreen()),
+    _slideRoute(AppRoutes.onboarding, (_) => const OnboardingScreen()),
+    _slideRoute(AppRoutes.dashboard, (_) => const RoadmapScreen()),
+    _slideRoute(AppRoutes.settings, (_) => const SettingsScreen()),
   ],
 );
 

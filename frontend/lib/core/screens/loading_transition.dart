@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/features/authentication/data/auth_storage.dart';
+import 'package:frontend/features/onboarding/data/onboarding_service.dart';
 
 class LoadingTransition extends StatefulWidget {
   const LoadingTransition({super.key});
@@ -15,10 +17,33 @@ class _LoadingTransitionState extends State<LoadingTransition> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
+    _checkAndRoute();
+  }
+
+  Future<void> _checkAndRoute() async {
+    final storage = AuthStorage();
+    final hasTokens = await storage.hasTokens();
+
+    if (!mounted) return;
+
+    // Pas de token → écran d'accueil
+    if (!hasTokens) {
+      context.go('/first-page');
+      return;
+    }
+
+    // Token présent → vérifier le statut onboarding
+    try {
+      final hasProfile = await OnboardingService().checkStatus();
       if (!mounted) return;
-      context.go('/dashboard');
-    });
+      context.go(hasProfile ? '/dashboard' : '/onboarding');
+    } catch (_) {
+      if (!mounted) return;
+      // Token invalide ou erreur réseau → retour à l'accueil
+      final stillHasTokens = await storage.hasTokens();
+      if (!mounted) return;
+      context.go(stillHasTokens ? '/dashboard' : '/first-page');
+    }
   }
 
   @override
@@ -28,7 +53,6 @@ class _LoadingTransitionState extends State<LoadingTransition> {
     final t = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
-        maintainBottomViewPadding: false,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -36,7 +60,7 @@ class _LoadingTransitionState extends State<LoadingTransition> {
               SvgPicture.asset(
                 'assets/images/processing.svg',
                 width: 280.w,
-                height: 280.h,             
+                height: 280.h,
               ),
               SizedBox(height: 10.h),
               Text(
@@ -47,11 +71,9 @@ class _LoadingTransitionState extends State<LoadingTransition> {
                 ),
               ),
             ],
-          )
+          ),
         ),
       ),
     );
   }
-
-
 }

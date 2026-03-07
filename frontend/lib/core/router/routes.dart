@@ -4,5 +4,7 @@ class AppRoutes {
   static const firstPage = '/first-page';
   static const login = '/login';
   static const register = '/register';
+  static const onboarding = '/onboarding';
   static const dashboard = '/dashboard';
+  static const settings = '/settings';
 }
