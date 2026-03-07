@@ -206,7 +206,7 @@ def _patch_config(monkeypatch):
 def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_user_dict):
     from fastapi.testclient import TestClient
     from app import app
-    from api.dependencies import get_auth_service, get_user_service, get_current_user, get_onboarding_service
+    from api.dependencies import get_auth_service, get_user_service, get_current_user, get_onboarding_service, get_roadmap_service
     from services.auth.email_password import EmailPasswordAuth
     from services.users.users import UserService
 
@@ -238,6 +238,14 @@ def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_
 
     onboarding_svc = OnboardingService(onboarding_mock_repo)
 
+    # Mock RoadmapService pour les routes /roadmap
+    roadmap_svc = AsyncMock()
+    roadmap_svc._get_career = AsyncMock(return_value=MagicMock(generation_status="idle"))
+    roadmap_svc.repo = AsyncMock()
+    roadmap_svc.repo.get_active_by_user_id = AsyncMock(return_value=None)
+    roadmap_svc.repo.get_history_by_user_id = AsyncMock(return_value=[])
+    roadmap_svc.generate = AsyncMock()
+
     async def override_auth_service():
         return auth_svc
 
@@ -250,14 +258,19 @@ def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_
     async def override_onboarding_service():
         return onboarding_svc
 
+    async def override_roadmap_service():
+        return roadmap_svc
+
     app.dependency_overrides[get_auth_service] = override_auth_service
     app.dependency_overrides[get_user_service] = override_user_service
     app.dependency_overrides[get_current_user] = override_current_user
     app.dependency_overrides[get_onboarding_service] = override_onboarding_service
+    app.dependency_overrides[get_roadmap_service] = override_roadmap_service
 
     client = TestClient(app)
     client._mock_onboarding_repo = onboarding_mock_repo
     client._mock_otp_service = mock_otp_service
+    client._mock_roadmap_svc = roadmap_svc
 
     yield client
 
