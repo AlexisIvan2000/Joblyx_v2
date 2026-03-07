@@ -166,3 +166,45 @@ class OnboardingResponse(BaseModel):
 
 class OnboardingStatus(BaseModel):
     has_profile: bool
+
+
+# ─── Roadmap schemas ───────────────────────────────────────────────
+
+class RoadmapGenerateResponse(BaseModel):
+    status: str
+
+class RoadmapStatusResponse(BaseModel):
+    generation_status: str
+    has_roadmap: bool
+
+class RoadmapResource(BaseModel):
+    title: str
+    url: str
+    type: str
+    free: bool
+
+class RoadmapSkill(BaseModel):
+    name: str
+    priority: str
+
+class RoadmapPhase(BaseModel):
+    title: str
+    duration_weeks: int
+    skills: List[RoadmapSkill]
+    actions: List[str]
+    resources: List[RoadmapResource]
+    certifications: List[str] = []
+    milestone: str
+
+class RoadmapResponse(BaseModel):
+    id: str
+    target_jobs: List[str]
+    phases: List[RoadmapPhase]
+    status: str
+    created_at: str | None = None
+
+class RoadmapHistoryItem(BaseModel):
+    id: str
+    target_jobs: List[str]
+    status: str
+    created_at: str | None = None

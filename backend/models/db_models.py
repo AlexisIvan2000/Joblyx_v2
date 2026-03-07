@@ -59,6 +59,7 @@ class Career(Base):
         CheckConstraint("level = ANY (ARRAY['junior','mid','senior','reconversion'])", name="career_level_check"),
         CheckConstraint("language = ANY (ARRAY['fr','en','bilingual'])", name="career_language_check"),
         CheckConstraint("array_length(target_jobs, 1) <= 3", name="career_target_jobs_check"),
+        CheckConstraint("generation_status = ANY (ARRAY['idle','generating','ready','error'])", name="career_generation_status_check"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -71,6 +72,7 @@ class Career(Base):
     language: Mapped[str | None] = mapped_column(Text, server_default="fr", nullable=True)
     previous_field: Mapped[str | None] = mapped_column(String(100), nullable=True)
     onboarding_completed: Mapped[bool | None] = mapped_column(Boolean, server_default="false", nullable=True)
+    generation_status: Mapped[str] = mapped_column(String(20), server_default="idle")
     created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
 
