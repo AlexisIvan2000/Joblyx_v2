@@ -11,6 +11,9 @@ from services.auth.email_password import EmailPasswordAuth
 from services.users.users import UserService
 from services.onboarding.onboarding_service import OnboardingService
 from services.roadmap.roadmap_service import RoadmapService
+from repositories.application_repository import ApplicationRepository
+from services.applications.application_service import ApplicationService
+from services.storage.r2_service import R2Service
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -31,6 +34,11 @@ async def get_onboarding_service(session: AsyncSession = Depends(get_db_session)
 
 async def get_roadmap_service(session: AsyncSession = Depends(get_db_session)) -> RoadmapService:
     return RoadmapService(session)
+
+async def get_application_service(session: AsyncSession = Depends(get_db_session)) -> ApplicationService:
+    repo = ApplicationRepository(session)
+    r2 = R2Service()
+    return ApplicationService(repo, r2)
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

@@ -757,9 +757,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Indicateur de progression (dots)
+            // Contenu des étapes
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _buildStepCareer(),
+                  _buildStepGoals(),
+                  _buildStepSkills(),
+                ],
+              ),
+            ),
+            // Dots indicator
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 12.h),
+              padding: EdgeInsets.only(top: 8.h),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(3, (i) {
@@ -777,21 +789,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 }),
               ),
             ),
-            // Contenu des étapes
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildStepCareer(),
-                  _buildStepGoals(),
-                  _buildStepSkills(),
-                ],
-              ),
-            ),
-            // Bouton en bas — "Suivant" sur les 2 premières étapes, "Compléter" sur la dernière
+            // Bouton — "Suivant" sur les 2 premières étapes, "Compléter" sur la dernière
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(

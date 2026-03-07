@@ -208,3 +208,53 @@ class RoadmapHistoryItem(BaseModel):
     target_jobs: List[str]
     status: str
     created_at: str | None = None
+
+
+# ─── Application schemas ──────────────────────────────────────────
+
+class ApplicationStatus(str, Enum):
+    applied = "applied"
+    phone_screen = "phone_screen"
+    technical = "technical"
+    final_interview = "final_interview"
+    offer = "offer"
+    accepted = "accepted"
+    rejected = "rejected"
+    withdrawn = "withdrawn"
+
+class ApplicationCreate(BaseModel):
+    company_name: str
+    job_title: str
+    job_url: str | None = None
+    job_description: str | None = None
+    status: ApplicationStatus = ApplicationStatus.applied
+    notes: str | None = None
+
+    @field_validator("company_name", "job_title")
+    @classmethod
+    def validate_not_empty(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("This field must not be empty")
+        return v
+
+class ApplicationUpdate(BaseModel):
+    company_name: str | None = None
+    job_title: str | None = None
+    job_url: str | None = None
+    job_description: str | None = None
+    status: ApplicationStatus | None = None
+    notes: str | None = None
+
+class ApplicationResponse(BaseModel):
+    id: str
+    company_name: str
+    job_title: str
+    job_url: str | None = None
+    job_description: str | None = None
+    status: str
+    cv_file_key: str | None = None
+    cv_url: str | None = None
+    notes: str | None = None
+    applied_at: str | None = None
+    updated_at: str | None = None
