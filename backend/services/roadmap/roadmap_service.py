@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.db_models import Career, UserSkill, MarketSkillsCache
@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 # Durée max du cache market pour être considéré valide
 CACHE_MAX_AGE = timedelta(hours=48)
+
+# Limite de régénérations par mois
+REGENERATION_LIMIT = 5
 
 
 class RoadmapService:
@@ -67,6 +70,58 @@ class RoadmapService:
         # Trie par count décroissant
         return sorted(all_skills.values(), key=lambda s: s.get("count", 0), reverse=True)
 
+    # ─── Vérification limite de régénération ─────────────────────────
+
+    async def check_regeneration_limit(self, user_id: str) -> dict:
+        """Vérifie et met à jour le compteur de régénération.
+
+        Retourne {"allowed": bool, "used": int, "remaining": int, "resets_at": str}.
+        """
+        career = await self._get_career(user_id)
+        if not career:
+            return {"allowed": False, "used": 0, "remaining": 0, "resets_at": ""}
+
+        now = datetime.now(timezone.utc)
+
+        # Reset mensuel : si le mois courant est différent de celui du dernier reset
+        reset_at = career.regeneration_reset_at
+        if reset_at is None or (now.year, now.month) != (reset_at.year, reset_at.month):
+            await self.session.execute(
+                update(Career).where(Career.user_id == user_id).values(
+                    regeneration_count=0,
+                    regeneration_reset_at=now,
+                )
+            )
+            await self.session.flush()
+            # Refresh
+            career = await self._get_career(user_id)
+
+        used = career.regeneration_count or 0
+        remaining = max(0, REGENERATION_LIMIT - used)
+
+        # Date du 1er du mois prochain
+        if now.month == 12:
+            next_reset = datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)
+        else:
+            next_reset = datetime(now.year, now.month + 1, 1, tzinfo=timezone.utc)
+
+        return {
+            "allowed": used < REGENERATION_LIMIT,
+            "used": used,
+            "remaining": remaining,
+            "resets_at": next_reset.isoformat(),
+        }
+
+    async def increment_regeneration_count(self, user_id: str) -> None:
+        await self.session.execute(
+            update(Career).where(Career.user_id == user_id).values(
+                regeneration_count=Career.regeneration_count + 1,
+            )
+        )
+        await self.session.flush()
+
+    # ─── Génération du roadmap ───────────────────────────────────────
+
     async def generate(self, user_id: str) -> None:
         """Génère un roadmap complet. Appelé en background task."""
         # Passe le status à 'generating'
@@ -107,6 +162,16 @@ class RoadmapService:
             gpt_response = await call_gpt(system_prompt, user_prompt)
             phases = gpt_response.get("phases", [])
 
+            # Ajoute completed/custom/user_notes par défaut sur chaque phase, action et skill
+            for phase in phases:
+                phase.setdefault("completed", False)
+                phase.setdefault("custom", False)
+                phase.setdefault("user_notes", None)
+                for action in phase.get("actions", []):
+                    action.setdefault("completed", False)
+                for skill in phase.get("skills", []):
+                    skill.setdefault("completed", False)
+
             # Archive l'ancien roadmap actif s'il existe
             await self.repo.archive_active(user_id)
 
@@ -117,6 +182,9 @@ class RoadmapService:
                 market_data=market_data,
                 phases=phases,
             )
+
+            # Incrémente le compteur de régénération
+            await self.increment_regeneration_count(user_id)
 
             # Status → 'ready'
             await self.repo.set_generation_status(user_id, "ready")
@@ -129,3 +197,20 @@ class RoadmapService:
             # Status → 'error'
             await self.repo.set_generation_status(user_id, "error")
             await self.session.commit()
+
+    # ─── Méthodes de modification (zéro appel GPT) ──────────────────
+
+    async def update_phases(self, roadmap_id: str, user_id: str, phases: list[dict]):
+        return await self.repo.update_phases(roadmap_id, user_id, phases)
+
+    async def add_phase(self, roadmap_id: str, user_id: str, phase: dict, position: int | None):
+        return await self.repo.add_phase(roadmap_id, user_id, phase, position)
+
+    async def delete_phase(self, roadmap_id: str, user_id: str, phase_number: int):
+        return await self.repo.delete_phase(roadmap_id, user_id, phase_number)
+
+    async def toggle_phase_complete(self, roadmap_id: str, user_id: str, phase_number: int):
+        return await self.repo.toggle_phase_complete(roadmap_id, user_id, phase_number)
+
+    async def toggle_action_complete(self, roadmap_id: str, user_id: str, phase_number: int, action_index: int):
+        return await self.repo.toggle_action_complete(roadmap_id, user_id, phase_number, action_index)

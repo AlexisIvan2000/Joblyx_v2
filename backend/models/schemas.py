@@ -179,22 +179,66 @@ class RoadmapStatusResponse(BaseModel):
 
 class RoadmapResource(BaseModel):
     title: str
-    url: str
+    platform: str | None = None
+    url: str | None = None
     type: str
     free: bool
+    why: str | None = None
+
+class RoadmapActionItem(BaseModel):
+    task: str
+    detail: str | None = None
+    estimated_hours: int | None = None
+    completed: bool = False
 
 class RoadmapSkill(BaseModel):
     name: str
     priority: str
+    reason: str | None = None
+    completed: bool = False
+
+class RoadmapCertification(BaseModel):
+    name: str
+    provider: str | None = None
+    cost: str | None = None
+    value: str | None = None
+
+class RoadmapProject(BaseModel):
+    name: str
+    description: str | None = None
+    technologies: List[str] = []
+    portfolio_worthy: bool = False
 
 class RoadmapPhase(BaseModel):
+    phase_number: int
     title: str
     duration_weeks: int
-    skills: List[RoadmapSkill]
-    actions: List[str]
-    resources: List[RoadmapResource]
-    certifications: List[str] = []
-    milestone: str
+    objective: str | None = None
+    skills: List[RoadmapSkill] = []
+    actions: List[RoadmapActionItem] = []
+    resources: List[RoadmapResource] = []
+    certifications: List[RoadmapCertification] = []
+    projects: List[RoadmapProject] = []
+    milestone: str | None = None
+    completed: bool = False
+    custom: bool = False
+    user_notes: str | None = None
+
+class RoadmapPhaseCreate(BaseModel):
+    title: str
+    duration_weeks: int
+    objective: str | None = None
+    skills: List[RoadmapSkill] = []
+    actions: List[RoadmapActionItem] = []
+    resources: List[RoadmapResource] = []
+    certifications: List[RoadmapCertification] = []
+    projects: List[RoadmapProject] = []
+    milestone: str | None = None
+    user_notes: str | None = None
+    position: int | None = None
+
+class RoadmapPhasesUpdate(BaseModel):
+    phases: List[RoadmapPhase]
 
 class RoadmapResponse(BaseModel):
     id: str
@@ -208,6 +252,12 @@ class RoadmapHistoryItem(BaseModel):
     target_jobs: List[str]
     status: str
     created_at: str | None = None
+
+class RegenerationStatusResponse(BaseModel):
+    used: int
+    limit: int
+    remaining: int
+    resets_at: str
 
 
 # ─── Application schemas ──────────────────────────────────────────

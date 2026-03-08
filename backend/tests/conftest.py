@@ -245,6 +245,15 @@ def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_
     roadmap_svc.repo.get_active_by_user_id = AsyncMock(return_value=None)
     roadmap_svc.repo.get_history_by_user_id = AsyncMock(return_value=[])
     roadmap_svc.generate = AsyncMock()
+    roadmap_svc.check_regeneration_limit = AsyncMock(return_value={
+        "allowed": True, "used": 0, "remaining": 5, "resets_at": "2026-04-01T00:00:00+00:00",
+    })
+    roadmap_svc.update_phases = AsyncMock(return_value=None)
+    roadmap_svc.add_phase = AsyncMock(return_value=None)
+    roadmap_svc.delete_phase = AsyncMock(return_value=None)
+    roadmap_svc.toggle_phase_complete = AsyncMock(return_value=None)
+    roadmap_svc.toggle_action_complete = AsyncMock(return_value=None)
+    roadmap_svc.session = AsyncMock()
 
     async def override_auth_service():
         return auth_svc

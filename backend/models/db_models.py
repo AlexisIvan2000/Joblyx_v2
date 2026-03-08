@@ -73,6 +73,8 @@ class Career(Base):
     previous_field: Mapped[str | None] = mapped_column(String(100), nullable=True)
     onboarding_completed: Mapped[bool | None] = mapped_column(Boolean, server_default="false", nullable=True)
     generation_status: Mapped[str] = mapped_column(String(20), server_default="idle")
+    regeneration_count: Mapped[int] = mapped_column(Integer, server_default="0")
+    regeneration_reset_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
     created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
 
