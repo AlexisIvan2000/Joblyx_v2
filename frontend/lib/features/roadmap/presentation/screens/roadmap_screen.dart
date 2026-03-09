@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -98,9 +99,58 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
     try {
       await _roadmapService.generate();
       _startPolling();
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final t = AppLocalizations.of(context);
+      if (e.response?.statusCode == 429) {
+        // Limite de régénération atteinte
+        setState(() => _generationStatus = _hasRoadmap ? 'ready' : 'idle');
+        final detail = e.response?.data;
+        String message = t.t('dashboard.regen_limit_reached');
+        if (detail is Map) {
+          final inner = detail['detail'];
+          if (inner is Map && inner['error'] != null) {
+            message = inner['error'].toString();
+          }
+        }
+        AppSnackbar.error(context, message.toString());
+      } else {
+        setState(() => _generationStatus = 'error');
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _generationStatus = 'error');
+    }
+  }
+
+  // ─── Toggle completion ──────────────────────────────────────────
+
+  Future<void> _onTogglePhaseComplete(int phaseNumber) async {
+    final roadmapId = _roadmap?['id'] as String?;
+    if (roadmapId == null) return;
+    try {
+      final updated = await _roadmapService.togglePhaseComplete(roadmapId, phaseNumber);
+      if (!mounted) return;
+      setState(() => _roadmap = updated);
+    } catch (_) {
+      if (!mounted) return;
+      final t = AppLocalizations.of(context);
+      AppSnackbar.error(context, t.t('dashboard.update_error'));
+    }
+  }
+
+  Future<void> _onToggleActionComplete(int phaseNumber, int actionIndex) async {
+    final roadmapId = _roadmap?['id'] as String?;
+    if (roadmapId == null) return;
+    try {
+      final updated = await _roadmapService.toggleActionComplete(
+          roadmapId, phaseNumber, actionIndex);
+      if (!mounted) return;
+      setState(() => _roadmap = updated);
+    } catch (_) {
+      if (!mounted) return;
+      final t = AppLocalizations.of(context);
+      AppSnackbar.error(context, t.t('dashboard.update_error'));
     }
   }
 
@@ -145,7 +195,7 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
     return _buildEmpty(theme, cs, t);
   }
 
-  // ─── Écran de génération en cours ────────────────────────────────
+  // ─── Ecran de génération en cours ────────────────────────────────
   Widget _buildGenerating(ThemeData theme, ColorScheme cs, AppLocalizations t) {
     return Center(
       child: Padding(
@@ -187,7 +237,7 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
     );
   }
 
-  // ─── Écran d'erreur ──────────────────────────────────────────────
+  // ─── Ecran d'erreur ──────────────────────────────────────────────
   Widget _buildError(ThemeData theme, ColorScheme cs, AppLocalizations t) {
     return Center(
       child: Padding(
@@ -219,7 +269,7 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
     );
   }
 
-  // ─── État vide (pas de roadmap) ──────────────────────────────────
+  // ─── Etat vide (pas de roadmap) ──────────────────────────────────
   Widget _buildEmpty(ThemeData theme, ColorScheme cs, AppLocalizations t) {
     return Center(
       child: Padding(
@@ -281,6 +331,8 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
               index: i,
               phase: phase,
               isLast: i == phases.length - 1,
+              onTogglePhaseComplete: _onTogglePhaseComplete,
+              onToggleActionComplete: _onToggleActionComplete,
             );
           }),
           SizedBox(height: 20.h),

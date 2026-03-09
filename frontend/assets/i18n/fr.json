@@ -191,7 +191,11 @@
         "skills_to_learn": "Compétences à acquérir",
         "actions": "Actions à réaliser",
         "resources": "Ressources",
-        "certifications": "Certifications"
+        "certifications": "Certifications",
+        "projects": "Projets",
+        "custom_phase": "Perso",
+        "regen_limit_reached": "Vous avez atteint la limite de 5 régénérations ce mois-ci",
+        "update_error": "Impossible de mettre à jour le roadmap"
     },
 
     "settings": {

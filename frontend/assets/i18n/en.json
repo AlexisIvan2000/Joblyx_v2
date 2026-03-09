@@ -190,7 +190,11 @@
         "skills_to_learn": "Skills to learn",
         "actions": "Action items",
         "resources": "Resources",
-        "certifications": "Certifications"
+        "certifications": "Certifications",
+        "projects": "Projects",
+        "custom_phase": "Custom",
+        "regen_limit_reached": "You have reached the limit of 5 regenerations this month",
+        "update_error": "Could not update roadmap"
     },
 
     "settings": {
