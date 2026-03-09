@@ -1,4 +1,67 @@
 {
+    "nav": {
+        "home": "Accueil",
+        "roadmap": "Roadmap",
+        "applications": "Candidatures",
+        "profile": "Profil"
+    },
+
+    "home": {
+        "greeting": "Bonjour",
+        "progress_title": "PROGRESSION ROADMAP",
+        "actions_label": "actions",
+        "skills_acquired": "skills acquis",
+        "weeks_label": "semaines",
+        "applications_stat": "Candidatures",
+        "interviews_stat": "Entretiens",
+        "regenerations_stat": "Régénérations",
+        "current_phase": "Phase en cours",
+        "view_all": "Voir tout",
+        "completed_suffix": "complétées",
+        "recent_applications": "Candidatures récentes",
+        "tip_title": "Conseil du jour",
+        "phase_label": "PHASE"
+    },
+
+    "applications_screen": {
+        "title": "Candidatures",
+        "filter_all": "Toutes",
+        "filter_active": "En cours",
+        "filter_interviews": "Entretiens",
+        "filter_closed": "Terminées",
+        "days_ago": "j",
+        "status_applied": "Postulée",
+        "status_phone_screen": "Entretien tél.",
+        "status_technical": "Entretien tech.",
+        "status_final_interview": "Entretien final",
+        "status_offer": "Offre",
+        "status_accepted": "Acceptée",
+        "status_rejected": "Rejetée",
+        "status_withdrawn": "Retirée",
+        "empty": "Aucune candidature",
+        "add_error": "Impossible d'ajouter la candidature",
+        "delete_error": "Impossible de supprimer la candidature"
+    },
+
+    "profile_screen": {
+        "title": "Profil",
+        "regenerations_left": "Régénérations restantes",
+        "skills_acquired": "Skills acquis",
+        "personal_info": "Informations personnelles",
+        "personal_info_sub": "Nom, email, avatar",
+        "career_profile": "Profil carrière",
+        "career_profile_sub": "Niveau, postes visés, skills",
+        "security": "Sécurité",
+        "security_sub": "Mot de passe, sessions",
+        "language": "Langue",
+        "language_sub": "Français",
+        "notifications": "Notifications",
+        "notifications_sub": "Emails, rappels",
+        "my_cvs": "Mes CVs",
+        "my_cvs_sub": "CVs uploadés",
+        "logout": "Se déconnecter"
+    },
+
     "splash": {
         "tagline": "Votre assistant de carrière intelligent"
     },

@@ -58,7 +58,7 @@ async def extract_skills_from_cv(pdf_bytes: bytes) -> list[dict]:
     if not cv_text:
         return []
 
-    # Tronquer à 8k chars (suffisant pour un CV, réduit les tokens d'entrée)
+    # Tronquer à 9k chars (suffisant pour un CV, réduit les tokens d'entrée)
     if len(cv_text) > 9000:
         cv_text = cv_text[:9000]
 

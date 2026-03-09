@@ -151,7 +151,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
 
       if (!mounted) return;
-      context.go('/dashboard');
+      context.go('/loading');
     } catch (e) {
       if (!mounted) return;
       AppSnackbar.error(context, t.t('onboarding.error'));

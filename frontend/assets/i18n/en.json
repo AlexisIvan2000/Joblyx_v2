@@ -1,4 +1,67 @@
 {
+    "nav": {
+        "home": "Home",
+        "roadmap": "Roadmap",
+        "applications": "Applications",
+        "profile": "Profile"
+    },
+
+    "home": {
+        "greeting": "Hello",
+        "progress_title": "ROADMAP PROGRESS",
+        "actions_label": "actions",
+        "skills_acquired": "skills acquired",
+        "weeks_label": "weeks",
+        "applications_stat": "Applications",
+        "interviews_stat": "Interviews",
+        "regenerations_stat": "Regenerations",
+        "current_phase": "Current phase",
+        "view_all": "View all",
+        "completed_suffix": "completed",
+        "recent_applications": "Recent applications",
+        "tip_title": "Tip of the day",
+        "phase_label": "PHASE"
+    },
+
+    "applications_screen": {
+        "title": "Applications",
+        "filter_all": "All",
+        "filter_active": "Active",
+        "filter_interviews": "Interviews",
+        "filter_closed": "Closed",
+        "days_ago": "d",
+        "status_applied": "Applied",
+        "status_phone_screen": "Phone screen",
+        "status_technical": "Technical",
+        "status_final_interview": "Final interview",
+        "status_offer": "Offer",
+        "status_accepted": "Accepted",
+        "status_rejected": "Rejected",
+        "status_withdrawn": "Withdrawn",
+        "empty": "No applications yet",
+        "add_error": "Could not add application",
+        "delete_error": "Could not delete application"
+    },
+
+    "profile_screen": {
+        "title": "Profile",
+        "regenerations_left": "Regenerations left",
+        "skills_acquired": "Skills acquired",
+        "personal_info": "Personal information",
+        "personal_info_sub": "Name, email, avatar",
+        "career_profile": "Career profile",
+        "career_profile_sub": "Level, target jobs, skills",
+        "security": "Security",
+        "security_sub": "Password, sessions",
+        "language": "Language",
+        "language_sub": "English",
+        "notifications": "Notifications",
+        "notifications_sub": "Emails, reminders",
+        "my_cvs": "My CVs",
+        "my_cvs_sub": "Uploaded CVs",
+        "logout": "Log out"
+    },
+
     "splash": {
         "tagline": "Your smart carreer assistant"
     },

@@ -6,5 +6,8 @@ class AppRoutes {
   static const register = '/register';
   static const onboarding = '/onboarding';
   static const dashboard = '/dashboard';
+  static const roadmap = '/roadmap';
+  static const applications = '/applications';
+  static const profile = '/profile';
   static const settings = '/settings';
 }

@@ -1,48 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
-import 'package:frontend/features/authentication/data/auth_storage.dart';
-import 'package:frontend/features/onboarding/data/onboarding_service.dart';
+import 'package:frontend/features/authentication/presentation/providers/auth_state_provider.dart';
 
-class LoadingTransition extends StatefulWidget {
+/// Page de transition animée.
+/// Utilisée après login/register/onboarding → vérifie le provider et redirige.
+class LoadingTransition extends ConsumerStatefulWidget {
   const LoadingTransition({super.key});
 
   @override
-  State<LoadingTransition> createState() => _LoadingTransitionState();
+  ConsumerState<LoadingTransition> createState() => _LoadingTransitionState();
 }
 
-class _LoadingTransitionState extends State<LoadingTransition> {
+class _LoadingTransitionState extends ConsumerState<LoadingTransition> {
+  bool _navigated = false;
+
   @override
   void initState() {
     super.initState();
-    _checkAndRoute();
+    // Relancer la vérification auth (tokens ont peut-être changé)
+    Future.microtask(() => ref.read(authStateProvider.notifier).recheck());
   }
 
-  Future<void> _checkAndRoute() async {
-    final storage = AuthStorage();
-    final hasTokens = await storage.hasTokens();
-
-    if (!mounted) return;
-
-    // Pas de token → écran d'accueil
-    if (!hasTokens) {
-      context.go('/first-page');
-      return;
-    }
-
-    // Token présent → vérifier le statut onboarding
-    try {
-      final hasProfile = await OnboardingService().checkStatus();
-      if (!mounted) return;
-      context.go(hasProfile ? '/dashboard' : '/onboarding');
-    } catch (_) {
-      if (!mounted) return;
-      // Token invalide ou erreur réseau → retour à l'accueil
-      final stillHasTokens = await storage.hasTokens();
-      if (!mounted) return;
-      context.go(stillHasTokens ? '/dashboard' : '/first-page');
+  void _navigate(AppAuthState state) {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    switch (state) {
+      case AppAuthState.unauthenticated:
+        context.go('/first-page');
+      case AppAuthState.needsOnboarding:
+        context.go('/onboarding');
+      case AppAuthState.authenticated:
+        context.go('/dashboard');
+      case AppAuthState.loading:
+        break;
     }
   }
 
@@ -51,6 +45,11 @@ class _LoadingTransitionState extends State<LoadingTransition> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final t = AppLocalizations.of(context);
+
+    ref.listen(authStateProvider, (_, next) {
+      next.whenData(_navigate);
+    });
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -68,6 +67,13 @@ class _LoadingTransitionState extends State<LoadingTransition> {
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: cs.onSurface,
                   fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              SizedBox(
+                width: 180.w,
+                child: LinearProgressIndicator(
+                  borderRadius: BorderRadius.circular(4.r),
                 ),
               ),
             ],

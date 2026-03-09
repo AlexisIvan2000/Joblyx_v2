@@ -1,1 +1,1 @@
-export 'package:frontend/features/roadmap/presentation/screens/roadmap_screen.dart';
+export 'package:frontend/features/roadmap/presentation/screens/dashboard_screen.dart';
