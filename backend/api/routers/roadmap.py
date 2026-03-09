@@ -1,4 +1,5 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from core.rate_limit import limiter, get_user_id_from_jwt
 from models.schemas import (
     RoadmapGenerateResponse,
     RoadmapStatusResponse,
@@ -31,7 +32,9 @@ def _roadmap_to_response(roadmap) -> dict:
 
 
 @router.post("/generate", response_model=RoadmapGenerateResponse)
+@limiter.limit("3/minute", key_func=get_user_id_from_jwt)
 async def generate_roadmap(
+    request: Request,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),

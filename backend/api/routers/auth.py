@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from models.schemas import UserCreate, UserLogin, TokenResponse, RefreshToken, VerifyEmail, ForgotPassword, ResetPassword, ResendVerification, MessageResponse
 from services.auth.email_password import EmailPasswordAuth
 from services.users.users import UserService
 from api.dependencies import get_auth_service, get_user_service
+from core.rate_limit import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -11,11 +12,13 @@ async def register(user: UserCreate, auth: EmailPasswordAuth = Depends(get_auth_
     return await auth.register_user(user)
 
 @router.post("/login", response_model=TokenResponse)
-async def login(user: UserLogin, auth: EmailPasswordAuth = Depends(get_auth_service)):
+@limiter.limit("5/minute")
+async def login(request: Request, user: UserLogin, auth: EmailPasswordAuth = Depends(get_auth_service)):
     return await auth.login_user(user)
 
 @router.post("/verify-email", response_model=TokenResponse)
-async def verify_email(body: VerifyEmail, auth: EmailPasswordAuth = Depends(get_auth_service)):
+@limiter.limit("5/minute")
+async def verify_email(request: Request, body: VerifyEmail, auth: EmailPasswordAuth = Depends(get_auth_service)):
     return await auth.verify_email(body.email, body.code)
 
 @router.post("/refresh")
@@ -27,13 +30,16 @@ async def logout(body: RefreshToken, auth: EmailPasswordAuth = Depends(get_auth_
     return await auth.logout_user(body.refresh_token)
 
 @router.post("/resend-verification")
-async def resend_verification(body: ResendVerification, auth: EmailPasswordAuth = Depends(get_auth_service)):
+@limiter.limit("3/minute")
+async def resend_verification(request: Request, body: ResendVerification, auth: EmailPasswordAuth = Depends(get_auth_service)):
     return await auth.resend_verification_email(body.email)
 
 @router.post("/forgot-password")
-async def forgot_password(body: ForgotPassword, svc: UserService = Depends(get_user_service)):
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, body: ForgotPassword, svc: UserService = Depends(get_user_service)):
     return await svc.forgot_password(body.email)
 
 @router.post("/reset-password")
-async def reset_password(body: ResetPassword, svc: UserService = Depends(get_user_service)):
+@limiter.limit("5/minute")
+async def reset_password(request: Request, body: ResetPassword, svc: UserService = Depends(get_user_service)):
     return await svc.reset_password(body.email, body.code, body.new_password)

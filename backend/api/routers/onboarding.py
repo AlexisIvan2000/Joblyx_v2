@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.schemas import OnboardingRequest, OnboardingResponse, OnboardingStatus
 from models.db_models import User
@@ -6,6 +6,7 @@ from services.onboarding.onboarding_service import OnboardingService
 from services.roadmap.roadmap_service import RoadmapService
 from services.ai.cv_parser import extract_skills_from_cv
 from core.database import AsyncSessionLocal
+from core.rate_limit import limiter, get_user_id_from_jwt
 from api.dependencies import get_onboarding_service, get_current_user
 
 router = APIRouter(prefix="/onboarding", tags=["onboarding"])
@@ -52,7 +53,9 @@ async def get_profile(
 
 
 @router.post("/extract-skills")
+@limiter.limit("5/minute", key_func=get_user_id_from_jwt)
 async def extract_skills(
+    request: Request,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
