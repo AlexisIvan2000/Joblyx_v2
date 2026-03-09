@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/core/widgets/shimmer_loading.dart';
+import 'package:frontend/core/widgets/staggered_list.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
 import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
@@ -26,7 +28,7 @@ class DashboardScreen extends ConsumerWidget {
     final regenStatus = regenAsync.whenOrNull(data: (s) => s);
     final roadmap = roadmapState.roadmap;
 
-    if (roadmapState.isLoading) return const Center(child: CircularProgressIndicator());
+    if (roadmapState.isLoading) return const DashboardSkeleton();
 
     // Calculs de progression
     final phases = (roadmap?['phases'] as List?) ?? [];
@@ -63,75 +65,94 @@ class DashboardScreen extends ConsumerWidget {
         ref.read(userProvider.notifier).refresh();
       },
       child: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
         children: [
-          // Salutation
-          Text(t.t('home.greeting'),
-              style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant, fontWeight: FontWeight.w500)),
-          SizedBox(height: 2.h),
-          Text('$firstName 👋',
-              style: TextStyle(fontSize: 26.sp, fontWeight: FontWeight.w800, color: cs.onSurface, letterSpacing: -0.5)),
-          SizedBox(height: 20.h),
-
-          // Carte progression
-          if (roadmap != null) ...[
-            _ProgressCard(
-              actionPercent: actionPercent,
-              completedActions: completedActions,
-              totalActions: totalActions,
-              completedSkills: completedSkills,
-              totalSkills: totalSkills,
-              totalWeeks: totalWeeks,
-              cs: cs,
-              t: t,
-            ),
-            SizedBox(height: 20.h),
-          ],
-
-          // Stats rapides
-          Row(
+          StaggeredList(
             children: [
-              _StatCard(value: '$activeApps', label: t.t('home.applications_stat'), icon: '📋', color: const Color(0xFF2563EB)),
-              SizedBox(width: 10.w),
-              _StatCard(value: '$interviews', label: t.t('home.interviews_stat'), icon: '💬', color: const Color(0xFF7C3AED)),
-              SizedBox(width: 10.w),
-              _StatCard(value: '$regenRemaining', label: t.t('home.regenerations_stat'), icon: '✨', color: const Color(0xFFF59E0B)),
+              // Salutation
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.t('home.greeting'),
+                      style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant, fontWeight: FontWeight.w500)),
+                  SizedBox(height: 2.h),
+                  Text('$firstName \u{1F44B}',
+                      style: TextStyle(fontSize: 26.sp, fontWeight: FontWeight.w800, color: cs.onSurface, letterSpacing: -0.5)),
+                  SizedBox(height: 20.h),
+                ],
+              ),
+
+              // Carte progression
+              if (roadmap != null) ...[
+                Padding(
+                  padding: EdgeInsets.only(bottom: 20.h),
+                  child: _ProgressCard(
+                    actionPercent: actionPercent,
+                    completedActions: completedActions,
+                    totalActions: totalActions,
+                    completedSkills: completedSkills,
+                    totalSkills: totalSkills,
+                    totalWeeks: totalWeeks,
+                    cs: cs,
+                    t: t,
+                  ),
+                ),
+              ],
+
+              // Stats rapides
+              Padding(
+                padding: EdgeInsets.only(bottom: 24.h),
+                child: Row(
+                  children: [
+                    _StatCard(value: '$activeApps', label: t.t('home.applications_stat'), icon: '\u{1F4CB}', color: const Color(0xFF2563EB)),
+                    SizedBox(width: 10.w),
+                    _StatCard(value: '$interviews', label: t.t('home.interviews_stat'), icon: '\u{1F4AC}', color: const Color(0xFF7C3AED)),
+                    SizedBox(width: 10.w),
+                    _StatCard(value: '$regenRemaining', label: t.t('home.regenerations_stat'), icon: '\u2728', color: const Color(0xFFF59E0B)),
+                  ],
+                ),
+              ),
+
+              // Phase en cours
+              if (currentPhase.isNotEmpty) ...[
+                _SectionHeader(
+                  title: t.t('home.current_phase'),
+                  action: t.t('home.view_all'),
+                  onAction: () => context.go('/roadmap'),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 8.h, bottom: 24.h),
+                  child: _CurrentPhaseCard(phase: currentPhase, cs: cs, t: t, onTap: () => context.go('/roadmap')),
+                ),
+              ],
+
+              // Candidatures récentes
+              if (applications.isNotEmpty) ...[
+                _SectionHeader(
+                  title: t.t('home.recent_applications'),
+                  action: t.t('home.view_all'),
+                  onAction: () => context.go('/applications'),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 8.h),
+                  child: Column(
+                    children: applications.take(3).map((app) => Padding(
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: _ApplicationTile(app: app, cs: cs, t: t, onTap: () => context.go('/applications')),
+                    )).toList(),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+              ],
+
+              // Conseil du jour
+              if (keyMessage.isNotEmpty)
+                _TipCard(message: keyMessage, t: t),
+
+              SizedBox(height: 12.h),
             ],
           ),
-          SizedBox(height: 24.h),
-
-          // Phase en cours
-          if (currentPhase.isNotEmpty) ...[
-            _SectionHeader(
-              title: t.t('home.current_phase'),
-              action: t.t('home.view_all'),
-              onAction: () => context.go('/roadmap'),
-            ),
-            SizedBox(height: 8.h),
-            _CurrentPhaseCard(phase: currentPhase, cs: cs, t: t, onTap: () => context.go('/roadmap')),
-            SizedBox(height: 24.h),
-          ],
-
-          // Candidatures récentes
-          if (applications.isNotEmpty) ...[
-            _SectionHeader(
-              title: t.t('home.recent_applications'),
-              action: t.t('home.view_all'),
-              onAction: () => context.go('/applications'),
-            ),
-            SizedBox(height: 8.h),
-            ...applications.take(3).map((app) => Padding(
-              padding: EdgeInsets.only(bottom: 8.h),
-              child: _ApplicationTile(app: app, cs: cs, t: t, onTap: () => context.go('/applications')),
-            )),
-            SizedBox(height: 16.h),
-          ],
-
-          // Conseil du jour
-          if (keyMessage.isNotEmpty)
-            _TipCard(message: keyMessage, t: t),
-
-          SizedBox(height: 12.h),
         ],
       ),
     );
@@ -194,34 +215,79 @@ class _ProgressCard extends StatelessWidget {
   }
 }
 
-class _ProgressRing extends StatelessWidget {
+class _ProgressRing extends StatefulWidget {
   final int percent;
   final double size;
   const _ProgressRing({required this.percent, this.size = 48});
 
   @override
+  State<_ProgressRing> createState() => _ProgressRingState();
+}
+
+class _ProgressRingState extends State<_ProgressRing>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _animation = Tween<double>(begin: 0, end: widget.percent / 100)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProgressRing oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.percent != widget.percent) {
+      _animation = Tween<double>(
+        begin: _animation.value,
+        end: widget.percent / 100,
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: size,
-            height: size,
-            child: CircularProgressIndicator(
-              value: percent / 100,
-              strokeWidth: 5.w,
-              backgroundColor: Colors.white24,
-              valueColor: const AlwaysStoppedAnimation(Colors.white),
-              strokeCap: StrokeCap.round,
-            ),
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, _) {
+        final currentPercent = (_animation.value * 100).round();
+        return SizedBox(
+          width: widget.size,
+          height: widget.size,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: widget.size,
+                height: widget.size,
+                child: CircularProgressIndicator(
+                  value: _animation.value,
+                  strokeWidth: 5.w,
+                  backgroundColor: Colors.white24,
+                  valueColor: const AlwaysStoppedAnimation(Colors.white),
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              Text('$currentPercent%',
+                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: Colors.white)),
+            ],
           ),
-          Text('$percent%',
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: Colors.white)),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -247,7 +313,24 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(icon, style: TextStyle(fontSize: 18.sp)),
             SizedBox(height: 6.h),
-            Text(value, style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w800, color: color)),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.3),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: Text(value,
+                  key: ValueKey(value),
+                  style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w800, color: color)),
+            ),
             SizedBox(height: 2.h),
             Text(label, style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
           ],
@@ -332,11 +415,16 @@ class _CurrentPhaseCard extends StatelessWidget {
             SizedBox(height: 10.h),
             ClipRRect(
               borderRadius: BorderRadius.circular(3.r),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6.h,
-                backgroundColor: cs.outlineVariant.withValues(alpha: 0.3),
-                valueColor: AlwaysStoppedAnimation(cs.primary),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: progress),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, _) => LinearProgressIndicator(
+                  value: value,
+                  minHeight: 6.h,
+                  backgroundColor: cs.outlineVariant.withValues(alpha: 0.3),
+                  valueColor: AlwaysStoppedAnimation(cs.primary),
+                ),
               ),
             ),
             SizedBox(height: 12.h),

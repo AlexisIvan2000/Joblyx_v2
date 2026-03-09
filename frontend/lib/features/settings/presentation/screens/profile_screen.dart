@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/core/widgets/shimmer_loading.dart';
+import 'package:frontend/core/widgets/staggered_list.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
 import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
 import 'package:frontend/features/settings/presentation/widgets/edit_profile_dialog.dart';
@@ -24,7 +26,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: userAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const ProfileSkeleton(),
           error: (_, _) => Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -66,8 +68,11 @@ class ProfileScreen extends ConsumerWidget {
         ref.read(regenerationStatusProvider.notifier).refresh();
       },
       child: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
         children: [
+          StaggeredList(
+            children: [
           // Titre
           Text(t.t('profile_screen.title'),
               style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w800, color: cs.onSurface)),
@@ -197,6 +202,8 @@ class ProfileScreen extends ConsumerWidget {
 
           // Logout
           _LogoutButton(cs: cs, t: t),
+            ],
+          ),
         ],
       ),
     );

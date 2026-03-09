@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
+import 'package:frontend/core/widgets/shimmer_loading.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/phase_card.dart';
 
@@ -36,7 +37,7 @@ class RoadmapScreen extends ConsumerWidget {
         ],
       ),
       body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const RoadmapSkeleton()
           : _buildBody(context, ref, theme, cs, t, state),
     );
   }
@@ -163,6 +164,7 @@ class RoadmapScreen extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () => notifier.loadRoadmap(),
       child: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         children: [
           if (targetJobs.isNotEmpty)

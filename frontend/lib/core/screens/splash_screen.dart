@@ -11,8 +11,31 @@ class SplashScreen extends ConsumerStatefulWidget {
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with SingleTickerProviderStateMixin {
   bool _navigated = false;
+  late final AnimationController _controller;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,10 +83,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/images/joblyx_logo.png',
-              width: 150.w,
-              height: 150.h,
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Image.asset(
+                  'assets/images/joblyx_logo.png',
+                  width: 150.w,
+                  height: 150.h,
+                ),
+              ),
+            ),
+            SizedBox(height: 24.h),
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: SizedBox(
+                width: 28.w,
+                height: 28.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5.w,
+                  valueColor: AlwaysStoppedAnimation(
+                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
             ),
           ],
         ),

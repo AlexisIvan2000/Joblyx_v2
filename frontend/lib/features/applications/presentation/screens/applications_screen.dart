@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/core/widgets/shimmer_loading.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
 import 'package:frontend/features/roadmap/presentation/screens/dashboard_screen.dart';
 
@@ -39,7 +40,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     return Scaffold(
       body: SafeArea(
         child: appsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const ApplicationsSkeleton(),
           error: (_, _) => Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -60,6 +61,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
             return RefreshIndicator(
               onRefresh: () => ref.read(applicationsProvider.notifier).refresh(),
               child: ListView(
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                 padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
                 children: [
                   // Titre + bouton +
@@ -140,15 +142,20 @@ class _FilterChip extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () => onTap(key_),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
         decoration: BoxDecoration(
           color: isActive ? cs.onSurface : Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(20.r),
         ),
-        child: Text(label,
-            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600,
-                color: isActive ? cs.surface : cs.onSurfaceVariant)),
+        child: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 250),
+          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600,
+              color: isActive ? cs.surface : cs.onSurfaceVariant),
+          child: Text(label),
+        ),
       ),
     );
   }

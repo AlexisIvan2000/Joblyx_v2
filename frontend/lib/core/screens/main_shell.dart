@@ -60,12 +60,12 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
       _inAnimation = Tween<Offset>(
         begin: Offset(goingRight ? 1.0 : -1.0, 0.0),
         end: Offset.zero,
-      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
       _outAnimation = Tween<Offset>(
         begin: Offset.zero,
         end: Offset(goingRight ? -1.0 : 1.0, 0.0),
-      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
       _isAnimating = true;
       _controller.forward(from: 0.0);

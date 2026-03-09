@@ -70,20 +70,26 @@ GoRoute _slideRoute(String path, Widget Function(GoRouterState) builder) {
         final offsetAnimation = Tween<Offset>(
           begin: const Offset(1.0, 0.0),
           end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut));
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
 
         final secondaryOffset = Tween<Offset>(
           begin: Offset.zero,
-          end: const Offset(-0.3, 0.0),
-        ).animate(CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeInOut));
+          end: const Offset(-0.15, 0.0),
+        ).animate(CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeOutCubic));
+
+        final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0)
+            .animate(CurvedAnimation(parent: animation, curve: const Interval(0.0, 0.5)));
 
         return SlideTransition(
           position: secondaryOffset,
-          child: SlideTransition(position: offsetAnimation, child: child),
+          child: SlideTransition(
+            position: offsetAnimation,
+            child: FadeTransition(opacity: fadeAnimation, child: child),
+          ),
         );
       },
-      transitionDuration: const Duration(milliseconds: 300),
-      reverseTransitionDuration: const Duration(milliseconds: 250),
+      transitionDuration: const Duration(milliseconds: 350),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
     ),
   );
 }
