@@ -23,7 +23,10 @@ class DashboardScreen extends ConsumerWidget {
     final appsAsync = ref.watch(applicationsProvider);
     final regenAsync = ref.watch(regenerationStatusProvider);
 
-    final firstName = userAsync.whenOrNull(data: (u) => u['first_name'] as String?) ?? '';
+    final user = userAsync.whenOrNull(data: (u) => u);
+    final firstName = user?['first_name'] as String? ?? '';
+    final lastName = user?['last_name'] as String? ?? '';
+    final avatarUrl = user?['avatar_url'] as String?;
     final applications = appsAsync.whenOrNull(data: (a) => a) ?? [];
     final regenStatus = regenAsync.whenOrNull(data: (s) => s);
     final roadmap = roadmapState.roadmap;
@@ -57,32 +60,70 @@ class DashboardScreen extends ConsumerWidget {
 
     final keyMessage = roadmap?['summary']?['key_message'] as String? ?? '';
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.read(roadmapProvider.notifier).loadRoadmap();
-        ref.read(applicationsProvider.notifier).refresh();
-        ref.read(regenerationStatusProvider.notifier).refresh();
-        ref.read(userProvider.notifier).refresh();
-      },
-      child: ListView(
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
-        children: [
-          StaggeredList(
-            children: [
-              // Salutation
-              Column(
+    // Initiales pour l'avatar
+    final initials =
+        '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}'
+            .toUpperCase();
+
+    return Scaffold(
+      appBar: AppBar(
+        titleSpacing: 20.w,
+        title: Row(
+          children: [
+            GestureDetector(
+              onTap: () => context.go('/profile'),
+              child: CircleAvatar(
+                radius: 20.r,
+                backgroundColor: cs.primary.withValues(alpha: 0.1),
+                backgroundImage:
+                    avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                child: avatarUrl == null
+                    ? Text(initials,
+                        style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: cs.primary))
+                    : null,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(t.t('home.greeting'),
-                      style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant, fontWeight: FontWeight.w500)),
-                  SizedBox(height: 2.h),
+                      style: TextStyle(
+                          fontSize: 12.sp,
+                          color: cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w500)),
                   Text('$firstName \u{1F44B}',
-                      style: TextStyle(fontSize: 26.sp, fontWeight: FontWeight.w800, color: cs.onSurface, letterSpacing: -0.5)),
-                  SizedBox(height: 20.h),
+                      style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w800,
+                          color: cs.onSurface,
+                          letterSpacing: -0.3),
+                      overflow: TextOverflow.ellipsis),
                 ],
               ),
-
+            ),
+          ],
+        ),
+        actions: const [],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.read(roadmapProvider.notifier).loadRoadmap();
+          ref.read(applicationsProvider.notifier).refresh();
+          ref.read(regenerationStatusProvider.notifier).refresh();
+          ref.read(userProvider.notifier).refresh();
+        },
+        child: ListView(
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
+          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
+          children: [
+            StaggeredList(
+              children: [
               // Carte progression
               if (roadmap != null) ...[
                 Padding(
@@ -154,6 +195,7 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
         ],
+        ),
       ),
     );
   }

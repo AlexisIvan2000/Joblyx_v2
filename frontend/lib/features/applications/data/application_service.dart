@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:frontend/core/network/api_client.dart';
 
@@ -17,7 +19,7 @@ class ApplicationService {
   }
 
   Future<Map<String, dynamic>> create(Map<String, dynamic> data) async {
-    final formData = FormData.fromMap({'data': data.toString()});
+    final formData = FormData.fromMap({'data': jsonEncode(data)});
     final response = await _dio.post('/applications', data: formData);
     return response.data as Map<String, dynamic>;
   }

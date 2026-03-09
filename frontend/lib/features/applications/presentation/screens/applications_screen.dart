@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/core/widgets/shimmer_loading.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
+import 'package:frontend/features/applications/presentation/widgets/add_application_dialog.dart';
 import 'package:frontend/features/roadmap/presentation/screens/dashboard_screen.dart';
 
 class ApplicationsScreen extends ConsumerStatefulWidget {
@@ -29,6 +31,21 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     // closed
     return apps.where((a) =>
         ['rejected', 'withdrawn', 'accepted'].contains(a['status'])).toList();
+  }
+
+  Future<void> _openAddDialog(BuildContext context, WidgetRef ref, AppLocalizations t) async {
+    final data = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => const AddApplicationDialog(),
+    );
+    if (data == null || !context.mounted) return;
+    try {
+      await ref.read(applicationsProvider.notifier).create(data);
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackbar.error(context, t.t('applications_screen.add_error'));
+      }
+    }
   }
 
   @override
@@ -80,9 +97,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                         child: IconButton(
                           icon: Icon(Icons.add, color: Colors.white, size: 20.sp),
                           padding: EdgeInsets.zero,
-                          onPressed: () {
-                            // TODO: ouvrir le formulaire d'ajout
-                          },
+                          onPressed: () => _openAddDialog(context, ref, t),
                         ),
                       ),
                     ],

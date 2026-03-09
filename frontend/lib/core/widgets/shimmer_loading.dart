@@ -95,47 +95,38 @@ class DashboardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShimmerLoading(
-      child: Padding(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Greeting
-            SkeletonBox(width: 80.w, height: 14.h),
-            SizedBox(height: 6.h),
-            SkeletonBox(width: 160.w, height: 28.h),
-            SizedBox(height: 20.h),
-            // Progress card
-            SkeletonBox(width: double.infinity, height: 120.h, borderRadius: 20),
-            SizedBox(height: 20.h),
-            // Stat cards row
-            Row(
-              children: [
-                Expanded(child: SkeletonBox(width: double.infinity, height: 90.h, borderRadius: 14)),
-                SizedBox(width: 10.w),
-                Expanded(child: SkeletonBox(width: double.infinity, height: 90.h, borderRadius: 14)),
-                SizedBox(width: 10.w),
-                Expanded(child: SkeletonBox(width: double.infinity, height: 90.h, borderRadius: 14)),
-              ],
-            ),
-            SizedBox(height: 24.h),
-            // Section header
-            SkeletonBox(width: 140.w, height: 18.h),
-            SizedBox(height: 12.h),
-            // Phase card
-            SkeletonBox(width: double.infinity, height: 140.h, borderRadius: 16),
-            SizedBox(height: 24.h),
-            // Section header
-            SkeletonBox(width: 180.w, height: 18.h),
-            SizedBox(height: 12.h),
-            // Application tiles
-            SkeletonBox(width: double.infinity, height: 60.h, borderRadius: 14),
-            SizedBox(height: 8.h),
-            SkeletonBox(width: double.infinity, height: 60.h, borderRadius: 14),
-            SizedBox(height: 8.h),
-            SkeletonBox(width: double.infinity, height: 60.h, borderRadius: 14),
-          ],
-        ),
+        children: [
+          SkeletonBox(width: 80.w, height: 14.h),
+          SizedBox(height: 6.h),
+          SkeletonBox(width: 160.w, height: 28.h),
+          SizedBox(height: 20.h),
+          SkeletonBox(width: double.infinity, height: 120.h, borderRadius: 20),
+          SizedBox(height: 20.h),
+          Row(
+            children: [
+              Expanded(child: SkeletonBox(width: double.infinity, height: 90.h, borderRadius: 14)),
+              SizedBox(width: 10.w),
+              Expanded(child: SkeletonBox(width: double.infinity, height: 90.h, borderRadius: 14)),
+              SizedBox(width: 10.w),
+              Expanded(child: SkeletonBox(width: double.infinity, height: 90.h, borderRadius: 14)),
+            ],
+          ),
+          SizedBox(height: 24.h),
+          SkeletonBox(width: 140.w, height: 18.h),
+          SizedBox(height: 12.h),
+          SkeletonBox(width: double.infinity, height: 140.h, borderRadius: 16),
+          SizedBox(height: 24.h),
+          SkeletonBox(width: 180.w, height: 18.h),
+          SizedBox(height: 12.h),
+          SkeletonBox(width: double.infinity, height: 60.h, borderRadius: 14),
+          SizedBox(height: 8.h),
+          SkeletonBox(width: double.infinity, height: 60.h, borderRadius: 14),
+          SizedBox(height: 8.h),
+          SkeletonBox(width: double.infinity, height: 60.h, borderRadius: 14),
+        ],
       ),
     );
   }
@@ -148,34 +139,29 @@ class ApplicationsSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShimmerLoading(
-      child: Padding(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title
-            SkeletonBox(width: 180.w, height: 24.h),
-            SizedBox(height: 16.h),
-            // Filter chips
-            Row(
-              children: [
-                SkeletonBox(width: 60.w, height: 32.h, borderRadius: 20),
-                SizedBox(width: 6.w),
-                SkeletonBox(width: 70.w, height: 32.h, borderRadius: 20),
-                SizedBox(width: 6.w),
-                SkeletonBox(width: 80.w, height: 32.h, borderRadius: 20),
-                SizedBox(width: 6.w),
-                SkeletonBox(width: 65.w, height: 32.h, borderRadius: 20),
-              ],
-            ),
-            SizedBox(height: 16.h),
-            // Cards
-            for (int i = 0; i < 5; i++) ...[
-              SkeletonBox(width: double.infinity, height: 72.h, borderRadius: 14),
-              SizedBox(height: 8.h),
+        children: [
+          SkeletonBox(width: 180.w, height: 24.h),
+          SizedBox(height: 16.h),
+          Row(
+            children: [
+              SkeletonBox(width: 60.w, height: 32.h, borderRadius: 20),
+              SizedBox(width: 6.w),
+              SkeletonBox(width: 70.w, height: 32.h, borderRadius: 20),
+              SizedBox(width: 6.w),
+              SkeletonBox(width: 80.w, height: 32.h, borderRadius: 20),
+              SizedBox(width: 6.w),
+              SkeletonBox(width: 65.w, height: 32.h, borderRadius: 20),
             ],
+          ),
+          SizedBox(height: 16.h),
+          for (int i = 0; i < 5; i++) ...[
+            SkeletonBox(width: double.infinity, height: 72.h, borderRadius: 14),
+            SizedBox(height: 8.h),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -188,37 +174,31 @@ class ProfileSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShimmerLoading(
-      child: Padding(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title
-            SkeletonBox(width: 100.w, height: 24.h),
-            SizedBox(height: 24.h),
-            // Avatar
-            Center(
-              child: Column(
-                children: [
-                  SkeletonBox(width: 96.w, height: 96.w, borderRadius: 48),
-                  SizedBox(height: 14.h),
-                  SkeletonBox(width: 140.w, height: 22.h),
-                  SizedBox(height: 6.h),
-                  SkeletonBox(width: 180.w, height: 14.h),
-                ],
-              ),
+        children: [
+          SkeletonBox(width: 100.w, height: 24.h),
+          SizedBox(height: 24.h),
+          Center(
+            child: Column(
+              children: [
+                SkeletonBox(width: 96.w, height: 96.w, borderRadius: 48),
+                SizedBox(height: 14.h),
+                SkeletonBox(width: 140.w, height: 22.h),
+                SizedBox(height: 6.h),
+                SkeletonBox(width: 180.w, height: 14.h),
+              ],
             ),
-            SizedBox(height: 24.h),
-            // Stats
-            SkeletonBox(width: double.infinity, height: 56.h, borderRadius: 14),
-            SizedBox(height: 24.h),
-            // Menu items
-            for (int i = 0; i < 6; i++) ...[
-              SkeletonBox(width: double.infinity, height: 68.h, borderRadius: 14),
-              SizedBox(height: 4.h),
-            ],
+          ),
+          SizedBox(height: 24.h),
+          SkeletonBox(width: double.infinity, height: 56.h, borderRadius: 14),
+          SizedBox(height: 24.h),
+          for (int i = 0; i < 6; i++) ...[
+            SkeletonBox(width: double.infinity, height: 68.h, borderRadius: 14),
+            SizedBox(height: 4.h),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -231,46 +211,42 @@ class RoadmapSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShimmerLoading(
-      child: Padding(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Chips
+        children: [
+          Row(
+            children: [
+              SkeletonBox(width: 90.w, height: 32.h, borderRadius: 16),
+              SizedBox(width: 8.w),
+              SkeletonBox(width: 110.w, height: 32.h, borderRadius: 16),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          for (int i = 0; i < 3; i++) ...[
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SkeletonBox(width: 90.w, height: 32.h, borderRadius: 16),
-                SizedBox(width: 8.w),
-                SkeletonBox(width: 110.w, height: 32.h, borderRadius: 16),
+                Column(
+                  children: [
+                    SkeletonBox(width: 24.w, height: 24.w, borderRadius: 12),
+                    SizedBox(height: 4.h),
+                    SkeletonBox(width: 2.w, height: 100.h, borderRadius: 1),
+                  ],
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: SkeletonBox(
+                    width: double.infinity,
+                    height: 120.h,
+                    borderRadius: 14,
+                  ),
+                ),
               ],
             ),
-            SizedBox(height: 16.h),
-            // Phase cards
-            for (int i = 0; i < 3; i++) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    children: [
-                      SkeletonBox(width: 24.w, height: 24.w, borderRadius: 12),
-                      SizedBox(height: 4.h),
-                      SkeletonBox(width: 2.w, height: 100.h, borderRadius: 1),
-                    ],
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: SkeletonBox(
-                      width: double.infinity,
-                      height: 120.h,
-                      borderRadius: 14,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-            ],
+            SizedBox(height: 12.h),
           ],
-        ),
+        ],
       ),
     );
   }
