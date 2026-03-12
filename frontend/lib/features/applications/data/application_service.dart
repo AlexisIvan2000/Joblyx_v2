@@ -18,8 +18,19 @@ class ApplicationService {
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> create(Map<String, dynamic> data) async {
-    final formData = FormData.fromMap({'data': jsonEncode(data)});
+  Future<Map<String, dynamic>> create(
+    Map<String, dynamic> data, {
+    String? cvPath,
+    String? cvFilename,
+  }) async {
+    final map = <String, dynamic>{'data': jsonEncode(data)};
+    if (cvPath != null) {
+      map['cv'] = await MultipartFile.fromFile(
+        cvPath,
+        filename: cvFilename ?? 'cv.pdf',
+      );
+    }
+    final formData = FormData.fromMap(map);
     final response = await _dio.post('/applications', data: formData);
     return response.data as Map<String, dynamic>;
   }

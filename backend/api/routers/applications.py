@@ -49,7 +49,7 @@ async def create_application(
 
     app = await svc.create(
         user_id=str(current_user.id),
-        data=body.model_dump(),
+        data=body.model_dump(exclude_none=True),
         cv_bytes=cv_bytes,
         cv_filename=cv_filename,
     )

@@ -1,6 +1,14 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+
+/// Result returned by the dialog: form data + optional CV file.
+class AddApplicationResult {
+  final Map<String, dynamic> data;
+  final PlatformFile? cvFile;
+  const AddApplicationResult({required this.data, this.cvFile});
+}
 
 class AddApplicationDialog extends StatefulWidget {
   const AddApplicationDialog({super.key});
@@ -14,17 +22,41 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
   final _companyController = TextEditingController();
   final _jobTitleController = TextEditingController();
   final _jobUrlController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final _notesController = TextEditingController();
   String _status = 'applied';
   bool _showOptional = false;
+  PlatformFile? _cvFile;
+  DateTime _appliedAt = DateTime.now();
 
   @override
   void dispose() {
     _companyController.dispose();
     _jobTitleController.dispose();
     _jobUrlController.dispose();
+    _descriptionController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickCv(AppLocalizations t) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+      // Max 5 MB
+      if (file.size > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(t.t('applications_screen.cv_too_large'))),
+          );
+        }
+        return;
+      }
+      setState(() => _cvFile = file);
+    }
   }
 
   @override
@@ -69,7 +101,7 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
                 controller: _companyController,
                 textInputAction: TextInputAction.next,
                 decoration: _inputDecoration(
-                  t.t('applications_screen.company_hint'), cs),
+                    t.t('applications_screen.company_hint'), cs),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? t.t('applications_screen.field_required')
                     : null,
@@ -83,7 +115,7 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
                 controller: _jobTitleController,
                 textInputAction: TextInputAction.next,
                 decoration: _inputDecoration(
-                  t.t('applications_screen.job_title_hint'), cs),
+                    t.t('applications_screen.job_title_hint'), cs),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? t.t('applications_screen.field_required')
                     : null,
@@ -98,6 +130,57 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
                 cs: cs,
                 t: t,
                 onChanged: (s) => setState(() => _status = s),
+              ),
+              SizedBox(height: 14.h),
+
+              // Date
+              _buildLabel(t.t('applications_screen.date_label'), cs),
+              SizedBox(height: 6.h),
+              GestureDetector(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _appliedAt,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) setState(() => _appliedAt = picked);
+                },
+                child: Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                        color: cs.outlineVariant.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_rounded,
+                          size: 18.sp, color: cs.onSurfaceVariant),
+                      SizedBox(width: 10.w),
+                      Text(
+                        '${_appliedAt.day.toString().padLeft(2, '0')}/${_appliedAt.month.toString().padLeft(2, '0')}/${_appliedAt.year}',
+                        style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 14.h),
+
+              // CV upload
+              _buildLabel(t.t('applications_screen.cv_label'), cs),
+              SizedBox(height: 6.h),
+              _CvPicker(
+                file: _cvFile,
+                cs: cs,
+                t: t,
+                onPick: () => _pickCv(t),
+                onRemove: () => setState(() => _cvFile = null),
               ),
               SizedBox(height: 14.h),
 
@@ -132,7 +215,6 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(height: 14.h),
-                          // Job URL
                           _buildLabel(
                               t.t('applications_screen.job_url_label'), cs),
                           SizedBox(height: 6.h),
@@ -141,10 +223,20 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
                             textInputAction: TextInputAction.next,
                             keyboardType: TextInputType.url,
                             decoration: _inputDecoration(
-                              t.t('applications_screen.job_url_hint'), cs),
+                                t.t('applications_screen.job_url_hint'), cs),
                           ),
                           SizedBox(height: 14.h),
-                          // Notes
+                          _buildLabel(
+                              t.t('applications_screen.description_label'), cs),
+                          SizedBox(height: 6.h),
+                          TextFormField(
+                            controller: _descriptionController,
+                            textInputAction: TextInputAction.next,
+                            maxLines: 4,
+                            decoration: _inputDecoration(
+                                t.t('applications_screen.description_hint'), cs),
+                          ),
+                          SizedBox(height: 14.h),
                           _buildLabel(
                               t.t('applications_screen.notes_label'), cs),
                           SizedBox(height: 6.h),
@@ -153,7 +245,7 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
                             textInputAction: TextInputAction.done,
                             maxLines: 3,
                             decoration: _inputDecoration(
-                              t.t('applications_screen.notes_hint'), cs),
+                                t.t('applications_screen.notes_hint'), cs),
                           ),
                         ],
                       )
@@ -203,7 +295,8 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.r),
-        borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+        borderSide:
+            BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.r),
@@ -223,17 +316,114 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
       'company_name': _companyController.text.trim(),
       'job_title': _jobTitleController.text.trim(),
       'status': _status,
+      'applied_at': _appliedAt.toIso8601String(),
     };
 
     final url = _jobUrlController.text.trim();
     if (url.isNotEmpty) data['job_url'] = url;
 
+    final description = _descriptionController.text.trim();
+    if (description.isNotEmpty) data['job_description'] = description;
+
     final notes = _notesController.text.trim();
     if (notes.isNotEmpty) data['notes'] = notes;
 
-    Navigator.pop(context, data);
+    Navigator.pop(
+        context, AddApplicationResult(data: data, cvFile: _cvFile));
   }
 }
+
+// ─── CV Picker widget ───────────────────────────────────────────
+
+class _CvPicker extends StatelessWidget {
+  final PlatformFile? file;
+  final ColorScheme cs;
+  final AppLocalizations t;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  const _CvPicker({
+    required this.file,
+    required this.cs,
+    required this.t,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (file != null) {
+      final sizeMb = (file!.size / 1024 / 1024).toStringAsFixed(1);
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.picture_as_pdf_rounded,
+                size: 24.sp, color: cs.primary),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(file!.name,
+                      style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface),
+                      overflow: TextOverflow.ellipsis),
+                  Text('$sizeMb MB',
+                      style: TextStyle(
+                          fontSize: 11.sp, color: cs.onSurfaceVariant)),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: onRemove,
+              icon: Icon(Icons.close_rounded,
+                  size: 18.sp, color: cs.onSurfaceVariant),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: onPick,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 16.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: cs.outlineVariant.withValues(alpha: 0.5),
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.upload_file_rounded,
+                size: 20.sp, color: cs.onSurfaceVariant),
+            SizedBox(width: 8.w),
+            Text(t.t('applications_screen.cv_pick'),
+                style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurfaceVariant)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Status Selector ────────────────────────────────────────────
 
 class _StatusSelector extends StatelessWidget {
   final String current;
@@ -276,7 +466,8 @@ class _StatusSelector extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? cs.onPrimary : cs.onSurfaceVariant)),
+                    color:
+                        isSelected ? cs.onPrimary : cs.onSurfaceVariant)),
           ),
         );
       }).toList(),

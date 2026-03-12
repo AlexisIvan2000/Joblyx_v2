@@ -53,6 +53,6 @@ app.include_router(onboarding_router)
 app.include_router(roadmap_router)
 app.include_router(applications_router)
 
-@app.route("/health", methods=["GET"])
+@app.get("/health")
 async def health_check():
     return {"status": "ok"}

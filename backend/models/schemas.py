@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from enum import Enum
 from typing import List
 from pydantic import BaseModel, EmailStr, field_validator
@@ -279,6 +280,7 @@ class ApplicationCreate(BaseModel):
     job_description: str | None = None
     status: ApplicationStatus = ApplicationStatus.applied
     notes: str | None = None
+    applied_at: datetime | None = None
 
     @field_validator("company_name", "job_title")
     @classmethod

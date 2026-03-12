@@ -34,13 +34,17 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
   }
 
   Future<void> _openAddDialog(BuildContext context, WidgetRef ref, AppLocalizations t) async {
-    final data = await showDialog<Map<String, dynamic>>(
+    final result = await showDialog<AddApplicationResult>(
       context: context,
       builder: (_) => const AddApplicationDialog(),
     );
-    if (data == null || !context.mounted) return;
+    if (result == null || !context.mounted) return;
     try {
-      await ref.read(applicationsProvider.notifier).create(data);
+      await ref.read(applicationsProvider.notifier).create(
+        result.data,
+        cvPath: result.cvFile?.path,
+        cvFilename: result.cvFile?.name,
+      );
     } catch (_) {
       if (context.mounted) {
         AppSnackbar.error(context, t.t('applications_screen.add_error'));

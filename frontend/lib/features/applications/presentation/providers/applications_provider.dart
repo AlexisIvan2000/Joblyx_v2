@@ -25,9 +25,13 @@ class ApplicationsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
     });
   }
 
-  Future<void> create(Map<String, dynamic> data) async {
+  Future<void> create(
+    Map<String, dynamic> data, {
+    String? cvPath,
+    String? cvFilename,
+  }) async {
     final svc = ref.read(applicationServiceProvider);
-    await svc.create(data);
+    await svc.create(data, cvPath: cvPath, cvFilename: cvFilename);
     await refresh();
   }
 
