@@ -11,6 +11,7 @@ import 'package:frontend/features/onboarding/presentation/screens/onboarding_scr
 import 'package:frontend/features/roadmap/presentation/screens/dashboard_screen.dart';
 import 'package:frontend/features/roadmap/presentation/screens/roadmap_screen.dart';
 import 'package:frontend/features/applications/presentation/screens/applications_screen.dart';
+import 'package:frontend/features/applications/presentation/screens/application_detail_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/profile_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
 
@@ -34,6 +35,8 @@ final appRouter = GoRouter(
     _slideRoute(AppRoutes.loading, (_) => const LoadingTransition()),
     _slideRoute(AppRoutes.onboarding, (_) => const OnboardingScreen()),
     _slideRoute(AppRoutes.settings, (_) => const SettingsScreen()),
+    _slideRoute(AppRoutes.applicationDetail, (state) =>
+        ApplicationDetailScreen(applicationId: state.pathParameters['id']!)),
 
     // Shell avec bottom navigation
     ShellRoute(

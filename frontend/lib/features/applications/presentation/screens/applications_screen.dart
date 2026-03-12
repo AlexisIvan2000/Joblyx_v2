@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/core/widgets/shimmer_loading.dart';
@@ -138,7 +139,13 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                   else
                     ...filtered.map((app) => Padding(
                       padding: EdgeInsets.only(bottom: 8.h),
-                      child: _AppCard(app: app, cs: cs, t: t),
+                      child: GestureDetector(
+                        onTap: () {
+                          final id = app['id'] as String?;
+                          if (id != null) context.push('/applications/$id');
+                        },
+                        child: _AppCard(app: app, cs: cs, t: t),
+                      ),
                     )),
                 ],
               ),

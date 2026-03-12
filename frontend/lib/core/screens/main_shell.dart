@@ -23,8 +23,6 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
 
   late final AnimationController _controller;
   Animation<Offset>? _inAnimation;
-  Animation<Offset>? _outAnimation;
-  Widget? _previousChild;
   bool _isAnimating = false;
 
   @override
@@ -35,10 +33,7 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
       duration: const Duration(milliseconds: 250),
     )..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          setState(() {
-            _isAnimating = false;
-            _previousChild = null;
-          });
+          setState(() => _isAnimating = false);
         }
       });
   }
@@ -55,16 +50,9 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
     if (oldWidget.currentIndex != widget.currentIndex) {
       final goingRight = widget.currentIndex > oldWidget.currentIndex;
 
-      _previousChild = oldWidget.child;
-
       _inAnimation = Tween<Offset>(
         begin: Offset(goingRight ? 1.0 : -1.0, 0.0),
         end: Offset.zero,
-      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-
-      _outAnimation = Tween<Offset>(
-        begin: Offset.zero,
-        end: Offset(goingRight ? -1.0 : 1.0, 0.0),
       ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
       _isAnimating = true;
@@ -78,13 +66,8 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
     final t = AppLocalizations.of(context);
 
     final Widget body;
-    if (_isAnimating && _previousChild != null && _inAnimation != null && _outAnimation != null) {
-      body = Stack(
-        children: [
-          SlideTransition(position: _outAnimation!, child: _previousChild!),
-          SlideTransition(position: _inAnimation!, child: widget.child),
-        ],
-      );
+    if (_isAnimating && _inAnimation != null) {
+      body = SlideTransition(position: _inAnimation!, child: widget.child);
     } else {
       body = widget.child;
     }

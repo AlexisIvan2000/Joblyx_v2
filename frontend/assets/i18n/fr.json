@@ -62,6 +62,20 @@
         "delete_error": "Impossible de supprimer la candidature"
     },
 
+    "application_detail": {
+        "delete": "Supprimer",
+        "delete_title": "Supprimer la candidature",
+        "delete_confirm": "Voulez-vous vraiment supprimer cette candidature ?",
+        "applied_on": "Postulée le",
+        "job_url": "Voir l'offre",
+        "cv": "Voir le CV",
+        "description": "Description du poste",
+        "notes": "Notes",
+        "updated": "Mis à jour le",
+        "update_status": "Mettre à jour le statut",
+        "update_error": "Impossible de mettre à jour le statut"
+    },
+
     "profile_screen": {
         "title": "Profil",
         "regenerations_left": "Régénérations restantes",

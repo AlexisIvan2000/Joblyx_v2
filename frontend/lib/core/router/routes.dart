@@ -8,6 +8,7 @@ class AppRoutes {
   static const dashboard = '/dashboard';
   static const roadmap = '/roadmap';
   static const applications = '/applications';
+  static const applicationDetail = '/applications/:id';
   static const profile = '/profile';
   static const settings = '/settings';
 }
