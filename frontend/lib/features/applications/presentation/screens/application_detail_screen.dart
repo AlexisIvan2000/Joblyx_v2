@@ -341,6 +341,7 @@ class _ApplicationDetailScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(t.t('application_detail.delete_title')),
         content: Text(t.t('application_detail.delete_confirm')),
         actions: [

@@ -45,8 +45,9 @@ class ApplicationRepository:
             .values(**data)
         )
         await self.session.flush()
-        # Recharger pour avoir les valeurs à jour
-        return await self.get_by_id(app_id, user_id)
+        # Expirer le cache pour forcer la relecture depuis la DB
+        await self.session.refresh(existing)
+        return existing
 
     async def delete(self, app_id: str, user_id: str) -> Application | None:
         existing = await self.get_by_id(app_id, user_id)
