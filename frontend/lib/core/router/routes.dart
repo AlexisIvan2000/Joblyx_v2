@@ -11,4 +11,7 @@ class AppRoutes {
   static const applicationDetail = '/applications/:id';
   static const profile = '/profile';
   static const settings = '/settings';
+  static const roadmapHistory = '/roadmap/history';
+  static const roadmapDetail = '/roadmap/history/:id';
+  static const createRoadmap = '/roadmap/create';
 }

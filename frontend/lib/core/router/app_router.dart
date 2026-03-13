@@ -13,6 +13,9 @@ import 'package:frontend/features/roadmap/presentation/screens/roadmap_screen.da
 import 'package:frontend/features/applications/presentation/screens/applications_screen.dart';
 import 'package:frontend/features/applications/presentation/screens/application_detail_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/profile_screen.dart';
+import 'package:frontend/features/roadmap/presentation/screens/create_roadmap_screen.dart';
+import 'package:frontend/features/roadmap/presentation/screens/roadmap_detail_screen.dart';
+import 'package:frontend/features/roadmap/presentation/screens/roadmap_history_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
@@ -35,6 +38,10 @@ final appRouter = GoRouter(
     _slideRoute(AppRoutes.loading, (_) => const LoadingTransition()),
     _slideRoute(AppRoutes.onboarding, (_) => const OnboardingScreen()),
     _slideRoute(AppRoutes.settings, (_) => const SettingsScreen()),
+    _slideRoute(AppRoutes.createRoadmap, (_) => const CreateRoadmapScreen()),
+    _slideRoute(AppRoutes.roadmapHistory, (_) => const RoadmapHistoryScreen()),
+    _slideRoute(AppRoutes.roadmapDetail, (state) =>
+        RoadmapDetailScreen(roadmapId: state.pathParameters['id']!)),
     _slideRoute(AppRoutes.applicationDetail, (state) =>
         ApplicationDetailScreen(applicationId: state.pathParameters['id']!)),
 

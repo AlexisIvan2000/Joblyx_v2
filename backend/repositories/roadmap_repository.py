@@ -55,6 +55,18 @@ class RoadmapRepository:
         )
         return list(result.scalars().all())
 
+    # Restaure un roadmap archivé → le rend actif
+    async def restore(self, roadmap_id: str, user_id: str) -> Roadmap | None:
+        roadmap = await self.get_by_id(roadmap_id, user_id)
+        if not roadmap or roadmap.status != "archived":
+            return None
+        # Archiver le roadmap actif actuel
+        await self.archive_active(user_id)
+        # Réactiver l'ancien
+        roadmap.status = "active"
+        await self.session.flush()
+        return roadmap
+
     # Met à jour le generation_status sur career
     async def set_generation_status(self, user_id: str, status: str) -> None:
         await self.session.execute(

@@ -9,6 +9,8 @@ import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/core/widgets/shimmer_loading.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/phase_card.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/add_phase_dialog.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/edit_notes_dialog.dart';
 
 class RoadmapScreen extends ConsumerWidget {
   const RoadmapScreen({super.key});
@@ -24,27 +26,40 @@ class RoadmapScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(t.t('dashboard.title')),
         actions: [
+          // Bouton régénérer
           if (state.hasRoadmap && state.generationStatus != 'generating')
             IconButton(
               onPressed: () => _regenerate(context, ref, t),
               icon: Icon(Icons.refresh_rounded, size: 22.sp),
               tooltip: t.t('dashboard.regenerate'),
             ),
+          // Bouton historique
           IconButton(
-            onPressed: () => context.push('/settings'),
-            icon: Icon(Icons.settings_outlined, size: 22.sp),
+            onPressed: () => context.push('/roadmap/history'),
+            icon: Icon(Icons.history_rounded, size: 22.sp),
+            tooltip: t.t('dashboard.history'),
           ),
         ],
       ),
+      // FAB pour ajouter une phase custom
+      floatingActionButton: (state.hasRoadmap && state.generationStatus != 'generating')
+          ? FloatingActionButton(
+              onPressed: () => _addPhase(context, ref, t),
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: state.isLoading
           ? const RoadmapSkeleton()
           : _buildBody(context, ref, theme, cs, t, state),
     );
   }
 
+  /// Régénérer le roadmap.
   Future<void> _regenerate(BuildContext context, WidgetRef ref, AppLocalizations t) async {
     try {
       await ref.read(roadmapProvider.notifier).generate();
+      // Rafraîchir le compteur de régénérations
+      ref.read(regenerationStatusProvider.notifier).refresh();
     } on DioException catch (e) {
       if (!context.mounted) return;
       if (e.response?.statusCode == 429) {
@@ -59,6 +74,91 @@ class RoadmapScreen extends ConsumerWidget {
         AppSnackbar.error(context, message);
       }
     } catch (_) {}
+  }
+
+  /// Ouvrir le dialog d'ajout de phase custom.
+  Future<void> _addPhase(BuildContext context, WidgetRef ref, AppLocalizations t) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => const AddPhaseDialog(),
+    );
+    if (result == null || !context.mounted) return;
+    try {
+      await ref.read(roadmapProvider.notifier).addPhase(result);
+      if (context.mounted) {
+        AppSnackbar.success(context, t.t('dashboard.phase_added'));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackbar.error(context, t.t('dashboard.add_phase_error'));
+      }
+    }
+  }
+
+  /// Confirmer puis supprimer une phase.
+  Future<void> _deletePhase(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    int phaseNumber,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text(t.t('dashboard.delete_phase')),
+        content: Text(t.t('dashboard.delete_phase_confirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.t('settings.cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              t.t('application_detail.delete'),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await ref.read(roadmapProvider.notifier).deletePhase(phaseNumber);
+      if (context.mounted) {
+        AppSnackbar.success(context, t.t('dashboard.phase_deleted'));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackbar.error(context, t.t('dashboard.delete_phase_error'));
+      }
+    }
+  }
+
+  /// Ouvrir le dialog d'édition des notes.
+  Future<void> _editNotes(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    int phaseNumber,
+    String currentNotes,
+  ) async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => EditNotesDialog(initialNotes: currentNotes),
+    );
+    if (result == null || !context.mounted) return;
+    try {
+      await ref.read(roadmapProvider.notifier).updatePhaseNotes(phaseNumber, result);
+      if (context.mounted) {
+        AppSnackbar.success(context, t.t('dashboard.notes_saved'));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackbar.error(context, t.t('dashboard.notes_error'));
+      }
+    }
   }
 
   Widget _buildBody(BuildContext context, WidgetRef ref, ThemeData theme, ColorScheme cs, AppLocalizations t, RoadmapState state) {
@@ -149,6 +249,12 @@ class RoadmapScreen extends ConsumerWidget {
               icon: const Icon(Icons.auto_awesome_rounded),
               label: Text(t.t('dashboard.generate')),
             ),
+            SizedBox(height: 12.h),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/roadmap/create'),
+              icon: const Icon(Icons.edit_note_rounded),
+              label: Text(t.t('dashboard.create_roadmap')),
+            ),
           ],
         ),
       ),
@@ -205,9 +311,13 @@ class RoadmapScreen extends ConsumerWidget {
                   }
                 }
               },
+              onDeletePhase: (phaseNumber) => _deletePhase(context, ref, t, phaseNumber),
+              onEditNotes: (phaseNumber, currentNotes) =>
+                  _editNotes(context, ref, t, phaseNumber, currentNotes),
             );
           }),
-          SizedBox(height: 20.h),
+          // Espace pour le FAB
+          SizedBox(height: 80.h),
         ],
       ),
     );

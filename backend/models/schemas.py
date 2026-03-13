@@ -238,6 +238,10 @@ class RoadmapPhaseCreate(BaseModel):
     user_notes: str | None = None
     position: int | None = None
 
+class RoadmapCreate(BaseModel):
+    target_jobs: List[str]
+    phases: List[RoadmapPhaseCreate]
+
 class RoadmapPhasesUpdate(BaseModel):
     phases: List[RoadmapPhase]
 

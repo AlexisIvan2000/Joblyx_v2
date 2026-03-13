@@ -18,9 +18,31 @@ class RoadmapService {
     await _dio.post('/roadmap/generate');
   }
 
+  /// Crée un roadmap manuellement (sans IA)
+  Future<Map<String, dynamic>> createRoadmap(
+      List<String> targetJobs, List<Map<String, dynamic>> phases) async {
+    final response = await _dio.post('/roadmap/create', data: {
+      'target_jobs': targetJobs,
+      'phases': phases,
+    });
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<List<dynamic>> getHistory() async {
     final response = await _dio.get('/roadmap/history');
     return response.data as List<dynamic>;
+  }
+
+  /// Récupère un roadmap par son ID (actif ou archivé)
+  Future<Map<String, dynamic>> getRoadmapById(String roadmapId) async {
+    final response = await _dio.get('/roadmap/$roadmapId');
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// Restaure un roadmap archivé (archive le courant, réactive celui-ci)
+  Future<Map<String, dynamic>> restoreRoadmap(String roadmapId) async {
+    final response = await _dio.post('/roadmap/$roadmapId/restore');
+    return response.data as Map<String, dynamic>;
   }
 
   /// Retourne {used, limit, remaining, resets_at}

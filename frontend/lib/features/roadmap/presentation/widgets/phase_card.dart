@@ -12,6 +12,10 @@ class PhaseCard extends StatefulWidget {
   final void Function(int phaseNumber)? onTogglePhaseComplete;
   final void Function(int phaseNumber, int actionIndex)? onToggleActionComplete;
 
+  /// Callbacks pour modification
+  final void Function(int phaseNumber)? onDeletePhase;
+  final void Function(int phaseNumber, String currentNotes)? onEditNotes;
+
   const PhaseCard({
     super.key,
     required this.index,
@@ -19,6 +23,8 @@ class PhaseCard extends StatefulWidget {
     required this.isLast,
     this.onTogglePhaseComplete,
     this.onToggleActionComplete,
+    this.onDeletePhase,
+    this.onEditNotes,
   });
 
   @override
@@ -110,6 +116,9 @@ class _PhaseCardState extends State<PhaseCard> {
               clipBehavior: Clip.antiAlias,
               child: InkWell(
                 onTap: () => setState(() => _expanded = !_expanded),
+                onLongPress: (widget.onDeletePhase != null || widget.onEditNotes != null)
+                    ? () => _showContextMenu(context, cs, t, phaseNumber, userNotes)
+                    : null,
                 child: Padding(
                   padding: EdgeInsets.all(14.w),
                   child: Column(
@@ -535,6 +544,65 @@ class _PhaseCardState extends State<PhaseCard> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Menu contextuel (long press) pour modifier/supprimer une phase.
+  void _showContextMenu(
+    BuildContext context,
+    ColorScheme cs,
+    AppLocalizations t,
+    int phaseNumber,
+    String currentNotes,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cs.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: 8.h),
+            // Indicateur de drag
+            Container(
+              width: 36.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: cs.onSurfaceVariant.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            SizedBox(height: 8.h),
+            // Option : modifier les notes
+            if (widget.onEditNotes != null)
+              ListTile(
+                leading: Icon(Icons.edit_note_rounded, color: cs.primary),
+                title: Text(t.t('dashboard.edit_notes')),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  widget.onEditNotes!(phaseNumber, currentNotes);
+                },
+              ),
+            // Option : supprimer la phase
+            if (widget.onDeletePhase != null)
+              ListTile(
+                leading: Icon(Icons.delete_outline_rounded, color: cs.error),
+                title: Text(
+                  t.t('dashboard.delete_phase'),
+                  style: TextStyle(color: cs.error),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  widget.onDeletePhase!(phaseNumber);
+                },
+              ),
+            SizedBox(height: 8.h),
+          ],
+        ),
       ),
     );
   }

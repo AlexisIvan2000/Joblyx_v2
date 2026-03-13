@@ -1,10 +1,10 @@
 import uuid
-from datetime import datetime, timezone
-
 import sqlalchemy as sa
+
 from sqlalchemy import String, Boolean, DateTime, ForeignKey, Text, Integer, UniqueConstraint, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from datetime import datetime, timezone
 
 
 class Base(DeclarativeBase):

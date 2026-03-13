@@ -128,6 +128,52 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
         await _svc.toggleActionComplete(roadmapId, phaseNumber, actionIndex);
     state = state.copyWith(roadmap: updated);
   }
+
+  /// Ajouter une phase custom
+  Future<void> addPhase(Map<String, dynamic> phase) async {
+    final roadmapId = state.roadmap?['id'] as String?;
+    if (roadmapId == null) return;
+    final updated = await _svc.addPhase(roadmapId, phase);
+    state = state.copyWith(roadmap: updated);
+  }
+
+  /// Supprimer une phase
+  Future<void> deletePhase(int phaseNumber) async {
+    final roadmapId = state.roadmap?['id'] as String?;
+    if (roadmapId == null) return;
+    final updated = await _svc.deletePhase(roadmapId, phaseNumber);
+    state = state.copyWith(roadmap: updated);
+  }
+
+  /// Créer un roadmap manuellement
+  Future<void> createRoadmap(List<String> targetJobs, List<Map<String, dynamic>> phases) async {
+    final roadmap = await _svc.createRoadmap(targetJobs, phases);
+    state = state.copyWith(
+      roadmap: roadmap,
+      hasRoadmap: true,
+      generationStatus: 'ready',
+    );
+  }
+
+  /// Restaurer un roadmap archivé (archive le courant, réactive celui-ci)
+  Future<void> restoreRoadmap(String roadmapId) async {
+    final updated = await _svc.restoreRoadmap(roadmapId);
+    state = state.copyWith(roadmap: updated, hasRoadmap: true, generationStatus: 'ready');
+  }
+
+  /// Mettre à jour les notes d'une phase
+  Future<void> updatePhaseNotes(int phaseNumber, String notes) async {
+    final roadmapId = state.roadmap?['id'] as String?;
+    if (roadmapId == null) return;
+    final phases = List<Map<String, dynamic>>.from(
+      (state.roadmap!['phases'] as List).map((p) => Map<String, dynamic>.from(p as Map)),
+    );
+    final idx = phases.indexWhere((p) => p['phase_number'] == phaseNumber);
+    if (idx == -1) return;
+    phases[idx]['user_notes'] = notes;
+    final updated = await _svc.updatePhases(roadmapId, phases);
+    state = state.copyWith(roadmap: updated);
+  }
 }
 
 /// Regeneration status provider (séparé car utilisé aussi dans dashboard/profile)

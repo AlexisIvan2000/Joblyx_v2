@@ -5,6 +5,7 @@ from models.schemas import (
     RoadmapStatusResponse,
     RoadmapResponse,
     RoadmapHistoryItem,
+    RoadmapCreate,
     RoadmapPhasesUpdate,
     RoadmapPhaseCreate,
     RegenerationStatusResponse,
@@ -55,6 +56,29 @@ async def generate_roadmap(
 
     background_tasks.add_task(_run_generate, user_id, svc)
     return {"status": "generating"}
+
+
+@router.post("/create", response_model=RoadmapResponse)
+async def create_roadmap(
+    body: RoadmapCreate,
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    """Crée un roadmap manuellement (sans génération IA)."""
+    user_id = str(current_user.id)
+    # Archiver l'éventuel roadmap actif
+    await svc.repo.archive_active(user_id)
+    # Construire les phases avec numérotation
+    phases = []
+    for i, p in enumerate(body.phases):
+        phase_dict = p.model_dump()
+        phase_dict["phase_number"] = i + 1
+        phase_dict["completed"] = False
+        phase_dict["custom"] = True
+        phases.append(phase_dict)
+    roadmap = await svc.repo.create(user_id, body.target_jobs, None, phases)
+    await svc.session.commit()
+    return _roadmap_to_response(roadmap)
 
 
 @router.get("/regeneration-status", response_model=RegenerationStatusResponse)
@@ -115,6 +139,33 @@ async def roadmap_history(
         }
         for r in roadmaps
     ]
+
+
+@router.get("/{roadmap_id}", response_model=RoadmapResponse)
+async def get_roadmap_by_id(
+    roadmap_id: str,
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    """Récupère un roadmap par son ID (actif ou archivé)."""
+    roadmap = await svc.repo.get_by_id(roadmap_id, str(current_user.id))
+    if not roadmap:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap not found")
+    return _roadmap_to_response(roadmap)
+
+
+@router.post("/{roadmap_id}/restore", response_model=RoadmapResponse)
+async def restore_roadmap(
+    roadmap_id: str,
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    """Restaure un roadmap archivé : archive le courant et réactive celui-ci."""
+    roadmap = await svc.repo.restore(roadmap_id, str(current_user.id))
+    if not roadmap:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap not found or not archived")
+    await svc.session.commit()
+    return _roadmap_to_response(roadmap)
 
 
 # ─── Endpoints de modification des phases (zéro appel GPT) ──────
