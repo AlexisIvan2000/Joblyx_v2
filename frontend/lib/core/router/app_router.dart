@@ -7,12 +7,12 @@ import 'package:frontend/core/screens/main_shell.dart';
 import 'package:frontend/core/screens/splash_screen.dart';
 import 'package:frontend/features/authentication/presentation/screens/login_screen.dart';
 import 'package:frontend/features/authentication/presentation/screens/register_screen.dart';
-import 'package:frontend/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:frontend/features/roadmap/presentation/screens/dashboard_screen.dart';
 import 'package:frontend/features/roadmap/presentation/screens/roadmap_screen.dart';
 import 'package:frontend/features/applications/presentation/screens/applications_screen.dart';
 import 'package:frontend/features/applications/presentation/screens/application_detail_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/profile_screen.dart';
+import 'package:frontend/features/roadmap/presentation/screens/ai_roadmap_form_screen.dart';
 import 'package:frontend/features/roadmap/presentation/screens/create_roadmap_screen.dart';
 import 'package:frontend/features/roadmap/presentation/screens/roadmap_detail_screen.dart';
 import 'package:frontend/features/roadmap/presentation/screens/roadmap_history_screen.dart';
@@ -36,8 +36,8 @@ final appRouter = GoRouter(
     _slideRoute(AppRoutes.login, (_) => const LoginScreen()),
     _slideRoute(AppRoutes.register, (_) => const RegisterScreen()),
     _slideRoute(AppRoutes.loading, (_) => const LoadingTransition()),
-    _slideRoute(AppRoutes.onboarding, (_) => const OnboardingScreen()),
     _slideRoute(AppRoutes.settings, (_) => const SettingsScreen()),
+    _slideRoute(AppRoutes.generateAI, (_) => const AIRoadmapFormScreen()),
     _slideRoute(AppRoutes.createRoadmap, (_) => const CreateRoadmapScreen()),
     _slideRoute(AppRoutes.roadmapHistory, (_) => const RoadmapHistoryScreen()),
     _slideRoute(AppRoutes.roadmapDetail, (state) =>

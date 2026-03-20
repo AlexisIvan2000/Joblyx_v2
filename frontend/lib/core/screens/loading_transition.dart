@@ -7,7 +7,7 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/features/authentication/presentation/providers/auth_state_provider.dart';
 
 /// Page de transition animée.
-/// Utilisée après login/register/onboarding → vérifie le provider et redirige.
+/// Utilisée après login/register → vérifie le provider et redirige.
 class LoadingTransition extends ConsumerStatefulWidget {
   const LoadingTransition({super.key});
 
@@ -21,7 +21,6 @@ class _LoadingTransitionState extends ConsumerState<LoadingTransition> {
   @override
   void initState() {
     super.initState();
-    // Relancer la vérification auth (tokens ont peut-être changé)
     Future.microtask(() => ref.read(authStateProvider.notifier).recheck());
   }
 
@@ -31,8 +30,6 @@ class _LoadingTransitionState extends ConsumerState<LoadingTransition> {
     switch (state) {
       case AppAuthState.unauthenticated:
         context.go('/first-page');
-      case AppAuthState.needsOnboarding:
-        context.go('/onboarding');
       case AppAuthState.authenticated:
         context.go('/dashboard');
       case AppAuthState.loading:

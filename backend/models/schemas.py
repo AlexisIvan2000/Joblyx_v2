@@ -117,7 +117,8 @@ class SkillItem(BaseModel):
         return v
 
 
-class OnboardingRequest(BaseModel):
+class RoadmapGenerateRequest(BaseModel):
+    """Données envoyées pour générer un roadmap avec l'IA."""
     level: UserLevel
     years_experience: int
     target_jobs: List[str]
@@ -151,22 +152,6 @@ class OnboardingRequest(BaseModel):
         if len(v) == 0:
             raise ValueError("At least one skill is required")
         return v
-
-
-class OnboardingResponse(BaseModel):
-    level: UserLevel
-    years_experience: int
-    target_jobs: List[str]
-    city: str
-    province: str
-    language: Language
-    previous_field: str | None = None
-    skills: List[SkillItem]
-    onboarding_completed: bool
-
-
-class OnboardingStatus(BaseModel):
-    has_profile: bool
 
 
 # ─── Roadmap schemas ───────────────────────────────────────────────

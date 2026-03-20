@@ -15,9 +15,7 @@ from models.schemas import (
     VerifyEmail,
     ResendVerification,
     SkillItem,
-    OnboardingRequest,
-    OnboardingResponse,
-    OnboardingStatus,
+    RoadmapGenerateRequest,
     SkillLevel,
     UserLevel,
     Language,
@@ -158,9 +156,9 @@ class TestSkillItem:
             SkillItem(skill_name="Python", category="Programming", proficiency="expert")
 
 
-# ─── OnboardingRequest ──────────────────────────────────────────────
+# ─── RoadmapGenerateRequest ──────────────────────────────────────────
 
-def _valid_onboarding(**overrides):
+def _valid_generate_request(**overrides):
     defaults = dict(
         level="junior",
         years_experience=2,
@@ -171,47 +169,47 @@ def _valid_onboarding(**overrides):
         skills=[{"skill_name": "Python", "category": "Programming", "proficiency": "advanced"}],
     )
     defaults.update(overrides)
-    return OnboardingRequest(**defaults)
+    return RoadmapGenerateRequest(**defaults)
 
 
-class TestOnboardingRequest:
+class TestRoadmapGenerateRequest:
     def test_valid_complete(self):
-        req = _valid_onboarding()
+        req = _valid_generate_request()
         assert req.level == UserLevel.junior
         assert req.language == Language.fr
 
     def test_empty_skills(self):
         with pytest.raises(ValidationError, match="At least one skill"):
-            _valid_onboarding(skills=[])
+            _valid_generate_request(skills=[])
 
     def test_too_many_target_jobs(self):
         with pytest.raises(ValidationError, match="Maximum 3"):
-            _valid_onboarding(target_jobs=["A", "B", "C", "D"])
+            _valid_generate_request(target_jobs=["A", "B", "C", "D"])
 
     def test_empty_target_jobs(self):
         with pytest.raises(ValidationError, match="At least one target job"):
-            _valid_onboarding(target_jobs=[])
+            _valid_generate_request(target_jobs=[])
 
     def test_negative_years(self):
         with pytest.raises(ValidationError, match="between 0 and 50"):
-            _valid_onboarding(years_experience=-1)
+            _valid_generate_request(years_experience=-1)
 
     def test_invalid_level(self):
         with pytest.raises(ValidationError):
-            _valid_onboarding(level="expert")
+            _valid_generate_request(level="expert")
 
     def test_strip_target_jobs(self):
-        req = _valid_onboarding(target_jobs=["  Dev  ", " PM "])
+        req = _valid_generate_request(target_jobs=["  Dev  ", " PM "])
         assert req.target_jobs == ["Dev", "PM"]
 
     def test_whitespace_only_target_jobs_removed(self):
         with pytest.raises(ValidationError, match="At least one target job"):
-            _valid_onboarding(target_jobs=["  ", ""])
+            _valid_generate_request(target_jobs=["  ", ""])
 
     def test_years_over_50(self):
         with pytest.raises(ValidationError, match="between 0 and 50"):
-            _valid_onboarding(years_experience=51)
+            _valid_generate_request(years_experience=51)
 
     def test_three_target_jobs_valid(self):
-        req = _valid_onboarding(target_jobs=["Dev", "PM", "QA"])
+        req = _valid_generate_request(target_jobs=["Dev", "PM", "QA"])
         assert len(req.target_jobs) == 3

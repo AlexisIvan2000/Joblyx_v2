@@ -5,11 +5,9 @@ from core.database import get_db_session
 from core.security import Security
 from repositories.auth_repository import AuthRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
-from repositories.onboarding_repository import OnboardingRepository
 from services.emailing.otp_service import OtpService
 from services.auth.email_password import EmailPasswordAuth
 from services.users.users import UserService
-from services.onboarding.onboarding_service import OnboardingService
 from services.roadmap.roadmap_service import RoadmapService
 from repositories.application_repository import ApplicationRepository
 from services.applications.application_service import ApplicationService
@@ -27,10 +25,6 @@ async def get_user_service(session: AsyncSession = Depends(get_db_session)) -> U
     repo = AuthRepository(session)
     otp_svc = OtpService(repo)
     return UserService(repo, otp_svc)
-
-async def get_onboarding_service(session: AsyncSession = Depends(get_db_session)) -> OnboardingService:
-    repo = OnboardingRepository(session)
-    return OnboardingService(repo)
 
 async def get_roadmap_service(session: AsyncSession = Depends(get_db_session)) -> RoadmapService:
     return RoadmapService(session)

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile, status
 from core.rate_limit import limiter, get_user_id_from_jwt
+from core.database import AsyncSessionLocal
 from models.schemas import (
     RoadmapGenerateResponse,
+    RoadmapGenerateRequest,
     RoadmapStatusResponse,
     RoadmapResponse,
     RoadmapHistoryItem,
@@ -13,13 +15,22 @@ from models.schemas import (
 from models.db_models import User
 from api.dependencies import get_current_user, get_roadmap_service
 from services.roadmap.roadmap_service import RoadmapService
+from services.ai.cv_parser import extract_skills_from_cv
 
 router = APIRouter(prefix="/roadmap", tags=["roadmap"])
 
 
-async def _run_generate(user_id: str, svc: RoadmapService):
-    # Wrapper pour le background task
-    await svc.generate(user_id)
+async def _run_generate(user_id: str):
+    """Background task : ouvre sa propre session DB pour la génération."""
+    async with AsyncSessionLocal() as session:
+        try:
+            svc = RoadmapService(session)
+            await svc.generate(user_id)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception(
+                "Background roadmap generation failed for user %s", user_id
+            )
 
 
 def _roadmap_to_response(roadmap) -> dict:
@@ -36,39 +47,61 @@ def _roadmap_to_response(roadmap) -> dict:
 @limiter.limit("3/minute", key_func=get_user_id_from_jwt)
 async def generate_roadmap(
     request: Request,
+    body: RoadmapGenerateRequest,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
+    """Sauvegarde le profil career+skills puis lance la génération IA en background."""
     user_id = str(current_user.id)
 
-    # Vérification de la limite de régénération
-    regen = await svc.check_regeneration_limit(user_id)
-    if not regen["allowed"]:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={
-                "error": "Vous avez atteint la limite de 5 régénérations ce mois-ci",
-                "remaining": 0,
-                "resets_at": regen["resets_at"],
-            },
-        )
+    # Sauvegarder/mettre à jour career + skills
+    career_data = {
+        "level": body.level.value,
+        "years_experience": body.years_experience,
+        "target_jobs": body.target_jobs,
+        "city": body.city,
+        "province": body.province,
+        "language": body.language.value,
+        "previous_field": body.previous_field,
+    }
+    skills_data = [
+        {
+            "skill_name": s.skill_name,
+            "category": s.category,
+            "proficiency": s.proficiency.value,
+        }
+        for s in body.skills
+    ]
+    is_first = await svc.save_career_and_skills(user_id, career_data, skills_data)
+    await svc.session.commit()
 
-    background_tasks.add_task(_run_generate, user_id, svc)
+    # Vérification de la limite de régénération (sauf première fois)
+    if not is_first:
+        regen = await svc.check_regeneration_limit(user_id)
+        if not regen["allowed"]:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": "Vous avez atteint la limite de 5 régénérations ce mois-ci",
+                    "remaining": 0,
+                    "resets_at": regen["resets_at"],
+                },
+            )
+
+    background_tasks.add_task(_run_generate, user_id)
     return {"status": "generating"}
 
 
-@router.post("/create", response_model=RoadmapResponse)
-async def create_roadmap(
+@router.post("/manual", response_model=RoadmapResponse)
+async def create_manual_roadmap(
     body: RoadmapCreate,
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    """Crée un roadmap manuellement (sans génération IA)."""
+    """Crée un roadmap manuellement (sans IA, sans limite)."""
     user_id = str(current_user.id)
-    # Archiver l'éventuel roadmap actif
     await svc.repo.archive_active(user_id)
-    # Construire les phases avec numérotation
     phases = []
     for i, p in enumerate(body.phases):
         phase_dict = p.model_dump()
@@ -79,6 +112,25 @@ async def create_roadmap(
     roadmap = await svc.repo.create(user_id, body.target_jobs, None, phases)
     await svc.session.commit()
     return _roadmap_to_response(roadmap)
+
+
+@router.post("/extract-skills")
+@limiter.limit("5/minute", key_func=get_user_id_from_jwt)
+async def extract_skills(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Extrait les compétences d'un CV uploadé (PDF uniquement)."""
+    if not file.content_type or "pdf" not in file.content_type:
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 5 MB)")
+
+    skills = await extract_skills_from_cv(content)
+    return {"skills": skills}
 
 
 @router.get("/regeneration-status", response_model=RegenerationStatusResponse)
@@ -100,14 +152,10 @@ async def roadmap_status(
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    # Lit le generation_status depuis career + vérifie si un roadmap actif existe
     career = await svc._get_career(str(current_user.id))
-    if not career:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
-
     roadmap = await svc.repo.get_active_by_user_id(str(current_user.id))
     return {
-        "generation_status": career.generation_status,
+        "generation_status": career.generation_status if career else "idle",
         "has_roadmap": roadmap is not None,
     }
 
@@ -120,7 +168,6 @@ async def get_roadmap(
     roadmap = await svc.repo.get_active_by_user_id(str(current_user.id))
     if not roadmap:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active roadmap")
-
     return _roadmap_to_response(roadmap)
 
 

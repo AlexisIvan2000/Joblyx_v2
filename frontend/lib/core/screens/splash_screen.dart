@@ -37,43 +37,32 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.dispose();
   }
 
+  void _navigate(AppAuthState state) {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    switch (state) {
+      case AppAuthState.unauthenticated:
+        context.go('/first-page');
+      case AppAuthState.authenticated:
+        context.go('/dashboard');
+      case AppAuthState.loading:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
 
     ref.listen(authStateProvider, (_, next) {
-      if (_navigated) return;
-      next.whenData((state) {
-        _navigated = true;
-        switch (state) {
-          case AppAuthState.unauthenticated:
-            context.go('/first-page');
-          case AppAuthState.needsOnboarding:
-            context.go('/onboarding');
-          case AppAuthState.authenticated:
-            context.go('/dashboard');
-          case AppAuthState.loading:
-            break;
-        }
-      });
+      next.whenData(_navigate);
     });
 
     // Si le provider a déjà résolu au premier build
     authState.whenData((state) {
       if (_navigated) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_navigated || !mounted) return;
-        _navigated = true;
-        switch (state) {
-          case AppAuthState.unauthenticated:
-            context.go('/first-page');
-          case AppAuthState.needsOnboarding:
-            context.go('/onboarding');
-          case AppAuthState.authenticated:
-            context.go('/dashboard');
-          case AppAuthState.loading:
-            break;
-        }
+        _navigate(state);
       });
     });
 

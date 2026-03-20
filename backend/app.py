@@ -10,7 +10,6 @@ from core.rate_limit import limiter
 from core.database import engine
 from api.routers.auth import router as auth_router
 from api.routers.users import router as users_router
-from api.routers.onboarding import router as onboarding_router
 from api.routers.roadmap import router as roadmap_router
 from api.routers.applications import router as applications_router
 
@@ -49,7 +48,6 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(users_router)
-app.include_router(onboarding_router)
 app.include_router(roadmap_router)
 app.include_router(applications_router)
 

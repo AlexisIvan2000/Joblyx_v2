@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.db_models import Career, UserSkill, MarketSkillsCache
@@ -69,6 +69,35 @@ class RoadmapService:
 
         # Trie par count décroissant
         return sorted(all_skills.values(), key=lambda s: s.get("count", 0), reverse=True)
+
+    # ─── Sauvegarde career + skills (créer ou mettre à jour) ────────
+
+    async def save_career_and_skills(self, user_id: str, career_data: dict, skills_data: list[dict]) -> bool:
+        """Crée ou met à jour le profil career + user_skills.
+
+        Retourne True si c'est la première création (pas de career existant).
+        """
+        career = await self._get_career(user_id)
+        is_first = career is None
+
+        if career:
+            # Mise à jour du career existant
+            await self.session.execute(
+                update(Career).where(Career.user_id == user_id).values(**career_data)
+            )
+        else:
+            # Création du career
+            self.session.add(Career(user_id=user_id, **career_data))
+
+        # Remplacer les skills : delete all + recreate
+        await self.session.execute(
+            delete(UserSkill).where(UserSkill.user_id == user_id)
+        )
+        if skills_data:
+            self.session.add_all([UserSkill(user_id=user_id, **s) for s in skills_data])
+
+        await self.session.flush()
+        return is_first
 
     # ─── Vérification limite de régénération ─────────────────────────
 

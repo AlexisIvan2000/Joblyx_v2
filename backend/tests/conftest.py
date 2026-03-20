@@ -139,44 +139,6 @@ def mock_refresh_token_repo():
     return repo
 
 
-# ─── Mock OnboardingRepository ──────────────────────────────────────
-
-@pytest.fixture
-def mock_onboarding_repo():
-    repo = AsyncMock()
-    repo.has_profile.return_value = False
-    repo.create_career.return_value = MagicMock(
-        user_id=FAKE_USER_ID,
-        level="junior",
-        years_experience=2,
-        target_jobs=["Developer"],
-        city="Montreal",
-        province="Quebec",
-        language="fr",
-        previous_field=None,
-        onboarding_completed=True,
-    )
-    repo.create_user_skills.return_value = [
-        MagicMock(skill_name="Python", category="Programming", proficiency="advanced"),
-    ]
-    repo.get_career_by_user_id.return_value = MagicMock(
-        level="junior",
-        years_experience=2,
-        target_jobs=["Developer"],
-        city="Montreal",
-        province="Quebec",
-        language="fr",
-        previous_field=None,
-        onboarding_completed=True,
-    )
-    repo.get_skills_by_user_id.return_value = [
-        MagicMock(skill_name="Python", category="Programming", proficiency="advanced"),
-    ]
-    repo.update_career.return_value = MagicMock()
-    repo.delete_skills_by_user_id.return_value = None
-    return repo
-
-
 # ─── Auth service with mocked deps ───────────────────────────────────
 
 @pytest.fixture
@@ -206,37 +168,12 @@ def _patch_config(monkeypatch):
 def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_user_dict):
     from fastapi.testclient import TestClient
     from app import app
-    from api.dependencies import get_auth_service, get_user_service, get_current_user, get_onboarding_service, get_roadmap_service, get_application_service
+    from api.dependencies import get_auth_service, get_user_service, get_current_user, get_roadmap_service, get_application_service
     from services.auth.email_password import EmailPasswordAuth
     from services.users.users import UserService
 
     auth_svc = EmailPasswordAuth(mock_auth_repo, mock_refresh_token_repo, mock_otp_service)
     user_svc = UserService(mock_auth_repo, mock_otp_service)
-
-    from services.onboarding.onboarding_service import OnboardingService
-
-    onboarding_mock_repo = AsyncMock()
-    onboarding_mock_repo.has_profile.return_value = False
-    onboarding_mock_repo.create_career.return_value = MagicMock(
-        user_id=FAKE_USER_ID, level="junior", years_experience=2,
-        target_jobs=["Developer"], city="Montreal", province="Quebec",
-        language="fr", previous_field=None, onboarding_completed=True,
-    )
-    onboarding_mock_repo.create_user_skills.return_value = [
-        MagicMock(skill_name="Python", category="Programming", proficiency="advanced"),
-    ]
-    onboarding_mock_repo.get_career_by_user_id.return_value = MagicMock(
-        level="junior", years_experience=2, target_jobs=["Developer"],
-        city="Montreal", province="Quebec", language="fr",
-        previous_field=None, onboarding_completed=True,
-    )
-    onboarding_mock_repo.get_skills_by_user_id.return_value = [
-        MagicMock(skill_name="Python", category="Programming", proficiency="advanced"),
-    ]
-    onboarding_mock_repo.update_career.return_value = MagicMock()
-    onboarding_mock_repo.delete_skills_by_user_id.return_value = None
-
-    onboarding_svc = OnboardingService(onboarding_mock_repo)
 
     # Mock RoadmapService pour les routes /roadmap
     roadmap_svc = AsyncMock()
@@ -245,6 +182,7 @@ def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_
     roadmap_svc.repo.get_active_by_user_id = AsyncMock(return_value=None)
     roadmap_svc.repo.get_history_by_user_id = AsyncMock(return_value=[])
     roadmap_svc.generate = AsyncMock()
+    roadmap_svc.save_career_and_skills = AsyncMock(return_value=True)
     roadmap_svc.check_regeneration_limit = AsyncMock(return_value={
         "allowed": True, "used": 0, "remaining": 5, "resets_at": "2026-04-01T00:00:00+00:00",
     })
@@ -264,9 +202,6 @@ def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_
     async def override_current_user():
         return fake_user_dict
 
-    async def override_onboarding_service():
-        return onboarding_svc
-
     async def override_roadmap_service():
         return roadmap_svc
 
@@ -285,12 +220,10 @@ def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_
     app.dependency_overrides[get_auth_service] = override_auth_service
     app.dependency_overrides[get_user_service] = override_user_service
     app.dependency_overrides[get_current_user] = override_current_user
-    app.dependency_overrides[get_onboarding_service] = override_onboarding_service
     app.dependency_overrides[get_roadmap_service] = override_roadmap_service
     app.dependency_overrides[get_application_service] = override_application_service
 
     client = TestClient(app)
-    client._mock_onboarding_repo = onboarding_mock_repo
     client._mock_otp_service = mock_otp_service
     client._mock_roadmap_svc = roadmap_svc
     client._mock_app_svc = app_svc

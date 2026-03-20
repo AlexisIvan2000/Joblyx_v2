@@ -325,6 +325,8 @@
         "add_phase_error": "Could not add phase",
         "delete_phase_error": "Could not delete phase",
         "notes_error": "Could not save notes",
+        "generate_ai_desc": "Fill out your profile and let our AI create a personalized roadmap",
+        "create_manual_desc": "Build your own roadmap by adding phases manually",
         "create_roadmap": "Create my roadmap",
         "create_roadmap_title": "New roadmap",
         "target_jobs_label": "Target jobs",

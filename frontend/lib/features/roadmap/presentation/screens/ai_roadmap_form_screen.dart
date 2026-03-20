@@ -1,22 +1,24 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
-import 'package:frontend/features/onboarding/data/onboarding_service.dart';
 import 'package:frontend/features/onboarding/data/mapbox_service.dart';
 import 'package:frontend/features/onboarding/data/skills_loader.dart';
+import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 
-class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+/// Formulaire 3 étapes pour générer un roadmap avec l'IA.
+/// Reprend la même structure que l'ancien onboarding.
+class AIRoadmapFormScreen extends ConsumerStatefulWidget {
+  const AIRoadmapFormScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<AIRoadmapFormScreen> createState() => _AIRoadmapFormScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final _onboardingService = OnboardingService();
+class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
   final _mapboxService = MapboxService();
   final _pageController = PageController();
   int _currentStep = 0;
@@ -56,7 +58,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _loadSkills() async {
     final data = await SkillsLoader.load();
     if (!mounted) return;
-    // Construire la liste plate de tous les skills avec leur catégorie
     final allNames = <String>[];
     for (final skills in data.values) {
       allNames.addAll(skills);
@@ -139,7 +140,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               })
           .toList();
 
-      await _onboardingService.complete(
+      final svc = ref.read(roadmapServiceProvider);
+      await svc.generateWithAI(
         level: _level,
         yearsExperience: int.tryParse(_yearsController.text) ?? 0,
         targetJobs: targetJobs,
@@ -151,7 +153,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
 
       if (!mounted) return;
-      context.go('/loading');
+      // Relancer le polling du provider
+      ref.read(roadmapProvider.notifier).loadStatus();
+      context.go('/roadmap');
     } catch (e) {
       if (!mounted) return;
       AppSnackbar.error(context, t.t('onboarding.error'));
@@ -176,10 +180,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     setState(() => _isUploadingCv = true);
 
     try {
-      final extracted = await _onboardingService.extractSkills(file.path!);
+      final svc = ref.read(roadmapServiceProvider);
+      final extracted = await svc.extractSkills(file.path!);
       if (!mounted) return;
 
-      // Ajouter les skills extraits (éviter les doublons)
       int added = 0;
       for (final s in extracted) {
         final name = s['skill_name'] as String;
@@ -208,9 +212,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  // ─── Ajout manuel d'un skill ────────────────────────────────────
   void _addSkillManually(String skillName) {
-    // Trouver la catégorie du skill
     String? category;
     for (final entry in _skillsData.entries) {
       if (entry.value.contains(skillName)) {
@@ -219,8 +221,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       }
     }
     if (category == null) return;
-
-    // Éviter les doublons
     if (_selectedSkills.any((c) => c.skillName == skillName)) return;
 
     setState(() {
@@ -264,7 +264,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
-  /// Scrolle pour rendre visible le widget associé à la clé
   void _scrollToWidget(GlobalKey key) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final ctx = key.currentContext;
@@ -382,7 +381,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(t.t('onboarding.step_goals_title'),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           SizedBox(height: 20.h),
-          // Emplois ciblés
           ...List.generate(_jobControllers.length, (i) {
             return Padding(
               padding: EdgeInsets.only(bottom: 10.h),
@@ -421,7 +419,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
           SizedBox(height: 12.h),
-          // Localisation via Mapbox
           Column(
             key: _locationFieldKey,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,7 +481,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
           SizedBox(height: 16.h),
-          // Langue
           DropdownButtonFormField<String>(
             initialValue: _language,
             decoration: _dropdownDecoration(
@@ -517,8 +513,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(t.t('onboarding.step_skills_title'),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           SizedBox(height: 16.h),
-
-          // ── Bouton Upload CV ──
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -544,14 +538,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           SizedBox(height: 4.h),
           Text(
             t.t('onboarding.upload_cv_sub'),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
-
           SizedBox(height: 20.h),
-          // ── Séparateur ──
           Row(
             children: [
               Expanded(child: Divider(color: cs.outlineVariant)),
@@ -559,17 +549,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 12.w),
                 child: Text(
                   t.t('onboarding.or_add_manually'),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                 ),
               ),
               Expanded(child: Divider(color: cs.outlineVariant)),
             ],
           ),
           SizedBox(height: 16.h),
-
-          // ── Recherche autocomplete ──
           LayoutBuilder(
             builder: (context, constraints) {
               return RawAutocomplete<String>(
@@ -578,7 +564,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 optionsBuilder: (textEditingValue) {
                   if (textEditingValue.text.isEmpty) return const Iterable.empty();
                   final query = textEditingValue.text.toLowerCase();
-                  // Filtrer les skills déjà sélectionnés
                   final selected = _selectedSkills.map((s) => s.skillName).toSet();
                   return _allSkillNames
                       .where((s) => s.toLowerCase().contains(query) && !selected.contains(s));
@@ -639,19 +624,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               );
             },
           ),
-
           SizedBox(height: 20.h),
-
-          // ── Liste de chips ──
           if (_selectedSkills.isEmpty)
             Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 24.h),
                 child: Text(
                   t.t('onboarding.no_skills_yet'),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
               ),
             )
@@ -660,7 +640,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               spacing: 8.w,
               runSpacing: 8.h,
               children: _selectedSkills.map((skill) {
-                return _buildSkillChipWidget(skill, t, cs);
+                return _buildSkillChipWidget(skill);
               }).toList(),
             ),
           SizedBox(height: 16.h),
@@ -669,8 +649,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildSkillChipWidget(_SkillChip skill, AppLocalizations t, ColorScheme cs) {
-    // Couleur selon le niveau
+  Widget _buildSkillChipWidget(_SkillChip skill) {
+    final cs = Theme.of(context).colorScheme;
+    final t = AppLocalizations.of(context);
+
     final Color chipColor;
     final String levelLabel;
     switch (skill.proficiency) {
@@ -688,10 +670,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return InputChip(
       label: Text('${skill.skillName}  ·  $levelLabel'),
       labelStyle: TextStyle(fontSize: 12.sp, color: cs.onSurface),
-      avatar: CircleAvatar(
-        radius: 5.r,
-        backgroundColor: chipColor,
-      ),
+      avatar: CircleAvatar(radius: 5.r, backgroundColor: chipColor),
       deleteIcon: Icon(Icons.close_rounded, size: 16.sp),
       onDeleted: () => setState(() => _selectedSkills.remove(skill)),
       onPressed: () => _showProficiencyPicker(skill),
@@ -703,8 +682,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _showProficiencyPicker(_SkillChip skill) {
     final t = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
+      backgroundColor: cs.surface,
       builder: (ctx) {
         return SafeArea(
           child: Column(
@@ -721,7 +702,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ListTile(
                   leading: Icon(
                     skill.proficiency == level ? Icons.radio_button_checked : Icons.radio_button_off,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: cs.primary,
                   ),
                   title: Text(t.t('onboarding.prof_$level')),
                   onTap: () {
@@ -751,13 +732,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPressed: _prevStep,
               )
             : null,
-        title: Text(t.t('onboarding.title')),
+        title: Text(t.t('dashboard.generate')),
         centerTitle: true,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // Contenu des étapes
             Expanded(
               child: PageView(
                 controller: _pageController,
@@ -769,7 +749,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               ),
             ),
-            // Dots indicator
+            // Dots
             Padding(
               padding: EdgeInsets.only(top: 8.h),
               child: Row(
@@ -789,7 +769,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 }),
               ),
             ),
-            // Bouton — "Suivant" sur les 2 premières étapes, "Compléter" sur la dernière
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               child: SizedBox(
@@ -817,7 +796,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         )
                       : Text(_currentStep < 2
                           ? t.t('onboarding.next')
-                          : t.t('onboarding.submit')),
+                          : t.t('dashboard.generate')),
                 ),
               ),
             ),

@@ -101,19 +101,6 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
     }
   }
 
-  Future<void> generate() async {
-    state = state.copyWith(generationStatus: 'generating');
-    try {
-      await _svc.generate();
-      _startPolling();
-    } catch (_) {
-      state = state.copyWith(
-        generationStatus: state.hasRoadmap ? 'ready' : 'error',
-      );
-      rethrow;
-    }
-  }
-
   Future<void> togglePhaseComplete(int phaseNumber) async {
     final roadmapId = state.roadmap?['id'] as String?;
     if (roadmapId == null) return;
@@ -147,7 +134,7 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
 
   /// Créer un roadmap manuellement
   Future<void> createRoadmap(List<String> targetJobs, List<Map<String, dynamic>> phases) async {
-    final roadmap = await _svc.createRoadmap(targetJobs, phases);
+    final roadmap = await _svc.createManual(targetJobs, phases);
     state = state.copyWith(
       roadmap: roadmap,
       hasRoadmap: true,

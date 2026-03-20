@@ -326,6 +326,8 @@
         "add_phase_error": "Impossible d'ajouter la phase",
         "delete_phase_error": "Impossible de supprimer la phase",
         "notes_error": "Impossible de sauvegarder les notes",
+        "generate_ai_desc": "Remplissez votre profil et laissez notre IA créer un roadmap personnalisé",
+        "create_manual_desc": "Construisez votre propre roadmap en ajoutant vos phases manuellement",
         "create_roadmap": "Créer mon roadmap",
         "create_roadmap_title": "Nouveau roadmap",
         "target_jobs_label": "Postes visés",
