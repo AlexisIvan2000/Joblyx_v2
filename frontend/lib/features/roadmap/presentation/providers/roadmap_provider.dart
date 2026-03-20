@@ -4,7 +4,6 @@ import 'package:frontend/features/roadmap/data/roadmap_service.dart';
 
 final roadmapServiceProvider = Provider((_) => RoadmapService());
 
-/// Etat du roadmap screen
 class RoadmapState {
   final bool isLoading;
   final String generationStatus; // idle | generating | ready | error
@@ -38,12 +37,8 @@ final roadmapProvider =
     NotifierProvider<RoadmapNotifier, RoadmapState>(RoadmapNotifier.new);
 
 class RoadmapNotifier extends Notifier<RoadmapState> {
-  Timer? _pollTimer;
-
   @override
   RoadmapState build() {
-    ref.onDispose(() => _pollTimer?.cancel());
-    // Lancer le chargement initial
     Future.microtask(() => loadStatus());
     return const RoadmapState();
   }
@@ -62,9 +57,7 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
         hasRoadmap: hasRoadmap,
       );
 
-      if (genStatus == 'generating') {
-        _startPolling();
-      } else if (hasRoadmap) {
+      if (hasRoadmap) {
         await loadRoadmap();
       }
     } catch (_) {
@@ -72,69 +65,88 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
     }
   }
 
-  void _startPolling() {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
-      try {
-        final status = await _svc.getStatus();
-        final genStatus = status['generation_status'] as String;
-        final hasRoadmap = status['has_roadmap'] as bool;
-
-        if (genStatus != 'generating') {
-          _pollTimer?.cancel();
-          state = state.copyWith(
-            generationStatus: genStatus,
-            hasRoadmap: hasRoadmap,
-          );
-          if (hasRoadmap) await loadRoadmap();
-        }
-      } catch (_) {}
-    });
-  }
-
   Future<void> loadRoadmap() async {
     try {
       final roadmap = await _svc.getRoadmap();
       state = state.copyWith(roadmap: roadmap);
-    } catch (_) {
-      // Erreur silencieuse, le UI réagira à l'absence de roadmap
+    } catch (_) {}
+  }
+
+  /// Generate roadmap with AI via SSE streaming.
+  /// Returns a Stream so the UI can react to events.
+  Stream<Map<String, dynamic>> generateWithAI({
+    required String level,
+    required int yearsExperience,
+    required List<String> targetJobs,
+    required String city,
+    required String province,
+    required String language,
+    String? previousField,
+    required List<Map<String, String>> skills,
+  }) async* {
+    state = state.copyWith(generationStatus: 'generating', isLoading: false);
+
+    await for (final event in _svc.generateWithAI(
+      level: level,
+      yearsExperience: yearsExperience,
+      targetJobs: targetJobs,
+      city: city,
+      province: province,
+      language: language,
+      previousField: previousField,
+      skills: skills,
+    )) {
+      yield event;
+
+      final eventType = event['event'] as String;
+      if (eventType == 'complete') {
+        await loadRoadmap();
+        state = state.copyWith(
+          generationStatus: 'ready',
+          hasRoadmap: true,
+        );
+        // Refresh regeneration count
+        ref.invalidate(regenerationStatusProvider);
+      } else if (eventType == 'error') {
+        state = state.copyWith(generationStatus: 'error');
+      }
     }
   }
 
-  Future<void> togglePhaseComplete(int phaseNumber) async {
-    final roadmapId = state.roadmap?['id'] as String?;
-    if (roadmapId == null) return;
-    final updated = await _svc.togglePhaseComplete(roadmapId, phaseNumber);
-    state = state.copyWith(roadmap: updated);
+  // ─── Phase operations (use phase ID) ──────────────────────────
+
+  Future<void> togglePhaseComplete(String phaseId) async {
+    await _svc.togglePhaseComplete(phaseId);
+    await loadRoadmap();
   }
 
-  Future<void> toggleActionComplete(int phaseNumber, int actionIndex) async {
-    final roadmapId = state.roadmap?['id'] as String?;
-    if (roadmapId == null) return;
-    final updated =
-        await _svc.toggleActionComplete(roadmapId, phaseNumber, actionIndex);
-    state = state.copyWith(roadmap: updated);
+  Future<void> toggleActionComplete(String phaseId, int actionIndex) async {
+    await _svc.toggleActionComplete(phaseId, actionIndex);
+    await loadRoadmap();
   }
 
-  /// Ajouter une phase custom
+  Future<void> toggleSkillComplete(String phaseId, int skillIndex) async {
+    await _svc.toggleSkillComplete(phaseId, skillIndex);
+    await loadRoadmap();
+  }
+
   Future<void> addPhase(Map<String, dynamic> phase) async {
-    final roadmapId = state.roadmap?['id'] as String?;
-    if (roadmapId == null) return;
-    final updated = await _svc.addPhase(roadmapId, phase);
-    state = state.copyWith(roadmap: updated);
+    await _svc.addPhase(phase);
+    await loadRoadmap();
   }
 
-  /// Supprimer une phase
-  Future<void> deletePhase(int phaseNumber) async {
-    final roadmapId = state.roadmap?['id'] as String?;
-    if (roadmapId == null) return;
-    final updated = await _svc.deletePhase(roadmapId, phaseNumber);
-    state = state.copyWith(roadmap: updated);
+  Future<void> deletePhase(String phaseId) async {
+    await _svc.deletePhase(phaseId);
+    await loadRoadmap();
   }
 
-  /// Créer un roadmap manuellement
-  Future<void> createRoadmap(List<String> targetJobs, List<Map<String, dynamic>> phases) async {
-    final roadmap = await _svc.createManual(targetJobs, phases);
+  Future<void> updatePhase(String phaseId, Map<String, dynamic> data) async {
+    await _svc.updatePhase(phaseId, data);
+    await loadRoadmap();
+  }
+
+  Future<void> createRoadmap(List<Map<String, dynamic>> phases) async {
+    final roadmap = await _svc.createManual(phases);
     state = state.copyWith(
       roadmap: roadmap,
       hasRoadmap: true,
@@ -142,28 +154,19 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
     );
   }
 
-  /// Restaurer un roadmap archivé (archive le courant, réactive celui-ci)
   Future<void> restoreRoadmap(String roadmapId) async {
     final updated = await _svc.restoreRoadmap(roadmapId);
-    state = state.copyWith(roadmap: updated, hasRoadmap: true, generationStatus: 'ready');
+    state = state.copyWith(
+        roadmap: updated, hasRoadmap: true, generationStatus: 'ready');
   }
 
-  /// Mettre à jour les notes d'une phase
-  Future<void> updatePhaseNotes(int phaseNumber, String notes) async {
-    final roadmapId = state.roadmap?['id'] as String?;
-    if (roadmapId == null) return;
-    final phases = List<Map<String, dynamic>>.from(
-      (state.roadmap!['phases'] as List).map((p) => Map<String, dynamic>.from(p as Map)),
-    );
-    final idx = phases.indexWhere((p) => p['phase_number'] == phaseNumber);
-    if (idx == -1) return;
-    phases[idx]['user_notes'] = notes;
-    final updated = await _svc.updatePhases(roadmapId, phases);
-    state = state.copyWith(roadmap: updated);
+  Future<void> updatePhaseNotes(String phaseId, String notes) async {
+    await _svc.updatePhase(phaseId, {'user_notes': notes});
+    await loadRoadmap();
   }
 }
 
-/// Regeneration status provider (séparé car utilisé aussi dans dashboard/profile)
+/// Regeneration status provider
 final regenerationStatusProvider =
     AsyncNotifierProvider<RegenerationStatusNotifier, Map<String, dynamic>>(
   RegenerationStatusNotifier.new,

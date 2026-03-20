@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:http_parser/http_parser.dart';
@@ -15,8 +18,9 @@ class RoadmapService {
     return response.data as Map<String, dynamic>;
   }
 
-  /// Génère un roadmap avec l'IA (envoie career + skills dans le body)
-  Future<void> generateWithAI({
+  /// Generates a roadmap with AI via SSE streaming.
+  /// Yields SSE events as maps: {event: "status"|"chunk"|"complete"|"error", data: {...}}
+  Stream<Map<String, dynamic>> generateWithAI({
     required String level,
     required int yearsExperience,
     required List<String> targetJobs,
@@ -25,31 +29,71 @@ class RoadmapService {
     required String language,
     String? previousField,
     required List<Map<String, String>> skills,
-  }) async {
-    await _dio.post('/roadmap/generate', data: {
-      'level': level,
-      'years_experience': yearsExperience,
-      'target_jobs': targetJobs,
-      'city': city,
-      'province': province,
-      'language': language,
-      // ignore: use_null_aware_elements
-      if (previousField != null) 'previous_field': previousField,
-      'skills': skills,
-    });
+  }) async* {
+    final response = await _dio.post(
+      '/roadmap/generate',
+      data: {
+        'level': level,
+        'years_experience': yearsExperience,
+        'target_jobs': targetJobs,
+        'city': city,
+        'province': province,
+        'language': language,
+        // ignore: use_null_aware_elements
+        if (previousField != null) 'previous_field': previousField,
+        'skills': skills,
+      },
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+      ),
+    );
+
+    final stream = response.data.stream as Stream<List<int>>;
+    String buffer = '';
+
+    await for (final chunk in stream) {
+      buffer += utf8.decode(chunk);
+
+      // Parse SSE events from buffer
+      while (buffer.contains('\n\n')) {
+        final eventEnd = buffer.indexOf('\n\n');
+        final rawEvent = buffer.substring(0, eventEnd);
+        buffer = buffer.substring(eventEnd + 2);
+
+        String? eventType;
+        String? eventData;
+
+        for (final line in rawEvent.split('\n')) {
+          if (line.startsWith('event: ')) {
+            eventType = line.substring(7);
+          } else if (line.startsWith('data: ')) {
+            eventData = line.substring(6);
+          }
+        }
+
+        if (eventType != null && eventData != null) {
+          try {
+            final parsed = jsonDecode(eventData) as Map<String, dynamic>;
+            yield {'event': eventType, 'data': parsed};
+          } catch (_) {
+            yield {'event': eventType, 'data': {'raw': eventData}};
+          }
+        }
+      }
+    }
   }
 
-  /// Crée un roadmap manuellement (sans IA)
+  /// Creates a roadmap manually (no AI)
   Future<Map<String, dynamic>> createManual(
-      List<String> targetJobs, List<Map<String, dynamic>> phases) async {
+      List<Map<String, dynamic>> phases) async {
     final response = await _dio.post('/roadmap/manual', data: {
-      'target_jobs': targetJobs,
       'phases': phases,
     });
     return response.data as Map<String, dynamic>;
   }
 
-  /// Extrait les compétences d'un CV (PDF)
+  /// Extracts skills from a CV (PDF)
   Future<List<Map<String, dynamic>>> extractSkills(String filePath) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
@@ -57,7 +101,8 @@ class RoadmapService {
         contentType: MediaType('application', 'pdf'),
       ),
     });
-    final response = await _dio.post('/roadmap/extract-skills', data: formData);
+    final response =
+        await _dio.post('/roadmap/extract-skills', data: formData);
     final skills = response.data['skills'] as List;
     return skills.cast<Map<String, dynamic>>();
   }
@@ -82,45 +127,47 @@ class RoadmapService {
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> updatePhases(
-      String roadmapId, List<Map<String, dynamic>> phases) async {
-    final response = await _dio.put(
-      '/roadmap/$roadmapId/phases',
-      data: {'phases': phases},
-    );
+  // ─── Phase endpoints (use phase ID) ───────────────────────────
+
+  Future<Map<String, dynamic>> addPhase(Map<String, dynamic> phase) async {
+    final response = await _dio.post('/roadmap/phases', data: phase);
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> addPhase(
-      String roadmapId, Map<String, dynamic> phase) async {
-    final response = await _dio.post(
-      '/roadmap/$roadmapId/phases',
-      data: phase,
-    );
+  Future<void> deletePhase(String phaseId) async {
+    await _dio.delete('/roadmap/phases/$phaseId');
+  }
+
+  Future<Map<String, dynamic>> updatePhase(
+      String phaseId, Map<String, dynamic> data) async {
+    final response = await _dio.put('/roadmap/phases/$phaseId', data: data);
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> deletePhase(
-      String roadmapId, int phaseNumber) async {
-    final response = await _dio.delete(
-      '/roadmap/$roadmapId/phases/$phaseNumber',
-    );
-    return response.data as Map<String, dynamic>;
-  }
-
-  Future<Map<String, dynamic>> togglePhaseComplete(
-      String roadmapId, int phaseNumber) async {
-    final response = await _dio.patch(
-      '/roadmap/$roadmapId/phases/$phaseNumber/complete',
-    );
+  Future<Map<String, dynamic>> togglePhaseComplete(String phaseId) async {
+    final response = await _dio.patch('/roadmap/phases/$phaseId/complete');
     return response.data as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> toggleActionComplete(
-      String roadmapId, int phaseNumber, int actionIndex) async {
+      String phaseId, int actionIndex) async {
     final response = await _dio.patch(
-      '/roadmap/$roadmapId/phases/$phaseNumber/actions/$actionIndex/complete',
+      '/roadmap/phases/$phaseId/actions/$actionIndex/complete',
     );
     return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> toggleSkillComplete(
+      String phaseId, int skillIndex) async {
+    final response = await _dio.patch(
+      '/roadmap/phases/$phaseId/skills/$skillIndex/complete',
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<void> reorderPhases(List<String> phaseIds) async {
+    await _dio.put('/roadmap/phases/reorder', data: {
+      'phase_ids': phaseIds,
+    });
   }
 }

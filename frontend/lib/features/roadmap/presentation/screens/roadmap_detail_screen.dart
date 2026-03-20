@@ -127,8 +127,6 @@ class _RoadmapDetailScreenState extends ConsumerState<RoadmapDetailScreen> {
   Widget _buildContent(ColorScheme cs, AppLocalizations t) {
     final roadmap = _roadmap!;
     final phases = (roadmap['phases'] as List?) ?? [];
-    final targetJobs =
-        (roadmap['target_jobs'] as List?)?.cast<String>() ?? [];
     final createdAt = roadmap['created_at'] as String? ?? '';
 
     // Formater la date
@@ -163,22 +161,6 @@ class _RoadmapDetailScreenState extends ConsumerState<RoadmapDetailScreen> {
                   ),
                 ),
               ],
-            ),
-          ),
-
-        // Postes ciblés
-        if (targetJobs.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.only(bottom: 12.h),
-            child: Wrap(
-              spacing: 8.w,
-              children: targetJobs
-                  .map((job) => Chip(
-                        label: Text(job, style: TextStyle(fontSize: 12.sp)),
-                        avatar: Icon(Icons.work_outline, size: 16.sp),
-                        visualDensity: VisualDensity.compact,
-                      ))
-                  .toList(),
             ),
           ),
 

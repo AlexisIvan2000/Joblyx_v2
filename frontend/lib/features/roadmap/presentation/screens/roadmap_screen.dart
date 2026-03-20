@@ -77,7 +77,7 @@ class RoadmapScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AppLocalizations t,
-    int phaseNumber,
+    String phaseId,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -102,7 +102,7 @@ class RoadmapScreen extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await ref.read(roadmapProvider.notifier).deletePhase(phaseNumber);
+      await ref.read(roadmapProvider.notifier).deletePhase(phaseId);
       if (context.mounted) {
         AppSnackbar.success(context, t.t('dashboard.phase_deleted'));
       }
@@ -118,7 +118,7 @@ class RoadmapScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AppLocalizations t,
-    int phaseNumber,
+    String phaseId,
     String currentNotes,
   ) async {
     final result = await showDialog<String>(
@@ -127,7 +127,7 @@ class RoadmapScreen extends ConsumerWidget {
     );
     if (result == null || !context.mounted) return;
     try {
-      await ref.read(roadmapProvider.notifier).updatePhaseNotes(phaseNumber, result);
+      await ref.read(roadmapProvider.notifier).updatePhaseNotes(phaseId, result);
       if (context.mounted) {
         AppSnackbar.success(context, t.t('dashboard.notes_saved'));
       }
@@ -249,7 +249,6 @@ class RoadmapScreen extends ConsumerWidget {
   Widget _buildRoadmap(BuildContext context, WidgetRef ref, ThemeData theme, ColorScheme cs, AppLocalizations t, RoadmapState state) {
     final roadmap = state.roadmap!;
     final phases = (roadmap['phases'] as List?) ?? [];
-    final targetJobs = (roadmap['target_jobs'] as List?)?.cast<String>() ?? [];
     final notifier = ref.read(roadmapProvider.notifier);
 
     return RefreshIndicator(
@@ -258,50 +257,36 @@ class RoadmapScreen extends ConsumerWidget {
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         children: [
-          if (targetJobs.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
-              child: Wrap(
-                spacing: 8.w,
-                children: targetJobs
-                    .map((job) => Chip(
-                          label: Text(job, style: TextStyle(fontSize: 12.sp)),
-                          avatar: Icon(Icons.work_outline, size: 16.sp),
-                          visualDensity: VisualDensity.compact,
-                        ))
-                    .toList(),
-              ),
-            ),
           ...List.generate(phases.length, (i) {
             final phase = phases[i] as Map<String, dynamic>;
+            final phaseId = phase['id'] as String;
             return PhaseCard(
               index: i,
               phase: phase,
               isLast: i == phases.length - 1,
-              onTogglePhaseComplete: (phaseNumber) async {
+              onTogglePhaseComplete: (_) async {
                 try {
-                  await notifier.togglePhaseComplete(phaseNumber);
+                  await notifier.togglePhaseComplete(phaseId);
                 } catch (_) {
                   if (context.mounted) {
                     AppSnackbar.error(context, t.t('dashboard.update_error'));
                   }
                 }
               },
-              onToggleActionComplete: (phaseNumber, actionIndex) async {
+              onToggleActionComplete: (_, actionIndex) async {
                 try {
-                  await notifier.toggleActionComplete(phaseNumber, actionIndex);
+                  await notifier.toggleActionComplete(phaseId, actionIndex);
                 } catch (_) {
                   if (context.mounted) {
                     AppSnackbar.error(context, t.t('dashboard.update_error'));
                   }
                 }
               },
-              onDeletePhase: (phaseNumber) => _deletePhase(context, ref, t, phaseNumber),
-              onEditNotes: (phaseNumber, currentNotes) =>
-                  _editNotes(context, ref, t, phaseNumber, currentNotes),
+              onDeletePhase: (_) => _deletePhase(context, ref, t, phaseId),
+              onEditNotes: (_, currentNotes) =>
+                  _editNotes(context, ref, t, phaseId, currentNotes),
             );
           }),
-          // Espace pour le FAB
           SizedBox(height: 80.h),
         ],
       ),

@@ -217,9 +217,9 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final targetJobs =
-        (item['target_jobs'] as List?)?.cast<String>() ?? [];
     final createdAt = item['created_at'] as String? ?? '';
+    final phases = (item['phases'] as List?) ?? [];
+    final phaseCount = phases.length;
 
     // Formater la date
     String dateStr = '';
@@ -264,21 +264,14 @@ class _HistoryCard extends StatelessWidget {
               ),
               SizedBox(height: 10.h),
 
-              // Postes ciblés
-              if (targetJobs.isNotEmpty)
-                Wrap(
-                  spacing: 6.w,
-                  runSpacing: 4.h,
-                  children: targetJobs
-                      .map((job) => Chip(
-                            label: Text(job, style: TextStyle(fontSize: 11.sp)),
-                            avatar: Icon(Icons.work_outline, size: 14.sp),
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          ))
-                      .toList(),
+              // Phase count
+              if (phaseCount > 0)
+                Text(
+                  '$phaseCount ${t.t('dashboard.phases_label').toLowerCase()}',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: cs.onSurfaceVariant,
+                  ),
                 ),
             ],
           ),

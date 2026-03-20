@@ -140,8 +140,13 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
               })
           .toList();
 
-      final svc = ref.read(roadmapServiceProvider);
-      await svc.generateWithAI(
+      if (!mounted) return;
+      // Navigate to roadmap screen immediately to show generating state
+      context.go('/roadmap');
+
+      // Start streaming generation via provider
+      final notifier = ref.read(roadmapProvider.notifier);
+      await for (final event in notifier.generateWithAI(
         level: _level,
         yearsExperience: int.tryParse(_yearsController.text) ?? 0,
         targetJobs: targetJobs,
@@ -150,12 +155,13 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
         language: _language,
         previousField: _level == 'reconversion' ? _previousFieldController.text.trim() : null,
         skills: skills,
-      );
-
-      if (!mounted) return;
-      // Relancer le polling du provider
-      ref.read(roadmapProvider.notifier).loadStatus();
-      context.go('/roadmap');
+      )) {
+        // Stream is consumed — provider handles state updates
+        final eventType = event['event'] as String;
+        if (eventType == 'error') {
+          break;
+        }
+      }
     } catch (e) {
       if (!mounted) return;
       AppSnackbar.error(context, t.t('onboarding.error'));

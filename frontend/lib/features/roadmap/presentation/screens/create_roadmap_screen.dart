@@ -17,24 +17,8 @@ class CreateRoadmapScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateRoadmapScreenState extends ConsumerState<CreateRoadmapScreen> {
-  final _jobCtrl = TextEditingController();
-  final List<String> _targetJobs = [];
   final List<Map<String, dynamic>> _phases = [];
   bool _submitting = false;
-
-  @override
-  void dispose() {
-    _jobCtrl.dispose();
-    super.dispose();
-  }
-
-  /// Ajouter un poste visé.
-  void _addJob() {
-    final job = _jobCtrl.text.trim();
-    if (job.isEmpty) return;
-    setState(() => _targetJobs.add(job));
-    _jobCtrl.clear();
-  }
 
   /// Ouvrir le formulaire de phase et ajouter le résultat.
   Future<void> _addPhase() async {
@@ -62,10 +46,6 @@ class _CreateRoadmapScreenState extends ConsumerState<CreateRoadmapScreen> {
   Future<void> _submit() async {
     final t = AppLocalizations.of(context);
 
-    if (_targetJobs.isEmpty) {
-      AppSnackbar.error(context, t.t('dashboard.at_least_one_job'));
-      return;
-    }
     if (_phases.isEmpty) {
       AppSnackbar.error(context, t.t('dashboard.at_least_one_phase'));
       return;
@@ -73,9 +53,7 @@ class _CreateRoadmapScreenState extends ConsumerState<CreateRoadmapScreen> {
 
     setState(() => _submitting = true);
     try {
-      await ref
-          .read(roadmapProvider.notifier)
-          .createRoadmap(_targetJobs, _phases);
+      await ref.read(roadmapProvider.notifier).createRoadmap(_phases);
       if (mounted) context.go('/roadmap');
     } catch (_) {
       if (mounted) {
@@ -98,56 +76,6 @@ class _CreateRoadmapScreenState extends ConsumerState<CreateRoadmapScreen> {
       body: ListView(
         padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 100.h),
         children: [
-          // ── Section postes visés ──
-          Text(
-            t.t('dashboard.target_jobs_label'),
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: cs.onSurface,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          // Champ + bouton ajouter
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _jobCtrl,
-                  decoration: InputDecoration(
-                    hintText: t.t('dashboard.target_jobs_hint'),
-                    isDense: true,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.r)),
-                  ),
-                  onSubmitted: (_) => _addJob(),
-                ),
-              ),
-              SizedBox(width: 8.w),
-              FilledButton(
-                onPressed: _addJob,
-                child: Text(t.t('dashboard.add_job')),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          // Chips des postes ajoutés
-          if (_targetJobs.isNotEmpty)
-            Wrap(
-              spacing: 6.w,
-              runSpacing: 4.h,
-              children: _targetJobs.asMap().entries.map((e) {
-                return Chip(
-                  label: Text(e.value, style: TextStyle(fontSize: 12.sp)),
-                  deleteIcon: Icon(Icons.close, size: 16.sp),
-                  onDeleted: () =>
-                      setState(() => _targetJobs.removeAt(e.key)),
-                  visualDensity: VisualDensity.compact,
-                );
-              }).toList(),
-            ),
-          SizedBox(height: 24.h),
-
           // ── Section phases ──
           Row(
             children: [
