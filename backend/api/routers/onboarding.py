@@ -51,7 +51,7 @@ async def get_profile(
 ):
     return await svc.get_profile(str(current_user.id))
 
-
+# Extrait les compétences d'un CV uploadé (PDF uniquement)
 @router.post("/extract-skills")
 @limiter.limit("5/minute", key_func=get_user_id_from_jwt)
 async def extract_skills(
@@ -59,7 +59,6 @@ async def extract_skills(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
-    """Extrait les compétences d'un CV uploadé (PDF uniquement)."""
     if not file.content_type or "pdf" not in file.content_type:
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 

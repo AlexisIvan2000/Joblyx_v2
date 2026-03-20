@@ -14,10 +14,10 @@ _s3 = boto3.client(
 
 
 class R2Service:
-    """Client R2 Cloudflare (compatible S3) pour le stockage de CVs."""
-
+    # Client R2 Cloudflare (compatible S3) pour le stockage de CVs
+    
+    # Upload un CV et retourne le file_key
     async def upload_cv(self, user_id: str, file_bytes: bytes, filename: str) -> str:
-        """Upload un CV et retourne le file_key."""
         ext = filename.rsplit(".", 1)[-1] if "." in filename else "pdf"
         file_key = f"{user_id}/{uuid.uuid4()}.{ext}"
 
@@ -34,7 +34,7 @@ class R2Service:
         return file_key
 
     async def get_cv_url(self, file_key: str) -> str:
-        """Génère une URL signée temporaire (1h) pour télécharger le CV."""
+     # Génère une URL signée temporaire (1h) pour télécharger le CV.
         url = await asyncio.get_event_loop().run_in_executor(
             None,
             partial(
@@ -47,7 +47,7 @@ class R2Service:
         return url
 
     async def delete_cv(self, file_key: str) -> None:
-        """Supprime un CV du bucket."""
+        # Supprime un CV du bucket.
         await asyncio.get_event_loop().run_in_executor(
             None,
             partial(
