@@ -31,7 +31,7 @@ async def create_application(
     current_user: User = Depends(get_current_user),
     svc: ApplicationService = Depends(get_application_service),
 ):
-    """Crée une candidature avec CV optionnel (multipart)."""
+    # "Crée une candidature avec CV optionnel (multipart).
     try:
         body = ApplicationCreate(**json.loads(data))
     except (json.JSONDecodeError, ValueError) as e:

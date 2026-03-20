@@ -1,7 +1,6 @@
 """Tests pour repositories/roadmap_repository.py."""
 
-import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -13,6 +12,7 @@ from tests.conftest import FAKE_USER_ID
 def mock_session():
     session = AsyncMock()
     session.flush = AsyncMock()
+    session.delete = AsyncMock()
     return session
 
 
@@ -21,25 +21,30 @@ def repo(mock_session):
     return RoadmapRepository(mock_session)
 
 
-class TestCreate:
+class TestCreateRoadmap:
     @pytest.mark.asyncio
     async def test_creates_roadmap_with_active_status(self, repo, mock_session):
-        roadmap = await repo.create(
-            user_id=FAKE_USER_ID,
-            target_jobs=["Developer"],
-            market_data=None,
-            phases=[{"title": "Phase 1"}],
-        )
+        roadmap = await repo.create_roadmap(user_id=FAKE_USER_ID, summary={"overview": "Test"})
         mock_session.add.assert_called_once()
         mock_session.flush.assert_called_once()
         added_obj = mock_session.add.call_args[0][0]
         assert added_obj.status == "active"
         assert added_obj.user_id == FAKE_USER_ID
-        assert added_obj.target_jobs == ["Developer"]
-        assert added_obj.phases == [{"title": "Phase 1"}]
 
 
-class TestGetActiveByUserId:
+class TestCreatePhases:
+    @pytest.mark.asyncio
+    async def test_creates_phases(self, repo, mock_session):
+        phases = await repo.create_phases(
+            "roadmap-id",
+            [{"phase_number": 1, "title": "Phase 1", "position": 0}],
+        )
+        mock_session.add_all.assert_called_once()
+        mock_session.flush.assert_called_once()
+        assert len(phases) == 1
+
+
+class TestGetActiveRoadmap:
     @pytest.mark.asyncio
     async def test_returns_roadmap_when_found(self, repo, mock_session):
         fake_roadmap = MagicMock()
@@ -47,7 +52,7 @@ class TestGetActiveByUserId:
         result_mock.scalar_one_or_none.return_value = fake_roadmap
         mock_session.execute.return_value = result_mock
 
-        result = await repo.get_active_by_user_id(FAKE_USER_ID)
+        result = await repo.get_active_roadmap(FAKE_USER_ID)
         assert result == fake_roadmap
 
     @pytest.mark.asyncio
@@ -56,7 +61,7 @@ class TestGetActiveByUserId:
         result_mock.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = result_mock
 
-        result = await repo.get_active_by_user_id(FAKE_USER_ID)
+        result = await repo.get_active_roadmap(FAKE_USER_ID)
         assert result is None
 
 
@@ -66,20 +71,6 @@ class TestArchiveActive:
         await repo.archive_active(FAKE_USER_ID)
         mock_session.execute.assert_called_once()
         mock_session.flush.assert_called_once()
-
-
-class TestGetHistoryByUserId:
-    @pytest.mark.asyncio
-    async def test_returns_list_of_archived(self, repo, mock_session):
-        r1, r2 = MagicMock(), MagicMock()
-        scalars_mock = MagicMock()
-        scalars_mock.all.return_value = [r1, r2]
-        result_mock = MagicMock()
-        result_mock.scalars.return_value = scalars_mock
-        mock_session.execute.return_value = result_mock
-
-        result = await repo.get_history_by_user_id(FAKE_USER_ID)
-        assert result == [r1, r2]
 
 
 class TestSetGenerationStatus:

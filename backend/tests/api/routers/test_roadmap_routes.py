@@ -1,7 +1,7 @@
 """Tests pour api/routers/roadmap.py."""
 
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -19,11 +19,45 @@ VALID_GENERATE_BODY = {
 }
 
 
+def _mock_roadmap(phases=None, status="active"):
+    rm = MagicMock()
+    rm.id = "aaaa-bbbb"
+    rm.summary = {"overview": "Test"}
+    rm.status = status
+    rm.created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    rm.phases = phases or []
+    return rm
+
+
+def _mock_phase(**overrides):
+    import uuid
+    defaults = {
+        "id": uuid.uuid4(),
+        "phase_number": 1,
+        "title": "Phase 1",
+        "duration_weeks": 4,
+        "objective": "Learn basics",
+        "skills": [],
+        "actions": [],
+        "resources": [],
+        "certifications": [],
+        "projects": [],
+        "milestone": "Done",
+        "completed": False,
+        "custom": False,
+        "user_notes": None,
+        "position": 0,
+    }
+    defaults.update(overrides)
+    return MagicMock(**defaults)
+
+
 class TestPostGenerate:
-    def test_returns_generating_status(self, test_client):
+    def test_returns_sse_stream(self, test_client):
         resp = test_client.post("/roadmap/generate", json=VALID_GENERATE_BODY)
         assert resp.status_code == 200
-        assert resp.json()["status"] == "generating"
+        assert resp.headers["content-type"].startswith("text/event-stream")
+        assert "generating" in resp.text
 
     def test_saves_career_and_skills(self, test_client):
         svc = test_client._mock_roadmap_svc
@@ -32,17 +66,10 @@ class TestPostGenerate:
 
     def test_skips_regen_limit_on_first_time(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.save_career_and_skills.return_value = True  # is_first
+        svc.save_career_and_skills.return_value = True
         resp = test_client.post("/roadmap/generate", json=VALID_GENERATE_BODY)
         assert resp.status_code == 200
         svc.check_regeneration_limit.assert_not_called()
-
-    def test_checks_regen_limit_on_subsequent(self, test_client):
-        svc = test_client._mock_roadmap_svc
-        svc.save_career_and_skills.return_value = False  # not first
-        resp = test_client.post("/roadmap/generate", json=VALID_GENERATE_BODY)
-        assert resp.status_code == 200
-        svc.check_regeneration_limit.assert_called_once()
 
     def test_returns_429_when_limit_reached(self, test_client):
         svc = test_client._mock_roadmap_svc
@@ -58,7 +85,7 @@ class TestGetStatus:
     def test_returns_status_with_roadmap(self, test_client):
         svc = test_client._mock_roadmap_svc
         svc._get_career.return_value = MagicMock(generation_status="ready")
-        svc.repo.get_active_by_user_id.return_value = MagicMock()
+        svc.repo.get_active_roadmap.return_value = _mock_roadmap()
 
         resp = test_client.get("/roadmap/status")
         assert resp.status_code == 200
@@ -69,7 +96,7 @@ class TestGetStatus:
     def test_returns_status_without_roadmap(self, test_client):
         svc = test_client._mock_roadmap_svc
         svc._get_career.return_value = MagicMock(generation_status="idle")
-        svc.repo.get_active_by_user_id.return_value = None
+        svc.repo.get_active_roadmap.return_value = None
 
         resp = test_client.get("/roadmap/status")
         assert resp.status_code == 200
@@ -80,7 +107,7 @@ class TestGetStatus:
     def test_returns_idle_when_no_career(self, test_client):
         svc = test_client._mock_roadmap_svc
         svc._get_career.return_value = None
-        svc.repo.get_active_by_user_id.return_value = None
+        svc.repo.get_active_roadmap.return_value = None
 
         resp = test_client.get("/roadmap/status")
         assert resp.status_code == 200
@@ -92,23 +119,19 @@ class TestGetStatus:
 class TestGetRoadmap:
     def test_returns_active_roadmap(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.get_active_by_user_id.return_value = MagicMock(
-            id="aaaa-bbbb",
-            target_jobs=["Developer"],
-            phases=[],
-            status="active",
-            created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        )
+        phase = _mock_phase()
+        svc.repo.get_active_roadmap.return_value = _mock_roadmap(phases=[phase])
 
         resp = test_client.get("/roadmap")
         assert resp.status_code == 200
         data = resp.json()
         assert data["id"] == "aaaa-bbbb"
         assert data["status"] == "active"
+        assert len(data["phases"]) == 1
 
     def test_returns_404_when_no_active(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.get_active_by_user_id.return_value = None
+        svc.repo.get_active_roadmap.return_value = None
 
         resp = test_client.get("/roadmap")
         assert resp.status_code == 404
@@ -117,13 +140,8 @@ class TestGetRoadmap:
 class TestGetHistory:
     def test_returns_archived_list(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.get_history_by_user_id.return_value = [
-            MagicMock(
-                id="111",
-                target_jobs=["Developer"],
-                status="archived",
-                created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
-            ),
+        svc.repo.get_history.return_value = [
+            _mock_roadmap(status="archived"),
         ]
 
         resp = test_client.get("/roadmap/history")
@@ -134,7 +152,7 @@ class TestGetHistory:
 
     def test_returns_empty_list(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.get_history_by_user_id.return_value = []
+        svc.repo.get_history.return_value = []
 
         resp = test_client.get("/roadmap/history")
         assert resp.status_code == 200

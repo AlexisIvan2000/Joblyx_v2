@@ -1,43 +1,48 @@
-import copy
-
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from models.db_models import Roadmap, Career
+from models.db_models import Roadmap, RoadmapPhase, Career
 
 
 class RoadmapRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    # Crée un nouveau roadmap avec status 'active'
-    async def create(self, user_id: str, target_jobs: list[str], market_data: dict | None, phases: dict) -> Roadmap:
-        roadmap = Roadmap(
-            user_id=user_id,
-            target_jobs=target_jobs,
-            market_data=market_data,
-            phases=phases,
-            status="active",
-        )
+    # Roadmap CRUD 
+
+    async def create_roadmap(self, user_id: str, summary: dict | None = None) -> Roadmap:
+        roadmap = Roadmap(user_id=user_id, summary=summary, status="active")
         self.session.add(roadmap)
         await self.session.flush()
         return roadmap
 
-    # Récupère le roadmap actif d'un utilisateur
-    async def get_active_by_user_id(self, user_id: str) -> Roadmap | None:
+    async def create_phases(self, roadmap_id, phases_list: list[dict]) -> list[RoadmapPhase]:
+        phases = []
+        for p in phases_list:
+            p["roadmap_id"] = roadmap_id
+            phase = RoadmapPhase(**p)
+            phases.append(phase)
+        self.session.add_all(phases)
+        await self.session.flush()
+        return phases
+
+    async def get_active_roadmap(self, user_id: str) -> Roadmap | None:
         result = await self.session.execute(
-            select(Roadmap).where(Roadmap.user_id == user_id, Roadmap.status == "active")
+            select(Roadmap)
+            .options(selectinload(Roadmap.phases))
+            .where(Roadmap.user_id == user_id, Roadmap.status == "active")
         )
         return result.scalar_one_or_none()
 
-    # Récupère un roadmap par id + user_id (sécurité)
     async def get_by_id(self, roadmap_id: str, user_id: str) -> Roadmap | None:
         result = await self.session.execute(
-            select(Roadmap).where(Roadmap.id == roadmap_id, Roadmap.user_id == user_id)
+            select(Roadmap)
+            .options(selectinload(Roadmap.phases))
+            .where(Roadmap.id == roadmap_id, Roadmap.user_id == user_id)
         )
         return result.scalar_one_or_none()
 
-    # Archive le roadmap actif (status → 'archived')
     async def archive_active(self, user_id: str) -> None:
         await self.session.execute(
             update(Roadmap)
@@ -46,131 +51,104 @@ class RoadmapRepository:
         )
         await self.session.flush()
 
-    # Retourne l'historique des roadmaps archivés
-    async def get_history_by_user_id(self, user_id: str) -> list[Roadmap]:
+    async def get_history(self, user_id: str) -> list[Roadmap]:
         result = await self.session.execute(
             select(Roadmap)
+            .options(selectinload(Roadmap.phases))
             .where(Roadmap.user_id == user_id, Roadmap.status == "archived")
             .order_by(Roadmap.created_at.desc())
         )
         return list(result.scalars().all())
 
-    # Restaure un roadmap archivé → le rend actif
     async def restore(self, roadmap_id: str, user_id: str) -> Roadmap | None:
         roadmap = await self.get_by_id(roadmap_id, user_id)
         if not roadmap or roadmap.status != "archived":
             return None
-        # Archiver le roadmap actif actuel
         await self.archive_active(user_id)
-        # Réactiver l'ancien
         roadmap.status = "active"
         await self.session.flush()
         return roadmap
 
-    # Met à jour le generation_status sur career
+    #  Phase operations 
+
+    async def get_phase(self, phase_id: str, user_id: str) -> RoadmapPhase | None:
+        result = await self.session.execute(
+            select(RoadmapPhase)
+            .join(Roadmap)
+            .where(RoadmapPhase.id == phase_id, Roadmap.user_id == user_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def update_phase(self, phase_id: str, data: dict) -> RoadmapPhase | None:
+        result = await self.session.execute(
+            select(RoadmapPhase).where(RoadmapPhase.id == phase_id)
+        )
+        phase = result.scalar_one_or_none()
+        if not phase:
+            return None
+        for key, value in data.items():
+            setattr(phase, key, value)
+        await self.session.flush()
+        return phase
+
+    async def toggle_phase_complete(self, phase_id: str) -> RoadmapPhase | None:
+        result = await self.session.execute(
+            select(RoadmapPhase).where(RoadmapPhase.id == phase_id)
+        )
+        phase = result.scalar_one_or_none()
+        if not phase:
+            return None
+        phase.completed = not phase.completed
+        await self.session.flush()
+        return phase
+
+    async def add_phase(self, roadmap_id, phase_data: dict, position: int) -> RoadmapPhase:
+        # Shift positions of phases at or after the insert position
+        await self.session.execute(
+            update(RoadmapPhase)
+            .where(RoadmapPhase.roadmap_id == roadmap_id, RoadmapPhase.position >= position)
+            .values(position=RoadmapPhase.position + 1, phase_number=RoadmapPhase.phase_number + 1)
+        )
+        phase_data["roadmap_id"] = roadmap_id
+        phase_data["position"] = position
+        phase_data["custom"] = True
+        phase = RoadmapPhase(**phase_data)
+        self.session.add(phase)
+        await self.session.flush()
+        return phase
+
+    async def delete_phase(self, phase_id: str) -> None:
+        result = await self.session.execute(
+            select(RoadmapPhase).where(RoadmapPhase.id == phase_id)
+        )
+        phase = result.scalar_one_or_none()
+        if not phase:
+            return
+        roadmap_id = phase.roadmap_id
+        position = phase.position
+        await self.session.delete(phase)
+        await self.session.flush()
+        # Shift positions down for phases after the deleted one
+        await self.session.execute(
+            update(RoadmapPhase)
+            .where(RoadmapPhase.roadmap_id == roadmap_id, RoadmapPhase.position > position)
+            .values(position=RoadmapPhase.position - 1, phase_number=RoadmapPhase.phase_number - 1)
+        )
+        await self.session.flush()
+
+    async def reorder_phases(self, roadmap_id, phase_ids_ordered: list[str]) -> None:
+        for i, phase_id in enumerate(phase_ids_ordered):
+            await self.session.execute(
+                update(RoadmapPhase)
+                .where(RoadmapPhase.id == phase_id, RoadmapPhase.roadmap_id == roadmap_id)
+                .values(position=i, phase_number=i + 1)
+            )
+        await self.session.flush()
+
+    # Career generation status
+
     async def set_generation_status(self, user_id: str, status: str) -> None:
         await self.session.execute(
             update(Career).where(Career.user_id == user_id).values(generation_status=status)
         )
         await self.session.flush()
-
-    # ─── Méthodes de modification des phases ─────────────────────────
-
-    # Remplace le JSONB phases complet
-    async def update_phases(self, roadmap_id: str, user_id: str, phases: list[dict]) -> Roadmap | None:
-        roadmap = await self.get_by_id(roadmap_id, user_id)
-        if not roadmap:
-            return None
-        roadmap.phases = phases
-        await self.session.flush()
-        return roadmap
-
-    # Ajoute une phase custom à la position souhaitée
-    async def add_phase(self, roadmap_id: str, user_id: str, phase: dict, position: int | None) -> Roadmap | None:
-        roadmap = await self.get_by_id(roadmap_id, user_id)
-        if not roadmap:
-            return None
-
-        phases = copy.deepcopy(roadmap.phases) if roadmap.phases else []
-        phase["custom"] = True
-        phase["completed"] = False
-
-        if position is not None and 0 <= position <= len(phases):
-            phases.insert(position, phase)
-        else:
-            phases.append(phase)
-
-        # Renumérotation des phase_number
-        for i, p in enumerate(phases):
-            p["phase_number"] = i + 1
-
-        roadmap.phases = phases
-        await self.session.flush()
-        return roadmap
-
-    # Supprime une phase par numéro
-    async def delete_phase(self, roadmap_id: str, user_id: str, phase_number: int) -> Roadmap | None:
-        roadmap = await self.get_by_id(roadmap_id, user_id)
-        if not roadmap:
-            return None
-
-        phases = copy.deepcopy(roadmap.phases) if roadmap.phases else []
-        original_len = len(phases)
-        phases = [p for p in phases if p.get("phase_number") != phase_number]
-
-        if len(phases) == original_len:
-            return None  # Phase non trouvée
-
-        # Renumérotation
-        for i, p in enumerate(phases):
-            p["phase_number"] = i + 1
-
-        roadmap.phases = phases
-        await self.session.flush()
-        return roadmap
-
-    # Toggle completed sur une phase
-    async def toggle_phase_complete(self, roadmap_id: str, user_id: str, phase_number: int) -> Roadmap | None:
-        roadmap = await self.get_by_id(roadmap_id, user_id)
-        if not roadmap:
-            return None
-
-        phases = copy.deepcopy(roadmap.phases) if roadmap.phases else []
-        found = False
-        for p in phases:
-            if p.get("phase_number") == phase_number:
-                p["completed"] = not p.get("completed", False)
-                found = True
-                break
-
-        if not found:
-            return None
-
-        roadmap.phases = phases
-        await self.session.flush()
-        return roadmap
-
-    # Toggle completed sur une action
-    async def toggle_action_complete(
-        self, roadmap_id: str, user_id: str, phase_number: int, action_index: int
-    ) -> Roadmap | None:
-        roadmap = await self.get_by_id(roadmap_id, user_id)
-        if not roadmap:
-            return None
-
-        phases = copy.deepcopy(roadmap.phases) if roadmap.phases else []
-        found = False
-        for p in phases:
-            if p.get("phase_number") == phase_number:
-                actions = p.get("actions", [])
-                if 0 <= action_index < len(actions):
-                    actions[action_index]["completed"] = not actions[action_index].get("completed", False)
-                    found = True
-                break
-
-        if not found:
-            return None
-
-        roadmap.phases = phases
-        await self.session.flush()
-        return roadmap

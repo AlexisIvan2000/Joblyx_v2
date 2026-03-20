@@ -179,18 +179,22 @@ def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_
     roadmap_svc = AsyncMock()
     roadmap_svc._get_career = AsyncMock(return_value=MagicMock(generation_status="idle"))
     roadmap_svc.repo = AsyncMock()
-    roadmap_svc.repo.get_active_by_user_id = AsyncMock(return_value=None)
-    roadmap_svc.repo.get_history_by_user_id = AsyncMock(return_value=[])
+    roadmap_svc.repo.get_active_roadmap = AsyncMock(return_value=None)
+    roadmap_svc.repo.get_history = AsyncMock(return_value=[])
+    roadmap_svc.repo.get_by_id = AsyncMock(return_value=None)
+    roadmap_svc.repo.get_phase = AsyncMock(return_value=None)
+    roadmap_svc.repo.create_roadmap = AsyncMock()
+    roadmap_svc.repo.create_phases = AsyncMock()
+    roadmap_svc.repo.archive_active = AsyncMock()
     roadmap_svc.generate = AsyncMock()
+    async def _mock_generate_stream(user_id):
+        yield 'event: status\ndata: {"status":"generating"}\n\n'
+        yield 'event: complete\ndata: {"status":"ready"}\n\n'
+    roadmap_svc.generate_stream = _mock_generate_stream
     roadmap_svc.save_career_and_skills = AsyncMock(return_value=True)
     roadmap_svc.check_regeneration_limit = AsyncMock(return_value={
         "allowed": True, "used": 0, "remaining": 5, "resets_at": "2026-04-01T00:00:00+00:00",
     })
-    roadmap_svc.update_phases = AsyncMock(return_value=None)
-    roadmap_svc.add_phase = AsyncMock(return_value=None)
-    roadmap_svc.delete_phase = AsyncMock(return_value=None)
-    roadmap_svc.toggle_phase_complete = AsyncMock(return_value=None)
-    roadmap_svc.toggle_action_complete = AsyncMock(return_value=None)
     roadmap_svc.session = AsyncMock()
 
     async def override_auth_service():

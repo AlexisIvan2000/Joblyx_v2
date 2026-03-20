@@ -1,5 +1,6 @@
 import hashlib
 import secrets
+import uuid
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -31,7 +32,7 @@ class Security:
     @staticmethod
     def create_refresh_token(user_id: str) -> str:
         expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        payload = {"sub": user_id, "exp": expire, "type": "refresh"}
+        payload = {"sub": user_id, "exp": expire, "type": "refresh", "jti": str(uuid.uuid4())}
         return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     
     

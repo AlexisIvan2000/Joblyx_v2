@@ -154,7 +154,7 @@ class RoadmapGenerateRequest(BaseModel):
         return v
 
 
-# ─── Roadmap schemas ───────────────────────────────────────────────
+# Roadmap schemas 
 
 class RoadmapGenerateResponse(BaseModel):
     status: str
@@ -195,51 +195,65 @@ class RoadmapProject(BaseModel):
     technologies: List[str] = []
     portfolio_worthy: bool = False
 
-class RoadmapPhase(BaseModel):
+class PhaseResponse(BaseModel):
+    id: str
     phase_number: int
     title: str
-    duration_weeks: int
+    duration_weeks: int | None = None
     objective: str | None = None
-    skills: List[RoadmapSkill] = []
-    actions: List[RoadmapActionItem] = []
-    resources: List[RoadmapResource] = []
-    certifications: List[RoadmapCertification] = []
-    projects: List[RoadmapProject] = []
+    skills: list = []
+    actions: list = []
+    resources: list = []
+    certifications: list = []
+    projects: list = []
     milestone: str | None = None
     completed: bool = False
     custom: bool = False
     user_notes: str | None = None
+    position: int = 0
 
-class RoadmapPhaseCreate(BaseModel):
+class PhaseCreate(BaseModel):
     title: str
-    duration_weeks: int
+    duration_weeks: int | None = None
     objective: str | None = None
-    skills: List[RoadmapSkill] = []
-    actions: List[RoadmapActionItem] = []
-    resources: List[RoadmapResource] = []
-    certifications: List[RoadmapCertification] = []
-    projects: List[RoadmapProject] = []
+    skills: list = []
+    actions: list = []
+    resources: list = []
+    certifications: list = []
+    projects: list = []
     milestone: str | None = None
     user_notes: str | None = None
     position: int | None = None
 
-class RoadmapCreate(BaseModel):
-    target_jobs: List[str]
-    phases: List[RoadmapPhaseCreate]
+class PhaseUpdate(BaseModel):
+    title: str | None = None
+    duration_weeks: int | None = None
+    objective: str | None = None
+    milestone: str | None = None
+    user_notes: str | None = None
+    skills: list | None = None
+    actions: list | None = None
+    resources: list | None = None
+    certifications: list | None = None
+    projects: list | None = None
 
-class RoadmapPhasesUpdate(BaseModel):
-    phases: List[RoadmapPhase]
+class RoadmapCreate(BaseModel):
+    phases: List[PhaseCreate]
+
+class PhaseReorder(BaseModel):
+    phase_ids: List[str]
 
 class RoadmapResponse(BaseModel):
     id: str
-    target_jobs: List[str]
-    phases: List[RoadmapPhase]
+    summary: dict | None = None
+    phases: List[PhaseResponse]
     status: str
     created_at: str | None = None
 
 class RoadmapHistoryItem(BaseModel):
     id: str
-    target_jobs: List[str]
+    summary: dict | None = None
+    phases: List[PhaseResponse] = []
     status: str
     created_at: str | None = None
 
@@ -250,7 +264,7 @@ class RegenerationStatusResponse(BaseModel):
     resets_at: str
 
 
-# ─── Application schemas ──────────────────────────────────────────
+# Application schemas 
 
 class ApplicationStatus(str, Enum):
     applied = "applied"

@@ -1,15 +1,18 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Request, UploadFile, status
+import copy
+
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi.responses import StreamingResponse
 from core.rate_limit import limiter, get_user_id_from_jwt
-from core.database import AsyncSessionLocal
 from models.schemas import (
-    RoadmapGenerateResponse,
     RoadmapGenerateRequest,
     RoadmapStatusResponse,
     RoadmapResponse,
     RoadmapHistoryItem,
     RoadmapCreate,
-    RoadmapPhasesUpdate,
-    RoadmapPhaseCreate,
+    PhaseCreate,
+    PhaseUpdate,
+    PhaseResponse,
+    PhaseReorder,
     RegenerationStatusResponse,
 )
 from models.db_models import User
@@ -20,42 +23,48 @@ from services.ai.cv_parser import extract_skills_from_cv
 router = APIRouter(prefix="/roadmap", tags=["roadmap"])
 
 
-async def _run_generate(user_id: str):
-    """Background task : ouvre sa propre session DB pour la génération."""
-    async with AsyncSessionLocal() as session:
-        try:
-            svc = RoadmapService(session)
-            await svc.generate(user_id)
-        except Exception:
-            import logging
-            logging.getLogger(__name__).exception(
-                "Background roadmap generation failed for user %s", user_id
-            )
+def _phase_to_dict(phase) -> dict:
+    return {
+        "id": str(phase.id),
+        "phase_number": phase.phase_number,
+        "title": phase.title,
+        "duration_weeks": phase.duration_weeks,
+        "objective": phase.objective,
+        "skills": phase.skills or [],
+        "actions": phase.actions or [],
+        "resources": phase.resources or [],
+        "certifications": phase.certifications or [],
+        "projects": phase.projects or [],
+        "milestone": phase.milestone,
+        "completed": phase.completed,
+        "custom": phase.custom,
+        "user_notes": phase.user_notes,
+        "position": phase.position,
+    }
 
 
 def _roadmap_to_response(roadmap) -> dict:
     return {
         "id": str(roadmap.id),
-        "target_jobs": roadmap.target_jobs,
-        "phases": roadmap.phases,
+        "summary": roadmap.summary,
+        "phases": [_phase_to_dict(p) for p in sorted(roadmap.phases, key=lambda p: p.position)],
         "status": roadmap.status,
         "created_at": roadmap.created_at.isoformat() if roadmap.created_at else None,
     }
 
 
-@router.post("/generate", response_model=RoadmapGenerateResponse)
+# ─── Generate (SSE streaming) ────────────────────────────────────
+
+@router.post("/generate")
 @limiter.limit("3/minute", key_func=get_user_id_from_jwt)
 async def generate_roadmap(
     request: Request,
     body: RoadmapGenerateRequest,
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    """Sauvegarde le profil career+skills puis lance la génération IA en background."""
     user_id = str(current_user.id)
 
-    # Sauvegarder/mettre à jour career + skills
     career_data = {
         "level": body.level.value,
         "years_experience": body.years_experience,
@@ -66,32 +75,32 @@ async def generate_roadmap(
         "previous_field": body.previous_field,
     }
     skills_data = [
-        {
-            "skill_name": s.skill_name,
-            "category": s.category,
-            "proficiency": s.proficiency.value,
-        }
+        {"skill_name": s.skill_name, "category": s.category, "proficiency": s.proficiency.value}
         for s in body.skills
     ]
     is_first = await svc.save_career_and_skills(user_id, career_data, skills_data)
     await svc.session.commit()
 
-    # Vérification de la limite de régénération (sauf première fois)
     if not is_first:
         regen = await svc.check_regeneration_limit(user_id)
         if not regen["allowed"]:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail={
-                    "error": "Vous avez atteint la limite de 5 régénérations ce mois-ci",
+                    "error": "Vous avez atteint la limite de 5 regenerations ce mois-ci",
                     "remaining": 0,
                     "resets_at": regen["resets_at"],
                 },
             )
 
-    background_tasks.add_task(_run_generate, user_id)
-    return {"status": "generating"}
+    async def _stream():
+        async for event in svc.generate_stream(user_id):
+            yield event
 
+    return StreamingResponse(_stream(), media_type="text/event-stream")
+
+
+# Création manuelle 
 
 @router.post("/manual", response_model=RoadmapResponse)
 async def create_manual_roadmap(
@@ -99,20 +108,29 @@ async def create_manual_roadmap(
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    """Crée un roadmap manuellement (sans IA, sans limite)."""
     user_id = str(current_user.id)
     await svc.repo.archive_active(user_id)
-    phases = []
+
+    roadmap = await svc.repo.create_roadmap(user_id)
+
+    phases_data = []
     for i, p in enumerate(body.phases):
-        phase_dict = p.model_dump()
+        phase_dict = p.model_dump(exclude={"position"})
         phase_dict["phase_number"] = i + 1
         phase_dict["completed"] = False
         phase_dict["custom"] = True
-        phases.append(phase_dict)
-    roadmap = await svc.repo.create(user_id, body.target_jobs, None, phases)
+        phase_dict["position"] = i
+        phases_data.append(phase_dict)
+
+    await svc.repo.create_phases(roadmap.id, phases_data)
     await svc.session.commit()
+
+    # Reload with phases
+    roadmap = await svc.repo.get_active_roadmap(user_id)
     return _roadmap_to_response(roadmap)
 
+
+# ─── Extract skills ──────────────────────────────────────────────
 
 @router.post("/extract-skills")
 @limiter.limit("5/minute", key_func=get_user_id_from_jwt)
@@ -121,7 +139,6 @@ async def extract_skills(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
-    """Extrait les compétences d'un CV uploadé (PDF uniquement)."""
     if not file.content_type or "pdf" not in file.content_type:
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 
@@ -132,6 +149,8 @@ async def extract_skills(
     skills = await extract_skills_from_cv(content)
     return {"skills": skills}
 
+
+# ─── Status endpoints ────────────────────────────────────────────
 
 @router.get("/regeneration-status", response_model=RegenerationStatusResponse)
 async def regeneration_status(
@@ -153,19 +172,21 @@ async def roadmap_status(
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
     career = await svc._get_career(str(current_user.id))
-    roadmap = await svc.repo.get_active_by_user_id(str(current_user.id))
+    roadmap = await svc.repo.get_active_roadmap(str(current_user.id))
     return {
         "generation_status": career.generation_status if career else "idle",
         "has_roadmap": roadmap is not None,
     }
 
 
+# ─── Get roadmap ─────────────────────────────────────────────────
+
 @router.get("", response_model=RoadmapResponse)
 async def get_roadmap(
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    roadmap = await svc.repo.get_active_by_user_id(str(current_user.id))
+    roadmap = await svc.repo.get_active_roadmap(str(current_user.id))
     if not roadmap:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active roadmap")
     return _roadmap_to_response(roadmap)
@@ -176,16 +197,8 @@ async def roadmap_history(
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    roadmaps = await svc.repo.get_history_by_user_id(str(current_user.id))
-    return [
-        {
-            "id": str(r.id),
-            "target_jobs": r.target_jobs,
-            "status": r.status,
-            "created_at": r.created_at.isoformat() if r.created_at else None,
-        }
-        for r in roadmaps
-    ]
+    roadmaps = await svc.repo.get_history(str(current_user.id))
+    return [_roadmap_to_response(r) for r in roadmaps]
 
 
 @router.get("/{roadmap_id}", response_model=RoadmapResponse)
@@ -194,7 +207,6 @@ async def get_roadmap_by_id(
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    """Récupère un roadmap par son ID (actif ou archivé)."""
     roadmap = await svc.repo.get_by_id(roadmap_id, str(current_user.id))
     if not roadmap:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap not found")
@@ -207,7 +219,6 @@ async def restore_roadmap(
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    """Restaure un roadmap archivé : archive le courant et réactive celui-ci."""
     roadmap = await svc.repo.restore(roadmap_id, str(current_user.id))
     if not roadmap:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap not found or not archived")
@@ -215,81 +226,135 @@ async def restore_roadmap(
     return _roadmap_to_response(roadmap)
 
 
-# ─── Endpoints de modification des phases (zéro appel GPT) ──────
+# ─── Phase endpoints ─────────────────────────────────────────────
 
-@router.put("/{roadmap_id}/phases", response_model=RoadmapResponse)
-async def update_phases(
-    roadmap_id: str,
-    body: RoadmapPhasesUpdate,
-    current_user: User = Depends(get_current_user),
-    svc: RoadmapService = Depends(get_roadmap_service),
-):
-    """Met à jour le JSONB phases complet (réordonnement, édition, notes, etc.)."""
-    phases_dicts = [p.model_dump() for p in body.phases]
-    roadmap = await svc.update_phases(roadmap_id, str(current_user.id), phases_dicts)
-    if not roadmap:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap not found")
-    await svc.session.commit()
-    return _roadmap_to_response(roadmap)
-
-
-@router.post("/{roadmap_id}/phases", response_model=RoadmapResponse)
+@router.post("/phases", response_model=PhaseResponse)
 async def add_phase(
-    roadmap_id: str,
-    body: RoadmapPhaseCreate,
+    body: PhaseCreate,
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    """Ajoute une phase custom au roadmap."""
-    phase_dict = body.model_dump(exclude={"position"})
-    roadmap = await svc.add_phase(roadmap_id, str(current_user.id), phase_dict, body.position)
+    user_id = str(current_user.id)
+    roadmap = await svc.repo.get_active_roadmap(user_id)
     if not roadmap:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active roadmap")
+
+    position = body.position if body.position is not None else len(roadmap.phases)
+    phase_data = body.model_dump(exclude={"position"})
+    phase_data["phase_number"] = position + 1
+
+    phase = await svc.repo.add_phase(roadmap.id, phase_data, position)
     await svc.session.commit()
-    return _roadmap_to_response(roadmap)
+    return _phase_to_dict(phase)
 
 
-@router.delete("/{roadmap_id}/phases/{phase_number}", response_model=RoadmapResponse)
+@router.put("/phases/{phase_id}", response_model=PhaseResponse)
+async def update_phase(
+    phase_id: str,
+    body: PhaseUpdate,
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    phase = await svc.repo.get_phase(phase_id, str(current_user.id))
+    if not phase:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Phase not found")
+
+    data = body.model_dump(exclude_none=True)
+    if not data:
+        return _phase_to_dict(phase)
+
+    phase = await svc.repo.update_phase(phase_id, data)
+    await svc.session.commit()
+    return _phase_to_dict(phase)
+
+
+@router.delete("/phases/{phase_id}", status_code=204)
 async def delete_phase(
-    roadmap_id: str,
-    phase_number: int,
+    phase_id: str,
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    """Supprime une phase par son numéro."""
-    roadmap = await svc.delete_phase(roadmap_id, str(current_user.id), phase_number)
-    if not roadmap:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap or phase not found")
+    phase = await svc.repo.get_phase(phase_id, str(current_user.id))
+    if not phase:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Phase not found")
+
+    await svc.repo.delete_phase(phase_id)
     await svc.session.commit()
-    return _roadmap_to_response(roadmap)
 
 
-@router.patch("/{roadmap_id}/phases/{phase_number}/complete", response_model=RoadmapResponse)
+@router.patch("/phases/{phase_id}/complete", response_model=PhaseResponse)
 async def toggle_phase_complete(
-    roadmap_id: str,
-    phase_number: int,
+    phase_id: str,
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    """Toggle le statut completed d'une phase."""
-    roadmap = await svc.toggle_phase_complete(roadmap_id, str(current_user.id), phase_number)
-    if not roadmap:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap or phase not found")
+    phase = await svc.repo.get_phase(phase_id, str(current_user.id))
+    if not phase:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Phase not found")
+
+    phase = await svc.repo.toggle_phase_complete(phase_id)
     await svc.session.commit()
-    return _roadmap_to_response(roadmap)
+    return _phase_to_dict(phase)
 
 
-@router.patch("/{roadmap_id}/phases/{phase_number}/actions/{action_index}/complete", response_model=RoadmapResponse)
+@router.patch("/phases/{phase_id}/actions/{action_index}/complete", response_model=PhaseResponse)
 async def toggle_action_complete(
-    roadmap_id: str,
-    phase_number: int,
+    phase_id: str,
     action_index: int,
     current_user: User = Depends(get_current_user),
     svc: RoadmapService = Depends(get_roadmap_service),
 ):
-    """Toggle le statut completed d'une action spécifique."""
-    roadmap = await svc.toggle_action_complete(roadmap_id, str(current_user.id), phase_number, action_index)
-    if not roadmap:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap, phase or action not found")
+    phase = await svc.repo.get_phase(phase_id, str(current_user.id))
+    if not phase:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Phase not found")
+
+    actions = copy.deepcopy(phase.actions or [])
+    if action_index < 0 or action_index >= len(actions):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Action not found")
+
+    actions[action_index]["completed"] = not actions[action_index].get("completed", False)
+    phase = await svc.repo.update_phase(phase_id, {"actions": actions})
     await svc.session.commit()
-    return _roadmap_to_response(roadmap)
+    return _phase_to_dict(phase)
+
+
+@router.patch("/phases/{phase_id}/skills/{skill_index}/complete", response_model=PhaseResponse)
+async def toggle_skill_complete(
+    phase_id: str,
+    skill_index: int,
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    phase = await svc.repo.get_phase(phase_id, str(current_user.id))
+    if not phase:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Phase not found")
+
+    skills = copy.deepcopy(phase.skills or [])
+    if skill_index < 0 or skill_index >= len(skills):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Skill not found")
+
+    skills[skill_index]["completed"] = not skills[skill_index].get("completed", False)
+    phase = await svc.repo.update_phase(phase_id, {"skills": skills})
+    await svc.session.commit()
+    return _phase_to_dict(phase)
+
+
+@router.put("/phases/reorder")
+async def reorder_phases(
+    body: PhaseReorder,
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    user_id = str(current_user.id)
+    roadmap = await svc.repo.get_active_roadmap(user_id)
+    if not roadmap:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active roadmap")
+
+    # Verifie que tous les phase_ids fournis appartiennent à la roadmap active de l'utilisateur
+    roadmap_phase_ids = {str(p.id) for p in roadmap.phases}
+    if set(body.phase_ids) != roadmap_phase_ids:
+        raise HTTPException(status_code=400, detail="phase_ids must match all phases of the active roadmap")
+
+    await svc.repo.reorder_phases(roadmap.id, body.phase_ids)
+    await svc.session.commit()
+    return {"ok": True}

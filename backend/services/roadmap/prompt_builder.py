@@ -2,6 +2,7 @@ def build_roadmap_prompt(
     career: dict,
     skills: list[dict],
     market_data: list[dict] | None,
+    completed_data: dict | None = None,
 ) -> tuple[str, str]:
     """Construit le system prompt et le user prompt pour GPT-4o.
 
@@ -91,7 +92,7 @@ RÈGLES STRICTES :
 - Adapte la difficulté et le rythme au niveau de l'utilisateur (un junior a besoin de plus de fondations, un senior de spécialisation)
 - Pour les reconversions : commence par les fondations absolues, sois réaliste sur la timeline, valorise les compétences transférables du domaine précédent
 - Inclus des soft skills pertinents (communication technique, travail en équipe agile, etc.)
-- Chaque phase doit contenir au moins un projet concret à réaliser pour le portfolio
+- Chaque phase doit contenir au moins un projet concret  à réaliser pour le portfolio
 - Pour les ressources : donne le NOM EXACT du cours et la PLATEFORME — ne génère AUCUNE URL car elles seront incorrectes
 - Les certifications doivent être reconnues sur le marché canadien
 - Tiens compte de l'impact de l'IA : quels outils IA l'utilisateur devrait maîtriser, comment l'IA change les attentes des recruteurs pour ces postes
@@ -149,6 +150,25 @@ Base-toi sur ta connaissance approfondie du marché IT canadien pour identifier 
 - Les outils et frameworks émergents en 2025-2026
 - L'impact de l'IA sur ces postes et les compétences IA à acquérir"""
 
+    # Section progression existante
+    progress_section = ""
+    if completed_data:
+        parts = []
+        if completed_data.get("completed_phases"):
+            parts.append("Phases complétées : " + ", ".join(completed_data["completed_phases"]))
+        if completed_data.get("acquired_skills"):
+            parts.append("Skills acquis : " + ", ".join(completed_data["acquired_skills"]))
+        if completed_data.get("completed_actions"):
+            parts.append("Actions terminées : " + ", ".join(completed_data["completed_actions"][:20]))
+        if parts:
+            progress_section = f"""
+PROGRESSION EXISTANTE :
+L'utilisateur a déjà complété les éléments suivants :
+{chr(10).join('- ' + p for p in parts)}
+
+Ne recommande pas ce qu'il a déjà accompli. Adapte le nouveau roadmap en continuant à partir de sa progression actuelle.
+"""
+
     user_prompt = f"""PROFIL DE L'UTILISATEUR :
 - Niveau : {level_desc}
 - Postes visés : {", ".join(target_jobs)}
@@ -159,7 +179,7 @@ SKILLS ACTUELS :
 {skills_text}
 
 {market_section}
-
+{progress_section}
 MISSION : Crée un roadmap personnalisé, détaillé et actionnable pour cet utilisateur.
 Le roadmap doit le mener du point A (son profil actuel) au point B (être un candidat compétitif pour les postes visés).
 Chaque phase doit contenir des actions concrètes avec des estimations de temps, des ressources réelles (nom + plateforme, PAS d'URLs), des projets pour le portfolio, et un milestone clair.

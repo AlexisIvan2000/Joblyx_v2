@@ -3,9 +3,8 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from core.security import Security
 
-
+# Extrait le user_id du JWT Bearer token pour le rate limiting par user
 def get_user_id_from_jwt(request: Request) -> str:
-    """Extrait le user_id du JWT Bearer token pour le rate limiting par user."""
     auth_header = request.headers.get("authorization", "")
     if auth_header.startswith("Bearer "):
         token = auth_header[7:]
