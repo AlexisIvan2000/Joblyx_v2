@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
-import 'package:frontend/features/roadmap/presentation/screens/dashboard_screen.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/dashboard_widgets.dart';
 
 class ApplicationDetailScreen extends ConsumerStatefulWidget {
   final String applicationId;

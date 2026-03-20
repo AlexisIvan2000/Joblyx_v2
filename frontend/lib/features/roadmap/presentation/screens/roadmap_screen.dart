@@ -10,6 +10,7 @@ import 'package:frontend/features/roadmap/presentation/providers/roadmap_provide
 import 'package:frontend/features/roadmap/presentation/widgets/phase_card.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/add_phase_dialog.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/edit_notes_dialog.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/option_card.dart';
 
 class RoadmapScreen extends ConsumerWidget {
   const RoadmapScreen({super.key});
@@ -221,8 +222,7 @@ class RoadmapScreen extends ConsumerWidget {
                 style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 textAlign: TextAlign.center),
             SizedBox(height: 32.h),
-            // Carte : Générer avec l'IA
-            _OptionCard(
+            OptionCard(
               icon: Icons.auto_awesome_rounded,
               iconColor: cs.primary,
               title: t.t('dashboard.generate'),
@@ -231,8 +231,7 @@ class RoadmapScreen extends ConsumerWidget {
               onTap: () => context.push('/roadmap/generate-ai'),
             ),
             SizedBox(height: 12.h),
-            // Carte : Créer manuellement
-            _OptionCard(
+            OptionCard(
               icon: Icons.edit_note_rounded,
               iconColor: cs.tertiary,
               title: t.t('dashboard.create_roadmap'),
@@ -294,73 +293,3 @@ class RoadmapScreen extends ConsumerWidget {
   }
 }
 
-/// Carte d'option pour l'état vide (générer IA / créer manuellement).
-class _OptionCard extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final ColorScheme cs;
-  final VoidCallback onTap;
-
-  const _OptionCard({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.cs,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Row(
-            children: [
-              Container(
-                width: 44.w,
-                height: 44.w,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Icon(icon, color: iconColor, size: 24.sp),
-              ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant, size: 20.sp),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

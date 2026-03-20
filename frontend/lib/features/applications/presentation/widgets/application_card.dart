@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
-import 'package:frontend/features/roadmap/presentation/screens/dashboard_screen.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/dashboard_widgets.dart';
 
 /// Carte affichant le résumé d'une candidature dans la liste.
 class ApplicationCard extends StatelessWidget {
