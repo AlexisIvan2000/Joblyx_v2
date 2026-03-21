@@ -4,10 +4,6 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/features/onboarding/data/mapbox_service.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/form/form_decorations.dart';
 
-// ---------------------------------------------------------------------------
-// Modèle de données
-// ---------------------------------------------------------------------------
-
 /// Modèle de données pour un chip de compétence sélectionné.
 class SkillChipData {
   final String skillName;
@@ -21,9 +17,6 @@ class SkillChipData {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Bouton d'upload de CV
-// ---------------------------------------------------------------------------
 
 /// Bouton pour uploader un CV (PDF) via file picker.
 class CvUploadButton extends StatelessWidget {
@@ -65,9 +58,6 @@ class CvUploadButton extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Champ de recherche de compétences
-// ---------------------------------------------------------------------------
 
 /// Champ d'autocomplétion pour rechercher et ajouter des compétences.
 class SkillSearchField extends StatelessWidget {
@@ -153,9 +143,7 @@ class SkillSearchField extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Chip de compétence
-// ---------------------------------------------------------------------------
+
 
 /// Chip coloré affichant une compétence avec son niveau de maîtrise.
 class SkillChipWidget extends StatelessWidget {
@@ -196,9 +184,7 @@ class SkillChipWidget extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Champ de localisation
-// ---------------------------------------------------------------------------
+
 
 /// Champ de localisation avec autocomplétion Mapbox.
 class LocationField extends StatelessWidget {
