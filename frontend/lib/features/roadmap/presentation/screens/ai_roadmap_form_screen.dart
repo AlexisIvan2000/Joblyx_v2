@@ -419,9 +419,6 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
                   onPressed: _isSubmitting ? null : _nextStep,
                   style: FilledButton.styleFrom(
                     minimumSize: Size(0, 50.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
                     textStyle: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,

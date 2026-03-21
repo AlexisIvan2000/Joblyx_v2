@@ -200,9 +200,6 @@ class _VerifyEmailDialogState extends State<_VerifyEmailDialog> {
                 child: FilledButton(
                   onPressed: _isVerifying ? null : _verify,
                   style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
                     textStyle: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,

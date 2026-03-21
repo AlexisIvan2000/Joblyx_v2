@@ -52,7 +52,7 @@ class _LoginFormState extends State<LoginForm> {
         password: _passwordController.text,
       );
       if (!mounted) return;
-      context.go('/loading');
+      context.go('/dashboard');
     } on AuthException catch (e) {
       if (!mounted) return;
       if (e.key == 'auth_error.email_not_verified') {
@@ -64,7 +64,7 @@ class _LoginFormState extends State<LoginForm> {
         final verified = await showVerifyEmailDialog(context, email);
         if (!mounted) return;
         if (verified) {
-          context.go('/loading');
+          context.go('/dashboard');
         }
       } else {
         final t = AppLocalizations.of(context);
@@ -200,13 +200,10 @@ class _LoginFormState extends State<LoginForm> {
               label: 'login_button',
               child: SizedBox(
                 width: double.infinity,
-                height: 54.h,
+                height: 52.h,
                 child: FilledButton(
                   onPressed: _isLoading ? null : _submit,
                   style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
                     textStyle: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,

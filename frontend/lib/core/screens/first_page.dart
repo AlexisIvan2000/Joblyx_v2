@@ -65,7 +65,7 @@ class FirstPage extends StatelessWidget {
                 width: double.infinity,
                 height: 52.h,
                 child: OutlinedButton.icon(
-                  onPressed: () => context.push('/loading'),
+                  onPressed: () {}, // TODO: LinkedIn OAuth
                   label: Text(
                     t.t("first_page.continue_with_linkedin"),
                     style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),

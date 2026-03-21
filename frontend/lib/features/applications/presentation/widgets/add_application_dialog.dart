@@ -167,7 +167,6 @@ class _AddApplicationDialogState extends State<AddApplicationDialog> {
               // Bouton ajouter
               SizedBox(width: double.infinity, height: 48.h, child: FilledButton(
                 onPressed: _submit,
-                style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r))),
                 child: Text(t.t('applications_screen.add_button'),
                     style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700)),
               )),

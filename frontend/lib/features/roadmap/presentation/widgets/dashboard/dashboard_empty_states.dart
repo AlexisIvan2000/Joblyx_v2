@@ -36,7 +36,7 @@ class EmptyRoadmapCard extends StatelessWidget {
             icon: Icon(Icons.auto_awesome_rounded, size: 18.sp),
             label: Text(t.t('home.generate_ai'), style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700)),
             style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: cs.primary,
-                minimumSize: Size(0, 44.h), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r))),
+                minimumSize: Size(0, 44.h)),
           )),
           SizedBox(width: 10.w),
           Expanded(child: OutlinedButton.icon(
@@ -44,7 +44,7 @@ class EmptyRoadmapCard extends StatelessWidget {
             icon: Icon(Icons.edit_note_rounded, size: 18.sp),
             label: Text(t.t('home.create_manual'), style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700)),
             style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54),
-                minimumSize: Size(0, 44.h), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r))),
+                minimumSize: Size(0, 44.h)),
           )),
         ]),
       ]),
@@ -79,8 +79,7 @@ class EmptyApplicationsCard extends StatelessWidget {
         SizedBox(height: 14.h),
         FilledButton.icon(
           onPressed: onTap, icon: Icon(Icons.add_rounded, size: 18.sp), label: Text(t.t('home.add_application')),
-          style: FilledButton.styleFrom(minimumSize: Size(0, 40.h),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r))),
+          style: FilledButton.styleFrom(minimumSize: Size(0, 40.h)),
         ),
       ]),
     );

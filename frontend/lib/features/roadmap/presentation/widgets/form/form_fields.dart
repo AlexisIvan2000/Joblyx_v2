@@ -50,7 +50,6 @@ class CvUploadButton extends StatelessWidget {
             : t.t('onboarding.upload_cv')),
         style: OutlinedButton.styleFrom(
           minimumSize: Size(0, 52.h),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
           side: BorderSide(color: cs.primary.withValues(alpha: 0.5)),
         ),
       ),

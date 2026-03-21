@@ -66,7 +66,7 @@ class _RegisterFormState extends State<RegisterForm> {
       );
       if (!mounted) return;
       if (verified) {
-        context.go('/loading');
+        context.go('/dashboard');
       }
     } on AuthException catch (e) {
       if (!mounted) return;
@@ -228,13 +228,10 @@ class _RegisterFormState extends State<RegisterForm> {
             // Register button
             SizedBox(
               width: double.infinity,
-              height: 54.h,
+              height: 52.h,
               child: FilledButton(
                 onPressed: _isLoading ? null : _submit,
                 style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
                   textStyle: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,

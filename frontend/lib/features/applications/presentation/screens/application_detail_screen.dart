@@ -235,9 +235,6 @@ class _ApplicationDetailScreenState
                 label: Text(t.t('application_detail.prepare_interview')),
                 style: FilledButton.styleFrom(
                   minimumSize: Size(double.infinity, 48.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
                 ),
               ),
             ],
@@ -269,9 +266,6 @@ class _ApplicationDetailScreenState
               style: OutlinedButton.styleFrom(
                 minimumSize: Size(double.infinity, 44.h),
                 side: BorderSide(color: cs.error.withValues(alpha: 0.3)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
               ),
             ),
           ],

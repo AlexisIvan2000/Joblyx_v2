@@ -227,9 +227,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                   },
                   style: FilledButton.styleFrom(
                     minimumSize: Size(0, 48.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
                   ),
                   child: Text(
                     t.t('applications_screen.filter_apply'),
@@ -415,7 +412,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(30.r),
                 border: Border.all(color: const Color(0xFFD1D5DB), width: 1.5),
               ),
               child: TextField(
@@ -447,7 +444,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
               height: 46.h,
               decoration: BoxDecoration(
                 color: _hasFilters ? cs.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(30.r),
                 border: Border.all(
                   color: _hasFilters ? cs.primary : const Color(0xFFD1D5DB),
                   width: 1.5,
@@ -546,9 +543,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                 label: Text(t.t('applications_screen.empty_add')),
                 style: FilledButton.styleFrom(
                   minimumSize: Size(0, 44.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
                 ),
               ),
             ],

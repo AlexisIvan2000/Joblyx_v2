@@ -308,24 +308,24 @@ class _LogoutButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: cs.error.withValues(alpha: 0.06),
-      borderRadius: BorderRadius.circular(14.r),
+      color: cs.error,
+      borderRadius: BorderRadius.circular(30.r),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(30.r),
         onTap: () async {
           await AuthService().logout();
           if (!context.mounted) return;
           context.go('/first-page');
         },
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.logout_rounded, size: 20.sp, color: cs.error),
+              Icon(Icons.logout_rounded, size: 20.sp, color: Colors.white),
               SizedBox(width: 8.w),
               Text(t.t('profile_screen.logout'),
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.error)),
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: Colors.white)),
             ],
           ),
         ),

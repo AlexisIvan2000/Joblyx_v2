@@ -7,9 +7,15 @@ import 'package:frontend/core/router/app_router.dart';
 import 'package:frontend/core/theme/theme_color.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/core/network/api_client.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Rediriger vers le login si la session expire
+  ApiClient().onSessionExpired = () {
+    appRouter.go('/first-page');
+  };
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

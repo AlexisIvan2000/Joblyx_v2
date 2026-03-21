@@ -7,6 +7,10 @@ class ThemeColor {
   static const _primaryDark = Color(0xFF0F766E);
   static const _accent = Color(0xFFF59E0B);
 
+  // Border radius global pour les boutons et champs
+  static final _buttonShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(30));
+  static final _inputBorder = BorderRadius.circular(30);
+
   final lightTheme = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
@@ -41,6 +45,37 @@ class ThemeColor {
     chipTheme: const ChipThemeData(
       side: BorderSide(color: Color(0xFFE8ECF0)),
     ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(shape: _buttonShape),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(shape: _buttonShape),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(shape: _buttonShape),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(shape: _buttonShape),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(borderRadius: _inputBorder),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: _inputBorder,
+        borderSide: const BorderSide(color: Color(0xFFE8ECF0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: _inputBorder,
+        borderSide: const BorderSide(color: _primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: _inputBorder,
+        borderSide: const BorderSide(color: Color(0xFFEF4444)),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: _inputBorder,
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+      ),
+    ),
   );
 
   final darkTheme = ThemeData(
@@ -72,6 +107,37 @@ class ThemeColor {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: const BorderSide(color: Color(0xFF334155)),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(shape: _buttonShape),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(shape: _buttonShape),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(shape: _buttonShape),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(shape: _buttonShape),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(borderRadius: _inputBorder),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: _inputBorder,
+        borderSide: const BorderSide(color: Color(0xFF334155)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: _inputBorder,
+        borderSide: const BorderSide(color: _primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: _inputBorder,
+        borderSide: const BorderSide(color: Color(0xFFEF4444)),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: _inputBorder,
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
       ),
     ),
   );

@@ -1,9 +1,14 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
 
-const String _baseUrl = 'http://10.0.2.2:8000'; // Android emulator → host machine
-// Use 'http://localhost:8000' for iOS simulator or web
+const String _baseUrl = 'http://10.0.2.2:8000'; // Émulateur Android → machine hôte
+// Utiliser 'http://localhost:8000' pour iOS simulator ou web
+
+/// Callback appelé quand la session expire (refresh token invalide).
+/// Permet au niveau app de rediriger vers le login.
+typedef OnSessionExpired = void Function();
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -11,6 +16,12 @@ class ApiClient {
 
   late final Dio dio;
   final _storage = AuthStorage();
+
+  /// Callback externe pour gérer l'expiration de session.
+  OnSessionExpired? onSessionExpired;
+
+  // Lock pour éviter les refresh concurrents
+  Completer<bool>? _refreshCompleter;
 
   // Endpoints exemptés du refresh automatique
   static const _noRefreshPaths = [
@@ -31,7 +42,7 @@ class ApiClient {
       headers: {'Content-Type': 'application/json'},
     ));
 
-    dio.interceptors.add(QueuedInterceptorsWrapper(
+    dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await _storage.getAccessToken();
         if (token != null) {
@@ -40,11 +51,12 @@ class ApiClient {
         handler.next(options);
       },
       onError: (error, handler) async {
+        // Si 401 et pas un endpoint exempt → tenter le refresh
         if (error.response?.statusCode == 401 &&
             !_noRefreshPaths.contains(error.requestOptions.path)) {
-          final refreshed = await _tryRefresh();
+          final refreshed = await _refreshWithLock();
           if (refreshed) {
-            // Relance la requête avec le nouveau token
+            // Relancer la requête avec le nouveau token
             final token = await _storage.getAccessToken();
             error.requestOptions.headers['Authorization'] = 'Bearer $token';
             try {
@@ -54,6 +66,8 @@ class ApiClient {
               return handler.reject(e);
             }
           }
+          // Refresh échoué → session expirée
+          return handler.reject(error);
         }
         if (kDebugMode) {
           print('API Error: ${error.response?.statusCode} ${error.message}');
@@ -61,6 +75,27 @@ class ApiClient {
         handler.next(error);
       },
     ));
+  }
+
+  /// Refresh avec lock : le premier appel fait le refresh,
+  /// les appels concurrents attendent le même résultat.
+  Future<bool> _refreshWithLock() async {
+    // Si un refresh est déjà en cours, attendre son résultat
+    if (_refreshCompleter != null) {
+      return _refreshCompleter!.future;
+    }
+
+    _refreshCompleter = Completer<bool>();
+    try {
+      final result = await _tryRefresh();
+      _refreshCompleter!.complete(result);
+      return result;
+    } catch (_) {
+      _refreshCompleter!.complete(false);
+      return false;
+    } finally {
+      _refreshCompleter = null;
+    }
   }
 
   Future<bool> _tryRefresh() async {
@@ -82,7 +117,9 @@ class ApiClient {
       );
       return true;
     } catch (_) {
+      // Refresh échoué → nettoyer les tokens et notifier
       await _storage.clearTokens();
+      onSessionExpired?.call();
       return false;
     }
   }
