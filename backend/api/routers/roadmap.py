@@ -2,6 +2,7 @@ import copy
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
+from sqlalchemy import update as sa_update, delete as sa_delete
 from core.rate_limit import limiter, get_user_id_from_jwt
 from models.schemas import (
     RoadmapGenerateRequest,
@@ -14,8 +15,10 @@ from models.schemas import (
     PhaseResponse,
     PhaseReorder,
     RegenerationStatusResponse,
+    CareerProfileResponse,
+    CareerProfileUpdate,
 )
-from models.db_models import User
+from models.db_models import User, Career, UserSkill
 from api.dependencies import get_current_user, get_roadmap_service
 from services.roadmap.roadmap_service import RoadmapService
 from services.ai.cv_parser import extract_skills_from_cv
@@ -100,7 +103,123 @@ async def generate_roadmap(
     return StreamingResponse(_stream(), media_type="text/event-stream")
 
 
-# Création manuelle 
+# ─── Regenerate (no body — uses existing career data) ─────────
+
+@router.post("/regenerate")
+@limiter.limit("3/minute", key_func=get_user_id_from_jwt)
+async def regenerate_roadmap(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    user_id = str(current_user.id)
+
+    career = await svc._get_career(user_id)
+    if not career:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Career profile not found. Complete onboarding first.",
+        )
+
+    regen = await svc.check_regeneration_limit(user_id)
+    if not regen["allowed"]:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "error": "Vous avez atteint la limite de 5 regenerations ce mois-ci",
+                "remaining": 0,
+                "resets_at": regen["resets_at"],
+            },
+        )
+
+    async def _stream():
+        async for event in svc.generate_stream(user_id):
+            yield event
+
+    return StreamingResponse(_stream(), media_type="text/event-stream")
+
+
+# ─── Career profile (get / update) ───────────────────────────
+
+@router.get("/career", response_model=CareerProfileResponse)
+async def get_career_profile(
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    user_id = str(current_user.id)
+    career = await svc._get_career(user_id)
+    if not career:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Career profile not found")
+
+    skills = await svc._get_skills(user_id)
+    return {
+        "level": career.level,
+        "years_experience": career.years_experience,
+        "target_jobs": career.target_jobs or [],
+        "city": career.city,
+        "province": career.province,
+        "language": career.language,
+        "previous_field": career.previous_field,
+        "skills": skills,
+    }
+
+
+@router.put("/career", response_model=CareerProfileResponse)
+async def update_career_profile(
+    body: CareerProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    user_id = str(current_user.id)
+    career = await svc._get_career(user_id)
+
+    # Build career update dict from non-None fields (excluding skills)
+    career_updates = {}
+    for field in ("level", "years_experience", "target_jobs", "city", "province", "language", "previous_field"):
+        val = getattr(body, field, None)
+        if val is not None:
+            career_updates[field] = val.value if hasattr(val, "value") else val
+
+    if not career:
+        # Create career profile for new users
+        svc.session.add(Career(user_id=user_id, **career_updates))
+        await svc.session.flush()
+    elif career_updates:
+        await svc.session.execute(
+            sa_update(Career).where(Career.user_id == user_id).values(**career_updates)
+        )
+
+    # Update skills if provided
+    if body.skills is not None:
+        skills_data = [
+            {"skill_name": s.skill_name, "category": s.category, "proficiency": s.proficiency.value}
+            for s in body.skills
+        ]
+        await svc.session.execute(
+            sa_delete(UserSkill).where(UserSkill.user_id == user_id)
+        )
+        if skills_data:
+            svc.session.add_all([UserSkill(user_id=user_id, **s) for s in skills_data])
+        await svc.session.flush()
+
+    await svc.session.commit()
+
+    # Return updated data
+    career = await svc._get_career(user_id)
+    skills = await svc._get_skills(user_id)
+    return {
+        "level": career.level,
+        "years_experience": career.years_experience,
+        "target_jobs": career.target_jobs or [],
+        "city": career.city,
+        "province": career.province,
+        "language": career.language,
+        "previous_field": career.previous_field,
+        "skills": skills,
+    }
+
+
+# Création manuelle
 
 @router.post("/manual", response_model=RoadmapResponse)
 async def create_manual_roadmap(

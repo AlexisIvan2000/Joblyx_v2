@@ -14,4 +14,5 @@ class AppRoutes {
   static const roadmapHistory = '/roadmap/history';
   static const roadmapDetail = '/roadmap/history/:id';
   static const createRoadmap = '/roadmap/create';
+  static const editCareer = '/profile/career';
 }

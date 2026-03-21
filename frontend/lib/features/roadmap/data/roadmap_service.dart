@@ -6,7 +6,10 @@ import 'package:frontend/core/network/api_client.dart';
 import 'package:http_parser/http_parser.dart';
 
 class RoadmapService {
-  final Dio _dio = ApiClient().dio;
+  final Dio _dio;
+
+  RoadmapService() : _dio = ApiClient().dio;
+  RoadmapService.withDio(this._dio);
 
   Future<Map<String, dynamic>> getStatus() async {
     final response = await _dio.get('/roadmap/status');
@@ -82,6 +85,64 @@ class RoadmapService {
         }
       }
     }
+  }
+
+  /// Regenerates a roadmap using existing career data (no form needed).
+  /// Returns SSE events as maps.
+  Stream<Map<String, dynamic>> regenerate() async* {
+    final response = await _dio.post(
+      '/roadmap/regenerate',
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+      ),
+    );
+
+    final stream = response.data.stream as Stream<List<int>>;
+    String buffer = '';
+
+    await for (final chunk in stream) {
+      buffer += utf8.decode(chunk);
+
+      while (buffer.contains('\n\n')) {
+        final eventEnd = buffer.indexOf('\n\n');
+        final rawEvent = buffer.substring(0, eventEnd);
+        buffer = buffer.substring(eventEnd + 2);
+
+        String? eventType;
+        String? eventData;
+
+        for (final line in rawEvent.split('\n')) {
+          if (line.startsWith('event: ')) {
+            eventType = line.substring(7);
+          } else if (line.startsWith('data: ')) {
+            eventData = line.substring(6);
+          }
+        }
+
+        if (eventType != null && eventData != null) {
+          try {
+            final parsed = jsonDecode(eventData) as Map<String, dynamic>;
+            yield {'event': eventType, 'data': parsed};
+          } catch (_) {
+            yield {'event': eventType, 'data': {'raw': eventData}};
+          }
+        }
+      }
+    }
+  }
+
+  /// Gets the user's career profile + skills
+  Future<Map<String, dynamic>> getCareerProfile() async {
+    final response = await _dio.get('/roadmap/career');
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// Updates the user's career profile + skills
+  Future<Map<String, dynamic>> updateCareerProfile(
+      Map<String, dynamic> data) async {
+    final response = await _dio.put('/roadmap/career', data: data);
+    return response.data as Map<String, dynamic>;
   }
 
   /// Creates a roadmap manually (no AI)

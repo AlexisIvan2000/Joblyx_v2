@@ -178,7 +178,7 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
     }
   }
 
-  // ─── CV upload ────────────────────────────────────────────────
+  // CV upload 
 
   Future<void> _uploadCv() async {
     final t = AppLocalizations.of(context);
@@ -245,7 +245,7 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
     });
   }
 
-  // ─── Location ─────────────────────────────────────────────────
+  // Location
 
   Future<void> _onLocationChanged(String query) async {
     if (query.trim().length < 2) {

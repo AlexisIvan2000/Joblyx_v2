@@ -154,7 +154,28 @@ class RoadmapGenerateRequest(BaseModel):
         return v
 
 
-# Roadmap schemas 
+class CareerProfileResponse(BaseModel):
+    level: str
+    years_experience: int | None = None
+    target_jobs: List[str] | None = None
+    city: str
+    province: str
+    language: str | None = None
+    previous_field: str | None = None
+    skills: List[dict] = []
+
+class CareerProfileUpdate(BaseModel):
+    level: UserLevel | None = None
+    years_experience: int | None = None
+    target_jobs: List[str] | None = None
+    city: str | None = None
+    province: str | None = None
+    language: Language | None = None
+    previous_field: str | None = None
+    skills: List[SkillItem] | None = None
+
+
+# Roadmap schemas
 
 class RoadmapGenerateResponse(BaseModel):
     status: str

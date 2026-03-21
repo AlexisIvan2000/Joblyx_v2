@@ -20,7 +20,14 @@
         "completed_suffix": "complétées",
         "recent_applications": "Candidatures récentes",
         "tip_title": "Conseil du jour",
-        "phase_label": "PHASE"
+        "phase_label": "PHASE",
+        "empty_roadmap_title": "Prêt à planifier votre carrière ?",
+        "empty_roadmap_subtitle": "Créez votre roadmap personnalisée pour atteindre vos objectifs professionnels.",
+        "generate_ai": "Créer avec l'IA",
+        "create_manual": "Créer manuellement",
+        "empty_applications_title": "Aucune candidature pour le moment",
+        "empty_applications_subtitle": "Commencez à suivre vos candidatures pour ne rien manquer.",
+        "add_application": "Ajouter une candidature"
     },
 
     "applications_screen": {
@@ -99,7 +106,9 @@
         "notifications_sub": "Emails, rappels",
         "my_cvs": "Mes CVs",
         "my_cvs_sub": "CVs uploadés",
-        "logout": "Se déconnecter"
+        "logout": "Se déconnecter",
+        "career_saved": "Profil carrière mis à jour",
+        "career_save_error": "Erreur lors de la sauvegarde du profil carrière"
     },
 
     "splash": {
@@ -281,6 +290,7 @@
     "dashboard": {
         "title": "Mon Roadmap",
         "regenerate": "Régénérer",
+        "regenerate_confirm": "Votre roadmap sera régénérée avec votre profil carrière actuel. L'ancienne sera archivée. Continuer ?",
         "generating_title": "Construction de votre roadmap...",
         "generating_subtitle": "Notre IA analyse votre profil et le marché de l'emploi pour créer un parcours d'apprentissage personnalisé.",
         "error_title": "Échec de la génération",

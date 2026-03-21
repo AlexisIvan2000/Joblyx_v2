@@ -48,6 +48,7 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
   Future<void> loadStatus() async {
     try {
       final status = await _svc.getStatus();
+      if (!ref.mounted) return;
       final genStatus = status['generation_status'] as String;
       final hasRoadmap = status['has_roadmap'] as bool;
 
@@ -61,6 +62,7 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
         await loadRoadmap();
       }
     } catch (_) {
+      if (!ref.mounted) return;
       state = state.copyWith(isLoading: false);
     }
   }
@@ -106,6 +108,27 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
           hasRoadmap: true,
         );
         // Refresh regeneration count
+        ref.invalidate(regenerationStatusProvider);
+      } else if (eventType == 'error') {
+        state = state.copyWith(generationStatus: 'error');
+      }
+    }
+  }
+
+  /// Regenerate roadmap using existing career data (no form).
+  Stream<Map<String, dynamic>> regenerate() async* {
+    state = state.copyWith(generationStatus: 'generating', isLoading: false);
+
+    await for (final event in _svc.regenerate()) {
+      yield event;
+
+      final eventType = event['event'] as String;
+      if (eventType == 'complete') {
+        await loadRoadmap();
+        state = state.copyWith(
+          generationStatus: 'ready',
+          hasRoadmap: true,
+        );
         ref.invalidate(regenerationStatusProvider);
       } else if (eventType == 'error') {
         state = state.copyWith(generationStatus: 'error');

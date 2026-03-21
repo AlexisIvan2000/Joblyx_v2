@@ -134,9 +134,7 @@ class ProfileScreen extends ConsumerWidget {
             title: t.t('profile_screen.career_profile'),
             subtitle: t.t('profile_screen.career_profile_sub'),
             cs: cs,
-            onTap: () {
-              // TODO: navigate to career profile edit
-            },
+            onTap: () => context.push('/profile/career'),
           ),
           _MenuItem(
             icon: Icons.lock_outline_rounded,

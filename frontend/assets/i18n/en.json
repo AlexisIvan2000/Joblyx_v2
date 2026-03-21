@@ -20,7 +20,14 @@
         "completed_suffix": "completed",
         "recent_applications": "Recent applications",
         "tip_title": "Tip of the day",
-        "phase_label": "PHASE"
+        "phase_label": "PHASE",
+        "empty_roadmap_title": "Ready to plan your career?",
+        "empty_roadmap_subtitle": "Create your personalized roadmap to reach your professional goals.",
+        "generate_ai": "Generate with AI",
+        "create_manual": "Create manually",
+        "empty_applications_title": "No applications yet",
+        "empty_applications_subtitle": "Start tracking your applications so you never miss a thing.",
+        "add_application": "Add an application"
     },
 
     "applications_screen": {
@@ -99,7 +106,9 @@
         "notifications_sub": "Emails, reminders",
         "my_cvs": "My CVs",
         "my_cvs_sub": "Uploaded CVs",
-        "logout": "Log out"
+        "logout": "Log out",
+        "career_saved": "Career profile updated",
+        "career_save_error": "Failed to save career profile"
     },
 
     "splash": {
@@ -280,6 +289,7 @@
     "dashboard": {
         "title": "My Roadmap",
         "regenerate": "Regenerate",
+        "regenerate_confirm": "Your roadmap will be regenerated using your current career profile. The old one will be archived. Continue?",
         "generating_title": "Building your roadmap...",
         "generating_subtitle": "Our AI is analyzing your profile and the job market to create a personalized learning path.",
         "error_title": "Generation failed",

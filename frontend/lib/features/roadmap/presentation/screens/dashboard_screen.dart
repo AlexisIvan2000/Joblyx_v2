@@ -134,21 +134,26 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             StaggeredList(
               children: [
-                if (roadmap != null) ...[
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 20.h),
-                    child: ProgressCard(
-                      actionPercent: actionPercent,
-                      completedActions: completedActions,
-                      totalActions: totalActions,
-                      completedSkills: completedSkills,
-                      totalSkills: totalSkills,
-                      totalWeeks: totalWeeks,
-                      cs: cs,
-                      t: t,
-                    ),
-                  ),
-                ],
+                Padding(
+                  padding: EdgeInsets.only(bottom: 20.h),
+                  child: roadmap != null
+                      ? ProgressCard(
+                          actionPercent: actionPercent,
+                          completedActions: completedActions,
+                          totalActions: totalActions,
+                          completedSkills: completedSkills,
+                          totalSkills: totalSkills,
+                          totalWeeks: totalWeeks,
+                          cs: cs,
+                          t: t,
+                        )
+                      : EmptyRoadmapCard(
+                          cs: cs,
+                          t: t,
+                          onGenerateAI: () => context.push('/roadmap/generate-ai'),
+                          onCreateManual: () => context.push('/roadmap/create'),
+                        ),
+                ),
                 Padding(
                   padding: EdgeInsets.only(bottom: 24.h),
                   child: Row(
@@ -188,30 +193,35 @@ class DashboardScreen extends ConsumerWidget {
                         onTap: () => context.go('/roadmap')),
                   ),
                 ],
-                if (applications.isNotEmpty) ...[
-                  SectionHeader(
-                    title: t.t('home.recent_applications'),
-                    action: t.t('home.view_all'),
-                    onAction: () => context.go('/applications'),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 8.h),
-                    child: Column(
-                      children: applications
-                          .take(3)
-                          .map((app) => Padding(
-                                padding: EdgeInsets.only(bottom: 8.h),
-                                child: ApplicationTile(
-                                    app: app,
-                                    cs: cs,
-                                    t: t,
-                                    onTap: () => context.go('/applications')),
-                              ))
-                          .toList(),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                ],
+                SectionHeader(
+                  title: t.t('home.recent_applications'),
+                  action: applications.isNotEmpty ? t.t('home.view_all') : null,
+                  onAction: applications.isNotEmpty
+                      ? () => context.go('/applications')
+                      : null,
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 8.h, bottom: 16.h),
+                  child: applications.isNotEmpty
+                      ? Column(
+                          children: applications
+                              .take(3)
+                              .map((app) => Padding(
+                                    padding: EdgeInsets.only(bottom: 8.h),
+                                    child: ApplicationTile(
+                                        app: app,
+                                        cs: cs,
+                                        t: t,
+                                        onTap: () => context.go('/applications')),
+                                  ))
+                              .toList(),
+                        )
+                      : EmptyApplicationsCard(
+                          cs: cs,
+                          t: t,
+                          onTap: () => context.go('/applications'),
+                        ),
+                ),
                 if (keyMessage.isNotEmpty)
                   TipCard(message: keyMessage, t: t),
                 SizedBox(height: 12.h),

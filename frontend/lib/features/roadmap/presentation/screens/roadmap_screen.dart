@@ -26,10 +26,10 @@ class RoadmapScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(t.t('dashboard.title')),
         actions: [
-          // Bouton régénérer (redirige vers le formulaire IA)
+          // Bouton régénérer (appel direct API)
           if (state.hasRoadmap && state.generationStatus != 'generating')
             IconButton(
-              onPressed: () => context.push('/roadmap/generate-ai'),
+              onPressed: () => _regenerate(context, ref, t),
               icon: Icon(Icons.refresh_rounded, size: 22.sp),
               tooltip: t.t('dashboard.regenerate'),
             ),
@@ -70,6 +70,40 @@ class RoadmapScreen extends ConsumerWidget {
       if (context.mounted) {
         AppSnackbar.error(context, t.t('dashboard.add_phase_error'));
       }
+    }
+  }
+
+  /// Régénérer la roadmap directement via l'API.
+  Future<void> _regenerate(BuildContext context, WidgetRef ref, AppLocalizations t) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text(t.t('dashboard.regenerate')),
+        content: Text(t.t('dashboard.regenerate_confirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.t('settings.cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(t.t('dashboard.regenerate')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      final notifier = ref.read(roadmapProvider.notifier);
+      await for (final event in notifier.regenerate()) {
+        final eventType = event['event'] as String;
+        if (eventType == 'error') break;
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      AppSnackbar.error(context, t.t('dashboard.error_title'));
     }
   }
 
@@ -196,7 +230,7 @@ class RoadmapScreen extends ConsumerWidget {
                 textAlign: TextAlign.center),
             SizedBox(height: 24.h),
             FilledButton.icon(
-              onPressed: () => context.push('/roadmap/generate-ai'),
+              onPressed: () => _regenerate(context, ref, t),
               icon: const Icon(Icons.refresh_rounded),
               label: Text(t.t('dashboard.retry')),
             ),

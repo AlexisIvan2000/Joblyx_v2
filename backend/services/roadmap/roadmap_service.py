@@ -90,7 +90,12 @@ class RoadmapService:
     async def check_regeneration_limit(self, user_id: str) -> dict:
         career = await self._get_career(user_id)
         if not career:
-            return {"allowed": False, "used": 0, "remaining": 0, "resets_at": ""}
+            now = datetime.now(timezone.utc)
+            if now.month == 12:
+                next_reset = datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)
+            else:
+                next_reset = datetime(now.year, now.month + 1, 1, tzinfo=timezone.utc)
+            return {"allowed": True, "used": 0, "remaining": REGENERATION_LIMIT, "resets_at": next_reset.isoformat()}
 
         now = datetime.now(timezone.utc)
         reset_at = career.regeneration_reset_at

@@ -17,6 +17,7 @@ import 'package:frontend/features/roadmap/presentation/screens/create_roadmap_sc
 import 'package:frontend/features/roadmap/presentation/screens/roadmap_detail_screen.dart';
 import 'package:frontend/features/roadmap/presentation/screens/roadmap_history_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
+import 'package:frontend/features/settings/presentation/screens/edit_career_screen.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
@@ -39,6 +40,7 @@ final appRouter = GoRouter(
     _slideRoute(AppRoutes.settings, (_) => const SettingsScreen()),
     _slideRoute(AppRoutes.generateAI, (_) => const AIRoadmapFormScreen()),
     _slideRoute(AppRoutes.createRoadmap, (_) => const CreateRoadmapScreen()),
+    _slideRoute(AppRoutes.editCareer, (_) => const EditCareerScreen()),
     _slideRoute(AppRoutes.roadmapHistory, (_) => const RoadmapHistoryScreen()),
     _slideRoute(AppRoutes.roadmapDetail, (state) =>
         RoadmapDetailScreen(roadmapId: state.pathParameters['id']!)),
