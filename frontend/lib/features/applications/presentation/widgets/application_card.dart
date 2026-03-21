@@ -1,130 +1,117 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/dashboard_widgets.dart';
+import 'package:frontend/core/constants/application_status.dart';
 
-/// Carte affichant le résumé d'une candidature dans la liste.
+/// Carte d'une candidature dans la liste principale.
+/// Affiche l'avatar entreprise, le poste, le statut coloré et la date.
 class ApplicationCard extends StatelessWidget {
   final Map<String, dynamic> app;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   const ApplicationCard({
     super.key,
     required this.app,
-    this.onTap,
+    required this.onTap,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-
-    final company = app['company_name'] as String? ?? '';
-    final jobTitle = app['job_title'] as String? ?? '';
-    final status = app['status'] as String? ?? 'applied';
-    final appliedAt = app['applied_at'] as String? ?? '';
+    final cs = Theme.of(context).colorScheme;
+    final status = (app['status'] ?? 'saved').toString();
+    final cfg = ApplicationStatuses.fromKey(status);
+    final company = (app['company_name'] ?? '').toString();
+    final job = (app['job_title'] ?? '').toString();
+    final initial = company.isNotEmpty ? company[0].toUpperCase() : '?';
 
     // Calcul du nombre de jours depuis la candidature
-    String daysAgo = '';
-    if (appliedAt.isNotEmpty) {
-      final date = DateTime.tryParse(appliedAt);
-      if (date != null) {
-        final diff = DateTime.now().difference(date).inDays;
-        daysAgo = '$diff${t.t('applications_screen.days_ago')}';
-      }
-    }
+    final appliedAt = DateTime.tryParse(app['applied_at'] ?? '');
+    final daysAgo = appliedAt != null ? DateTime.now().difference(appliedAt).inDays : 0;
+    final daysLabel = daysAgo == 0
+        ? t.t('applications_screen.time_today')
+        : '$daysAgo${t.t('applications_screen.days_ago')}';
 
-    final statusColors = statusConfig(status, t);
-
-    return Material(
-      color: Theme.of(context).cardTheme.color,
-      borderRadius: BorderRadius.circular(14.r),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            children: [
-              // Avatar avec initiale de l'entreprise
-              Container(
-                width: 42.w,
-                height: 42.w,
-                decoration: BoxDecoration(
-                  color: statusColors.$3,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Center(
-                  child: Text(
-                    company.isNotEmpty ? company[0] : '?',
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w800,
-                      color: statusColors.$2,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 14.h, 44.w, 14.h),
+              child: Row(
+                children: [
+                  // Avatar avec initiale de l'entreprise
+                  Container(
+                    width: 44.r, height: 44.r,
+                    decoration: BoxDecoration(color: cfg.bgColor, shape: BoxShape.circle),
+                    child: Center(
+                      child: Text(initial,
+                          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: cfg.textColor)),
                     ),
                   ),
-                ),
-              ),
-              SizedBox(width: 12.w),
-              // Titre du poste et nom de l'entreprise
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      jobTitle,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface,
+                  SizedBox(width: 12.w),
+
+                  // Titre du poste + entreprise
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(job,
+                            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.onSurface),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                        SizedBox(height: 3.h),
+                        Text(company,
+                            style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+
+                  // Badge statut + date
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                        decoration: BoxDecoration(
+                          color: cfg.bgColor,
+                          borderRadius: BorderRadius.circular(16.r),
+                          border: Border.all(color: cfg.borderColor),
+                        ),
+                        child: Text(t.t('applications_screen.status_$status'),
+                            style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w700, color: cfg.textColor)),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      company,
-                      style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-              // Badge de statut et date
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  StatusBadge(status: status, t: t),
-                  if (daysAgo.isNotEmpty) ...[
-                    SizedBox(height: 4.h),
-                    Text(
-                      daysAgo,
-                      style: TextStyle(fontSize: 10.sp, color: cs.onSurfaceVariant),
-                    ),
-                  ],
+                      SizedBox(height: 6.h),
+                      Text(daysLabel, style: TextStyle(fontSize: 11.sp, color: cs.onSurfaceVariant)),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+
+            // Bouton poubelle discret
+            Positioned(
+              top: 4.h, right: 4.w,
+              child: GestureDetector(
+                onTap: onDelete,
+                child: Padding(
+                  padding: EdgeInsets.all(4.w),
+                  child: Icon(Icons.delete_outline_rounded, size: 17.sp, color: cs.outlineVariant),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
-
-/// Configuration des couleurs par statut : (label, couleur, fond).
-(String, Color, Color) statusConfig(String status, AppLocalizations t) {
-  return switch (status) {
-    'applied' => (t.t('applications_screen.status_applied'), const Color(0xFF64748B), const Color(0xFFF1F5F9)),
-    'phone_screen' => (t.t('applications_screen.status_phone_screen'), const Color(0xFF2563EB), const Color(0xFFDBEAFE)),
-    'technical' => (t.t('applications_screen.status_technical'), const Color(0xFF7C3AED), const Color(0xFFEDE9FE)),
-    'final_interview' => (t.t('applications_screen.status_final_interview'), const Color(0xFFD97706), const Color(0xFFFEF3C7)),
-    'offer' => (t.t('applications_screen.status_offer'), const Color(0xFF059669), const Color(0xFFD1FAE5)),
-    'accepted' => (t.t('applications_screen.status_accepted'), const Color(0xFF047857), const Color(0xFFA7F3D0)),
-    'rejected' => (t.t('applications_screen.status_rejected'), const Color(0xFFDC2626), const Color(0xFFFEE2E2)),
-    'withdrawn' => (t.t('applications_screen.status_withdrawn'), const Color(0xFF94A3B8), const Color(0xFFF9FAFB)),
-    _ => (status, const Color(0xFF64748B), const Color(0xFFF1F5F9)),
-  };
 }

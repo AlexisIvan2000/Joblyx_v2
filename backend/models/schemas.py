@@ -288,7 +288,9 @@ class RegenerationStatusResponse(BaseModel):
 # Application schemas 
 
 class ApplicationStatus(str, Enum):
+    saved = "saved"
     applied = "applied"
+    online_assessment = "online_assessment"
     phone_screen = "phone_screen"
     technical = "technical"
     final_interview = "final_interview"
@@ -302,7 +304,7 @@ class ApplicationCreate(BaseModel):
     job_title: str
     job_url: str | None = None
     job_description: str | None = None
-    status: ApplicationStatus = ApplicationStatus.applied
+    status: ApplicationStatus = ApplicationStatus.saved
     notes: str | None = None
     applied_at: datetime | None = None
 

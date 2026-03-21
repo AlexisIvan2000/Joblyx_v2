@@ -142,7 +142,7 @@ class Application(Base):
     __tablename__ = "applications"
     __table_args__ = (
         CheckConstraint(
-            "status IN ('applied','phone_screen','technical','final_interview','offer','accepted','rejected','withdrawn')",
+            "status IN ('saved','applied','online_assessment','phone_screen','technical','final_interview','offer','accepted','rejected','withdrawn')",
             name="applications_status_check",
         ),
     )
@@ -153,7 +153,7 @@ class Application(Base):
     job_title: Mapped[str] = mapped_column(String(200))
     job_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     job_description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(20), server_default="applied")
+    status: Mapped[str] = mapped_column(String(20), server_default="saved")
     cv_file_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)

@@ -18,6 +18,7 @@ import 'package:frontend/features/roadmap/presentation/screens/roadmap_detail_sc
 import 'package:frontend/features/roadmap/presentation/screens/roadmap_history_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/edit_career_screen.dart';
+import 'package:frontend/features/applications/presentation/screens/edit_application_screen.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
@@ -46,6 +47,8 @@ final appRouter = GoRouter(
         RoadmapDetailScreen(roadmapId: state.pathParameters['id']!)),
     _slideRoute(AppRoutes.applicationDetail, (state) =>
         ApplicationDetailScreen(applicationId: state.pathParameters['id']!)),
+    _slideRoute(AppRoutes.applicationEdit, (state) =>
+        EditApplicationScreen(applicationId: state.pathParameters['id']!)),
 
     // Shell avec bottom navigation
     ShellRoute(

@@ -6,7 +6,7 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 import 'package:frontend/features/roadmap/presentation/screens/phase_form_screen.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/phase_preview_card.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/phase/phase_preview_card.dart';
 
 /// Écran de création d'un roadmap manuel.
 class CreateRoadmapScreen extends ConsumerStatefulWidget {

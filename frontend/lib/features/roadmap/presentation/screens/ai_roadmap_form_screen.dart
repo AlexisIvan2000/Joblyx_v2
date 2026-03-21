@@ -8,9 +8,9 @@ import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/onboarding/data/mapbox_service.dart';
 import 'package:frontend/features/onboarding/data/skills_loader.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/career_step.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/goals_step.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/skills_step.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/form/career_step.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/form/goals_step.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/form/skills_step.dart';
 
 class AIRoadmapFormScreen extends ConsumerStatefulWidget {
   const AIRoadmapFormScreen({super.key});

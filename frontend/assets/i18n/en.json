@@ -37,15 +37,19 @@
         "filter_interviews": "Interviews",
         "filter_closed": "Closed",
         "days_ago": "d",
+        "status_saved": "Saved",
         "status_applied": "Applied",
+        "status_online_assessment": "Online test",
         "status_phone_screen": "Phone screen",
         "status_technical": "Technical",
         "status_final_interview": "Final interview",
-        "status_offer": "Offer",
+        "status_offer": "Offer received",
         "status_accepted": "Accepted",
         "status_rejected": "Rejected",
         "status_withdrawn": "Withdrawn",
-        "empty": "No applications yet",
+        "empty_title": "No applications yet",
+        "empty_subtitle": "Add your first application to start tracking.",
+        "empty_add": "Add an application",
         "add_title": "New application",
         "company_name": "Company",
         "company_hint": "E.g. Google, Shopify...",
@@ -73,7 +77,12 @@
         "results_count": "result(s)",
         "no_results": "No results found",
         "add_error": "Could not add application",
-        "delete_error": "Could not delete application"
+        "delete_error": "Could not delete application",
+        "delete_title": "Delete this application?",
+        "delete_confirm": "This action cannot be undone.",
+        "filter_status": "Status",
+        "filter_date": "Date",
+        "filter_apply": "Apply"
     },
 
     "application_detail": {
@@ -87,7 +96,10 @@
         "notes": "Notes",
         "updated": "Updated on",
         "update_status": "Update status",
-        "update_error": "Could not update status"
+        "update_error": "Could not update",
+        "save_button": "Save",
+        "edit_title": "Edit application",
+        "prepare_interview": "Prepare interview"
     },
 
     "profile_screen": {

@@ -35,6 +35,12 @@ class ApplicationsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
     await refresh();
   }
 
+  Future<void> updateApplication(String id, Map<String, dynamic> data) async {
+    final svc = ref.read(applicationServiceProvider);
+    await svc.update(id, data);
+    await refresh();
+  }
+
   Future<void> delete(String id) async {
     final svc = ref.read(applicationServiceProvider);
     await svc.delete(id);

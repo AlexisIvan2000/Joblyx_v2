@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 
+/// Carte de prévisualisation d'une phase dans l'éditeur de roadmap.
 class PhasePreviewCard extends StatelessWidget {
   final int index;
   final Map<String, dynamic> phase;
@@ -43,6 +44,7 @@ class PhasePreviewCard extends StatelessWidget {
           padding: EdgeInsets.all(12.w),
           child: Row(
             children: [
+              // Numéro de phase dans un cercle coloré
               Container(
                 width: 28.w,
                 height: 28.w,
@@ -74,6 +76,7 @@ class PhasePreviewCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 2.h),
+                    // Résumé compact : durée, compétences, actions
                     Text(
                       '$weeks ${t.t('dashboard.weeks')}'
                       '${skills > 0 ? ' · $skills ${t.t('dashboard.skills_to_learn').toLowerCase()}' : ''}'
@@ -100,6 +103,7 @@ class PhasePreviewCard extends StatelessWidget {
                   ],
                 ),
               ),
+              // Boutons de réordonnancement vertical
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -117,6 +121,7 @@ class PhasePreviewCard extends StatelessWidget {
                     ),
                 ],
               ),
+              // Bouton de suppression de la phase
               IconButton(
                 onPressed: onDelete,
                 icon: Icon(Icons.delete_outline,

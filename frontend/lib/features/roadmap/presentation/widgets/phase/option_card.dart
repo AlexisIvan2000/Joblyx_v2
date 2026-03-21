@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+/// Carte d'option générique avec icône, titre, sous-titre et chevron de navigation.
 class OptionCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -22,8 +23,7 @@ class OptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -31,6 +31,7 @@ class OptionCard extends StatelessWidget {
           padding: EdgeInsets.all(16.w),
           child: Row(
             children: [
+              // Conteneur de l'icône avec fond coloré semi-transparent
               Container(
                 width: 44.w,
                 height: 44.w,
@@ -64,6 +65,7 @@ class OptionCard extends StatelessWidget {
                   ],
                 ),
               ),
+              // Chevron indiquant la navigation vers l'écran suivant
               Icon(Icons.chevron_right_rounded,
                   color: cs.onSurfaceVariant, size: 20.sp),
             ],

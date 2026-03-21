@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/phase_card.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/phase/phase_card.dart';
 
 /// Écran de détail en lecture seule pour un roadmap archivé.
 class RoadmapDetailScreen extends ConsumerStatefulWidget {

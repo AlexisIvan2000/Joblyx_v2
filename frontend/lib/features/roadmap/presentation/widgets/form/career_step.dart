@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/form_decorations.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/form/form_decorations.dart';
 
+/// Étape 1 du formulaire IA : informations sur le parcours professionnel.
 class CareerStep extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final String level;
@@ -34,6 +35,7 @@ class CareerStep extends StatelessWidget {
                   .titleMedium
                   ?.copyWith(fontWeight: FontWeight.bold)),
           SizedBox(height: 20.h),
+          // Sélection du niveau d'expérience
           DropdownButtonFormField<String>(
             initialValue: level,
             decoration: dropdownDecoration(
@@ -57,6 +59,7 @@ class CareerStep extends StatelessWidget {
             onChanged: (v) => onLevelChanged(v!),
           ),
           SizedBox(height: 16.h),
+          // Nombre d'années d'expérience
           TextFormField(
             controller: yearsController,
             keyboardType: TextInputType.number,
@@ -73,6 +76,7 @@ class CareerStep extends StatelessWidget {
               return null;
             },
           ),
+          // Champ affiché uniquement pour le profil reconversion
           if (level == 'reconversion') ...[
             SizedBox(height: 16.h),
             TextFormField(

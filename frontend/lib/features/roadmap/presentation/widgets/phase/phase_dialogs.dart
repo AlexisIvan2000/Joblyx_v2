@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 
+// ═══════════════════════════════════════════════════════════════
+// AddPhaseDialog
+// ═══════════════════════════════════════════════════════════════
+
 /// Dialog pour ajouter une phase custom au roadmap.
 class AddPhaseDialog extends StatefulWidget {
   const AddPhaseDialog({super.key});
@@ -25,6 +29,7 @@ class _AddPhaseDialogState extends State<AddPhaseDialog> {
     super.dispose();
   }
 
+  /// Valide le formulaire et retourne les données au parent via pop.
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     Navigator.of(context).pop(<String, dynamic>{
@@ -117,6 +122,87 @@ class _AddPhaseDialogState extends State<AddPhaseDialog> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EditNotesDialog
+// ═══════════════════════════════════════════════════════════════
+
+/// Dialog pour modifier les notes d'une phase.
+class EditNotesDialog extends StatefulWidget {
+  final String initialNotes;
+
+  const EditNotesDialog({super.key, this.initialNotes = ''});
+
+  @override
+  State<EditNotesDialog> createState() => _EditNotesDialogState();
+}
+
+class _EditNotesDialogState extends State<EditNotesDialog> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pré-remplit le champ avec les notes existantes
+    _ctrl = TextEditingController(text: widget.initialNotes);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final t = AppLocalizations.of(context);
+
+    return Dialog(
+      backgroundColor: cs.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+      child: Padding(
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Titre
+            Text(
+              t.t('dashboard.edit_notes'),
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface,
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            // Champ texte multilignes pour les notes
+            TextField(
+              controller: _ctrl,
+              decoration: InputDecoration(
+                hintText: t.t('dashboard.notes_hint'),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+              maxLines: 5,
+              autofocus: true,
+            ),
+            SizedBox(height: 20.h),
+
+            // Bouton sauvegarder — retourne le texte saisi au parent
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(_ctrl.text.trim()),
+              child: Text(t.t('settings.save')),
+            ),
+          ],
         ),
       ),
     );

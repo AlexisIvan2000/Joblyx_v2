@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+/// Décoration standard pour les champs de saisie du formulaire.
 InputDecoration inputDecoration(
   BuildContext context, {
   required String label,
@@ -32,6 +33,7 @@ InputDecoration inputDecoration(
   );
 }
 
+/// Décoration pour les menus déroulants (padding vertical réduit).
 InputDecoration dropdownDecoration(
   BuildContext context, {
   required String label,

@@ -37,15 +37,19 @@
         "filter_interviews": "Entretiens",
         "filter_closed": "Terminées",
         "days_ago": "j",
+        "status_saved": "Sauvegardée",
         "status_applied": "Postulée",
+        "status_online_assessment": "Test en ligne",
         "status_phone_screen": "Entretien tél.",
         "status_technical": "Entretien tech.",
         "status_final_interview": "Entretien final",
-        "status_offer": "Offre",
+        "status_offer": "Offre reçue",
         "status_accepted": "Acceptée",
         "status_rejected": "Rejetée",
         "status_withdrawn": "Retirée",
-        "empty": "Aucune candidature",
+        "empty_title": "Aucune candidature",
+        "empty_subtitle": "Ajoutez votre première candidature pour commencer le suivi.",
+        "empty_add": "Ajouter une candidature",
         "add_title": "Nouvelle candidature",
         "company_name": "Entreprise",
         "company_hint": "Ex: Google, Shopify...",
@@ -65,7 +69,7 @@
         "cv_label": "CV (optionnel)",
         "cv_pick": "Joindre un CV (PDF)",
         "cv_too_large": "Le fichier doit faire moins de 5 Mo",
-        "search_hint": "Rechercher entreprise ou poste...",
+        "search_hint": "Rechercher une entreprise ou un poste...",
         "time_all": "Tout",
         "time_today": "Aujourd'hui",
         "time_7d": "7 jours",
@@ -73,7 +77,12 @@
         "results_count": "résultat(s)",
         "no_results": "Aucun résultat trouvé",
         "add_error": "Impossible d'ajouter la candidature",
-        "delete_error": "Impossible de supprimer la candidature"
+        "delete_error": "Impossible de supprimer la candidature",
+        "delete_title": "Supprimer cette candidature ?",
+        "delete_confirm": "Cette action est irréversible.",
+        "filter_status": "Statut",
+        "filter_date": "Date",
+        "filter_apply": "Appliquer"
     },
 
     "application_detail": {
@@ -87,7 +96,10 @@
         "notes": "Notes",
         "updated": "Mis à jour le",
         "update_status": "Mettre à jour le statut",
-        "update_error": "Impossible de mettre à jour le statut"
+        "update_error": "Impossible de mettre à jour",
+        "save_button": "Sauvegarder",
+        "edit_title": "Modifier la candidature",
+        "prepare_interview": "Préparer l'entretien"
     },
 
     "profile_screen": {

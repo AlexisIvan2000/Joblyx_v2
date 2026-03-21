@@ -7,10 +7,9 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/core/widgets/shimmer_loading.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/phase_card.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/add_phase_dialog.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/edit_notes_dialog.dart';
-import 'package:frontend/features/roadmap/presentation/widgets/option_card.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/phase/phase_card.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/phase/phase_dialogs.dart';
+import 'package:frontend/features/roadmap/presentation/widgets/phase/option_card.dart';
 
 class RoadmapScreen extends ConsumerWidget {
   const RoadmapScreen({super.key});
