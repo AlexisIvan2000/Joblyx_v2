@@ -1,6 +1,6 @@
 import json
 from openai import AsyncOpenAI
-from core.config import OPENAI_API_KEY
+from core.config import OPENAI_API_KEY, OPENAI_MODEL_PRIMARY
 
 
 client = AsyncOpenAI(api_key=OPENAI_API_KEY)
@@ -9,7 +9,7 @@ client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 async def generate_roadmap(system_prompt: str, user_prompt: str) -> dict:
     
     response = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=OPENAI_MODEL_PRIMARY,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -30,7 +30,7 @@ async def generate_roadmap_stream(system_prompt: str, user_prompt: str):
       ("error", error_msg)    — on failure
     """
     stream = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=OPENAI_MODEL_PRIMARY,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},

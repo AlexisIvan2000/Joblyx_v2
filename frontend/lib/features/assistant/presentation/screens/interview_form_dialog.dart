@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
@@ -25,6 +26,7 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
   late final TextEditingController _jobTitleController;
   late final TextEditingController _companyController;
   late final TextEditingController _descriptionController;
+  PlatformFile? _cvFile;
   String _language = 'fr';
 
   @override
@@ -87,6 +89,53 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
                   ),
                 ),
                 SizedBox(height: 12.h),
+                // Upload CV optionnel
+                GestureDetector(
+                  onTap: () async {
+                    final result = await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['pdf'],
+                    );
+                    if (result != null && result.files.isNotEmpty) {
+                      setState(() => _cvFile = result.files.first);
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: _cvFile != null
+                            ? cs.primary.withValues(alpha: 0.5)
+                            : cs.outlineVariant.withValues(alpha: 0.5),
+                      ),
+                      color: _cvFile != null ? cs.primary.withValues(alpha: 0.06) : null,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _cvFile != null ? Icons.picture_as_pdf_rounded : Icons.upload_file_rounded,
+                          size: 20.sp,
+                          color: _cvFile != null ? cs.primary : cs.onSurfaceVariant,
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            _cvFile?.name ?? t.t('interview.cv_pick'),
+                            style: TextStyle(fontSize: 12.sp, color: _cvFile != null ? cs.onSurface : cs.onSurfaceVariant),
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (_cvFile != null)
+                          GestureDetector(
+                            onTap: () => setState(() => _cvFile = null),
+                            child: Icon(Icons.close_rounded, size: 16.sp, color: cs.onSurfaceVariant),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12.h),
                 DropdownButtonFormField<String>(
                   initialValue: _language,
                   decoration: InputDecoration(
@@ -119,6 +168,7 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
               'job_description': _descriptionController.text.trim().isEmpty
                   ? null
                   : _descriptionController.text.trim(),
+              'cv_path': _cvFile?.path,
               'language': _language,
             });
           },

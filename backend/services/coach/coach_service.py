@@ -1,5 +1,6 @@
 """Service principal pour le coach IA — analyse CV vs offre."""
 
+import hashlib
 import json
 from datetime import datetime, timezone, timedelta
 
@@ -7,10 +8,12 @@ import fitz  # PyMuPDF
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import OPENAI_MODEL_FAST
 from repositories.coach_repository import CoachRepository
 from services.ai.openai_client import client
 from services.coach.coach_prompt_builder import build_coach_prompt
 from services.storage.r2_service import R2Service
+from services.utils.text_cleaner import clean_cv_text
 
 WEEKLY_LIMIT = 3
 
@@ -93,14 +96,18 @@ class CoachService:
                 },
             )
 
-        # Extraire le texte du CV
-        cv_text = _extract_text_from_pdf(cv_bytes)
+        # Extraire et nettoyer le texte du CV
+        cv_text = clean_cv_text(_extract_text_from_pdf(cv_bytes))
         if not cv_text:
             raise HTTPException(status_code=400, detail="Impossible d'extraire le texte du CV")
 
-        # Tronquer le CV si trop long
-        if len(cv_text) > 12000:
-            cv_text = cv_text[:12000]
+        # Vérifier le cache avant d'appeler GPT
+        cv_hash = hashlib.sha256(cv_text.encode()).hexdigest()
+        job_hash = hashlib.sha256(job_description.encode()).hexdigest()
+        cached = await self.repo.find_cached(user_id, cv_hash, job_hash)
+        if cached and cached.analysis:
+            yield ("done", cached.analysis)
+            return
 
         # Upload le CV sur R2
         cv_file_key = await self.r2.upload_cv(user_id, cv_bytes, cv_filename)
@@ -110,13 +117,13 @@ class CoachService:
 
         # Appel GPT en streaming
         stream = await client.chat.completions.create(
-            model="gpt-4o",
+            model=OPENAI_MODEL_FAST,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=0.3,
-            max_tokens=4000,
+            temperature=0.2,
+            max_tokens=3000,
             response_format={"type": "json_object"},
             stream=True,
         )
@@ -145,6 +152,8 @@ class CoachService:
             "job_description": job_description,
             "cv_file_key": cv_file_key,
             "cv_text": cv_text,
+            "cv_hash": cv_hash,
+            "job_description_hash": job_hash,
             "compatibility_score": score,
             "analysis": analysis,
             "language": language,

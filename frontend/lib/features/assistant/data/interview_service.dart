@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:frontend/core/network/api_client.dart';
 
@@ -10,21 +11,28 @@ class InterviewService {
   InterviewService() : _dio = ApiClient().dio;
   InterviewService.withDio(this._dio);
 
-  /// Démarre une nouvelle session d'entretien.
+  /// Démarre une nouvelle session d'entretien (multipart pour le CV optionnel).
   Future<Map<String, dynamic>> startSession({
     required String jobTitle,
     String? companyName,
     String? jobDescription,
+    String? cvPath,
     String language = 'fr',
   }) async {
-    final response = await _dio.post('/assistant/interview/start', data: {
+    final map = <String, dynamic>{
       'job_title': jobTitle,
-      // ignore: use_null_aware_elements
-      if (companyName != null) 'company_name': companyName,
-      // ignore: use_null_aware_elements
-      if (jobDescription != null) 'job_description': jobDescription,
       'language': language,
-    });
+    };
+    if (companyName != null) map['company_name'] = companyName;
+    if (jobDescription != null) map['job_description'] = jobDescription;
+    if (cvPath != null) {
+      map['cv_file'] = await MultipartFile.fromFile(
+        cvPath,
+        contentType: MediaType('application', 'pdf'),
+      );
+    }
+    final formData = FormData.fromMap(map);
+    final response = await _dio.post('/assistant/interview/start', data: formData);
     return response.data as Map<String, dynamic>;
   }
 

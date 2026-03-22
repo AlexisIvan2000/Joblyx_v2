@@ -477,6 +477,7 @@
         "company_hint": "ex. Google",
         "job_desc_label": "Description du poste (optionnel)",
         "job_desc_hint": "Collez la description ici...",
+        "cv_pick": "Joindre votre CV (optionnel, PDF)",
         "language_label": "Langue",
         "star_tip": "Conseil : soyez concis et structurez vos réponses avec la méthode STAR (Situation, Tâche, Action, Résultat).",
         "type_answer": "Tapez votre réponse...",

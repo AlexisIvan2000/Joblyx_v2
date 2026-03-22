@@ -1,86 +1,53 @@
 """Construit les prompts pour l'analyse coach IA."""
 
 _LANG_INSTRUCTIONS = {
-    "fr": "Réponds UNIQUEMENT en français.",
-    "en": "Respond ONLY in English.",
+    "fr": "Réponds en français.",
+    "en": "Respond in English.",
 }
 
-_SYSTEM_PROMPT = """Tu es un expert en recrutement IT au Canada avec 15 ans d'expérience, spécialisé dans l'optimisation de CV pour les ATS (Applicant Tracking Systems) et les recruteurs humains.
+_SYSTEM_PROMPT = """Expert recrutement IT Canada, spécialisé optimisation CV pour ATS et recruteurs.
 {lang_instruction}
 
-Analyse le CV et la description d'offre fournis. Retourne UNIQUEMENT un JSON valide avec cette structure :
+Retourne UNIQUEMENT ce JSON :
 {{
-  "compatibility_score": 72,
-  "summary": "Résumé en 2-3 phrases de l'analyse globale",
+  "compatibility_score": int (0-100),
+  "summary": "2-3 phrases",
   "ats_analysis": {{
-    "keywords_found": ["Python", "Docker", "Agile"],
-    "keywords_missing": ["Kubernetes", "Terraform", "AWS"],
-    "keyword_match_percentage": 65,
-    "ats_tips": [
-      "Utiliser le titre exact du poste dans l'en-tête du CV",
-      "Ajouter une section compétences techniques avec les mots-clés manquants"
-    ]
+    "keywords_found": ["str"],
+    "keywords_missing": ["str"],
+    "keyword_match_percentage": int,
+    "ats_tips": ["str"]
   }},
   "structure_analysis": {{
-    "format_score": 80,
-    "issues": [
-      {{
-        "problem": "Ce qui ne va pas dans la structure/disposition",
-        "fix": "Comment corriger concrètement"
-      }}
-    ]
+    "format_score": int (0-100),
+    "issues": [{{"problem": "str", "fix": "str"}}]
   }},
   "experience_optimization": [
-    {{
-      "current": "La phrase actuelle telle qu'écrite dans le CV",
-      "optimized": "La phrase reformulée pour mieux correspondre à l'offre",
-      "why": "Pourquoi cette reformulation est meilleure"
-    }}
+    {{"current": "phrase du CV", "optimized": "reformulation", "why": "raison"}}
   ],
-  "strengths": [
-    {{
-      "point": "Titre du point fort",
-      "detail": "Pourquoi c'est un atout pour cette offre"
-    }}
-  ],
+  "strengths": [{{"point": "str", "detail": "str"}}],
   "recommendations": [
-    {{
-      "category": "keywords|experience|structure|formatting|soft_skills",
-      "priority": "critical|high|medium",
-      "title": "Titre court",
-      "problem": "Ce qui ne va pas",
-      "suggestion": "Quoi faire concrètement avec exemple avant/après",
-      "impact": "Effet sur les chances du candidat"
-    }}
+    {{"category": "keywords|experience|structure|formatting|soft_skills", "priority": "critical|high|medium", "title": "str", "problem": "str", "suggestion": "str", "impact": "str"}}
   ],
-  "missing_sections": [
-    {{
-      "section": "Nom de la section manquante",
-      "why": "Pourquoi elle est importante pour cette offre",
-      "example": "Exemple de contenu à ajouter"
-    }}
-  ]
+  "missing_sections": [{{"section": "str", "why": "str", "example": "str"}}]
 }}
 
 RÈGLES :
-- Le compatibility_score est basé sur le matching skills/expérience/mots-clés entre le CV et l'offre
-- Les ats_tips sont des conseils spécifiques pour passer les filtres ATS automatiques
-- Le structure_analysis évalue la disposition du CV : ordre des sections, lisibilité, longueur, format compatible ATS
-- Le experience_optimization prend les phrases d'expérience du CV et les reformule pour qu'elles correspondent mieux à l'offre. Utiliser des verbes d'action, quantifier les résultats, intégrer les mots-clés
-- Les recommandations sont actionnables avec des avant/après concrets, pas de conseils vagues
-- Priorité "critical" = le CV sera rejeté par l'ATS sans ce changement, "high" = amélioration significative, "medium" = nice to have
-- Maximum 5 points forts, 8 recommandations, 5 reformulations d'expérience
-- Tenir compte du marché canadien : bilinguisme, équivalences de diplômes, certifications valorisées
-- Si le CV est en français et l'offre en anglais (ou inversement), mentionner comme point d'attention"""
+- Score basé sur matching skills/expérience/mots-clés CV vs offre
+- experience_optimization : reformuler avec verbes d'action, quantifier, intégrer mots-clés de l'offre
+- Recommandations actionnables avec avant/après concrets. critical=rejet ATS, high=amélioration forte, medium=nice to have
+- Max 5 points forts, 8 recommandations, 5 reformulations
+- Marché canadien : bilinguisme, équivalences diplômes
+- Si langues CV/offre différentes, le mentionner"""
 
 
-_USER_PROMPT = """CV DE L'UTILISATEUR :
+_USER_PROMPT = """CV :
 {cv_text}
 
-DESCRIPTION DE L'OFFRE D'EMPLOI :
+OFFRE :
 {job_description}
 
-Analyse ce CV par rapport à cette offre. Fournis un score de compatibilité, identifie les mots-clés ATS manquants, évalue la structure du CV, propose des reformulations concrètes des expériences pour mieux matcher l'offre, et donne des recommandations actionnables priorisées."""
+Analyse ce CV par rapport à cette offre."""
 
 
 def build_coach_prompt(

@@ -11,6 +11,8 @@ REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
 DATABASE_URL = os.getenv("DB_URL")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL_PRIMARY = "gpt-4o"        # Roadmap génération uniquement
+OPENAI_MODEL_FAST = "gpt-4o-mini"      # Coach, simulateur, extraction skills
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "support@joblyx.com")

@@ -10,6 +10,17 @@ class CoachRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def find_cached(self, user_id: str, cv_hash: str, job_desc_hash: str) -> CoachSession | None:
+        """Cherche une analyse existante avec les mêmes CV et offre."""
+        result = await self.session.execute(
+            select(CoachSession).where(
+                CoachSession.user_id == user_id,
+                CoachSession.cv_hash == cv_hash,
+                CoachSession.job_description_hash == job_desc_hash,
+            ).order_by(CoachSession.created_at.desc()).limit(1)
+        )
+        return result.scalar_one_or_none()
+
     async def create(self, data: dict) -> CoachSession:
         session = CoachSession(**data)
         self.session.add(session)

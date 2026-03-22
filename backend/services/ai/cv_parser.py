@@ -1,7 +1,9 @@
 import json
 import fitz  # PyMuPDF
 from pathlib import Path
+from core.config import OPENAI_MODEL_FAST
 from services.ai.openai_client import client
+from services.utils.text_cleaner import clean_cv_text
 
 # Charger le référentiel de skills une seule fois
 _SKILLS_PATH = Path(__file__).resolve().parent.parent.parent / "models" / "data" / "skills.json"
@@ -86,21 +88,18 @@ def _validate_skills(raw_skills: list[dict]) -> list[dict]:
 
 async def extract_skills_from_cv(pdf_bytes: bytes) -> list[dict]:
     """Parse le CV, extrait les skills via GPT, et les normalise."""
-    cv_text = extract_text_from_pdf(pdf_bytes)
+    cv_text = clean_cv_text(extract_text_from_pdf(pdf_bytes))
     if not cv_text:
         return []
 
-    if len(cv_text) > 9000:
-        cv_text = cv_text[:9000]
-
     response = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=OPENAI_MODEL_FAST,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": cv_text},
         ],
         temperature=0.2,
-        max_tokens=1000,
+        max_tokens=800,
         response_format={"type": "json_object"},
     )
 
@@ -117,16 +116,13 @@ async def extract_skills_from_cv_stream(pdf_bytes: bytes):
       ("done", validated_skills)  — liste finale de skills validées
       ("error", error_msg)  — en cas d'erreur
     """
-    cv_text = extract_text_from_pdf(pdf_bytes)
+    cv_text = clean_cv_text(extract_text_from_pdf(pdf_bytes))
     if not cv_text:
         yield ("done", [])
         return
 
-    if len(cv_text) > 9000:
-        cv_text = cv_text[:9000]
-
     stream = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=OPENAI_MODEL_FAST,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": cv_text},

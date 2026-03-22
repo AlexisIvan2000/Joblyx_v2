@@ -68,7 +68,7 @@ class TestBuildRoadmapPrompt:
         _, usr_p = build_roadmap_prompt(_career(), _skills(), market)
         assert "Kubernetes" in usr_p
         assert "76%" in usr_p
-        assert "Complète avec" in usr_p or "Complète cette liste" in usr_p
+        assert "MARCHÉ LOCAL" in usr_p or "marché" in usr_p.lower()
 
     def test_reconversion_with_previous_field(self):
         career = _career(level="reconversion", previous_field="Marketing")

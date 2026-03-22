@@ -179,6 +179,8 @@ class CoachSession(Base):
     cv_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     compatibility_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     analysis: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    cv_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    job_description_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     language: Mapped[str | None] = mapped_column(String(10), server_default="fr", nullable=True)
     created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
 
@@ -196,6 +198,7 @@ class InterviewSession(Base):
     job_title: Mapped[str] = mapped_column(String(200))
     company_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     job_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cv_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     language: Mapped[str | None] = mapped_column(String(10), server_default="fr", nullable=True)
     status: Mapped[str] = mapped_column(String(20), server_default="in_progress")
     overall_score: Mapped[int | None] = mapped_column(Integer, nullable=True)

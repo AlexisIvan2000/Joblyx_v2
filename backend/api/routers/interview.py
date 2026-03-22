@@ -3,7 +3,9 @@
 import json
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+import fitz
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from api.dependencies import get_current_user
@@ -26,29 +28,43 @@ async def get_interview_service(session: AsyncSession = Depends(get_db_session))
 
 # ─── Schemas ─────────────────────────────────────────────────────
 
-class StartInterviewRequest(BaseModel):
-    job_title: str
-    company_name: str | None = None
-    job_description: str | None = None
-    language: str = "fr"
-
-
 # ─── Démarrer un entretien ───────────────────────────────────────
 
 @router.post("/start")
 @limiter.limit("3/minute", key_func=get_user_id_from_jwt)
 async def start_interview(
     request: Request,
-    body: StartInterviewRequest,
+    job_title: str = Form(...),
+    company_name: str = Form(None),
+    job_description: str = Form(None),
+    language: str = Form("fr"),
+    cv_file: UploadFile | None = File(None),
     current_user: User = Depends(get_current_user),
     svc: InterviewService = Depends(get_interview_service),
 ):
+    # Extraire le texte du CV si fourni
+    cv_text = None
+    if cv_file:
+        if not cv_file.content_type or "pdf" not in cv_file.content_type:
+            raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+        cv_bytes = await cv_file.read()
+        if len(cv_bytes) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large (max 10 MB)")
+        # Parser le PDF en texte
+        doc = fitz.open(stream=cv_bytes, filetype="pdf")
+        cv_text = ""
+        for page in doc:
+            cv_text += page.get_text()
+        doc.close()
+        cv_text = cv_text.strip() or None
+
     return await svc.start_session(
         user_id=str(current_user.id),
-        job_title=body.job_title,
-        company_name=body.company_name,
-        job_description=body.job_description,
-        language=body.language,
+        job_title=job_title,
+        company_name=company_name,
+        job_description=job_description,
+        cv_text=cv_text,
+        language=language,
     )
 
 

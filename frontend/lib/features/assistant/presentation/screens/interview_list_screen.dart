@@ -122,6 +122,7 @@ class InterviewListScreen extends ConsumerWidget {
         jobTitle: result['job_title'] as String,
         companyName: result['company_name'] as String?,
         jobDescription: result['job_description'] as String?,
+        cvPath: result['cv_path'] as String?,
         language: result['language'] as String? ?? 'fr',
       );
 

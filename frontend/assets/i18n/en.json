@@ -476,6 +476,7 @@
         "company_hint": "e.g. Google",
         "job_desc_label": "Job description (optional)",
         "job_desc_hint": "Paste the job description here...",
+        "cv_pick": "Attach your CV (optional, PDF)",
         "language_label": "Language",
         "star_tip": "Tip: be concise and structure your answers with the STAR method (Situation, Task, Action, Result).",
         "type_answer": "Type your answer...",

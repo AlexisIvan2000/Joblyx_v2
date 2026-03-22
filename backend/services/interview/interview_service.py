@@ -7,8 +7,10 @@ from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import OPENAI_MODEL_FAST
 from repositories.interview_repository import InterviewRepository
 from services.ai.openai_client import client
+from services.utils.text_cleaner import clean_cv_text
 from services.interview.interview_prompt_builder import (
     build_interview_prompt,
     build_summary_prompt,
@@ -69,6 +71,7 @@ class InterviewService:
         job_title: str,
         company_name: str | None = None,
         job_description: str | None = None,
+        cv_text: str | None = None,
         language: str = "fr",
     ) -> dict:
         # Vérifier la limite
@@ -83,26 +86,31 @@ class InterviewService:
                 },
             )
 
+        # Nettoyer le CV
+        if cv_text:
+            cv_text = clean_cv_text(cv_text)
+
         # Créer la session
         interview = await self.repo.create_session({
             "user_id": user_id,
             "job_title": job_title,
             "company_name": company_name,
             "job_description": job_description,
+            "cv_text": cv_text,
             "language": language,
         })
 
         # Construire le system prompt
         system_prompt = build_interview_prompt(
-            job_title, company_name, job_description, language
+            job_title, company_name, job_description, cv_text, language
         )
 
         # Appeler GPT pour la première question (sans streaming pour le start)
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=OPENAI_MODEL_FAST,
             messages=[{"role": "system", "content": system_prompt}],
             temperature=0.7,
-            max_tokens=800,
+            max_tokens=500,
         )
 
         raw_content = response.choices[0].message.content or ""
@@ -177,16 +185,16 @@ class InterviewService:
             "position": user_position,
         })
 
-        # Construire l'historique pour GPT
+        # Construire l'historique pour GPT (fenêtre glissante pour réduire les tokens)
         system_prompt = build_interview_prompt(
             interview.job_title,
             interview.company_name,
             interview.job_description,
+            interview.cv_text,
             interview.language or "fr",
         )
         gpt_messages = [{"role": "system", "content": system_prompt}]
-        for msg in messages:
-            gpt_messages.append({"role": msg.role, "content": msg.content})
+        gpt_messages.extend(_build_windowed_history(messages))
         gpt_messages.append({"role": "user", "content": user_message.strip()})
 
         # Forcer la clôture si on atteint la limite
@@ -198,10 +206,10 @@ class InterviewService:
 
         # Appeler GPT en streaming
         stream = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=OPENAI_MODEL_FAST,
             messages=gpt_messages,
             temperature=0.7,
-            max_tokens=800,
+            max_tokens=500,
             stream=True,
         )
 
@@ -297,7 +305,8 @@ class InterviewService:
         messages = await self.repo.get_messages_by_session(session_id)
         system_prompt = build_interview_prompt(
             interview.job_title, interview.company_name,
-            interview.job_description, interview.language or "fr",
+            interview.job_description, interview.cv_text,
+            interview.language or "fr",
         )
 
         gpt_messages = [{"role": "system", "content": system_prompt}]
@@ -309,10 +318,10 @@ class InterviewService:
         })
 
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=OPENAI_MODEL_FAST,
             messages=gpt_messages,
             temperature=0.7,
-            max_tokens=800,
+            max_tokens=500,
         )
 
         raw_content = response.choices[0].message.content or ""
@@ -348,13 +357,13 @@ class InterviewService:
         summary_prompt = build_summary_prompt(language)
 
         response = await client.chat.completions.create(
-            model="gpt-4o",
+            model=OPENAI_MODEL_FAST,
             messages=[
                 {"role": "system", "content": summary_prompt},
                 {"role": "user", "content": f"Voici la transcription de l'entretien :\n\n{history}"},
             ],
-            temperature=0.3,
-            max_tokens=2000,
+            temperature=0.2,
+            max_tokens=1500,
             response_format={"type": "json_object"},
         )
 
@@ -397,6 +406,42 @@ class InterviewService:
         count = await self.repo.delete_all_by_user(user_id)
         await self.session.commit()
         return count
+
+
+_WINDOW_SIZE = 10  # Nombre de messages récents à garder
+
+
+def _build_windowed_history(messages: list) -> list[dict]:
+    """Construit un historique tronqué pour économiser les tokens.
+
+    Garde les 2 premiers messages (intro) + les N derniers.
+    Résume les messages du milieu en une ligne.
+    """
+    if len(messages) <= _WINDOW_SIZE + 2:
+        # Pas besoin de tronquer
+        return [{"role": m.role, "content": m.content} for m in messages]
+
+    # Premiers messages (intro)
+    intro = messages[:2]
+    # Derniers messages (fenêtre récente)
+    recent = messages[-_WINDOW_SIZE:]
+    # Messages du milieu (résumés)
+    middle = messages[2:-_WINDOW_SIZE]
+    middle_topics = set()
+    for m in middle:
+        if m.role == "assistant":
+            # Extraire les premiers mots comme topic
+            words = m.content.split()[:6]
+            middle_topics.add(" ".join(words))
+
+    result = [{"role": m.role, "content": m.content} for m in intro]
+
+    if middle:
+        summary = f"[{len(middle)} messages précédents résumés : le candidat a répondu à {len(middle) // 2} questions supplémentaires]"
+        result.append({"role": "system", "content": summary})
+
+    result.extend({"role": m.role, "content": m.content} for m in recent)
+    return result
 
 
 def _parse_response(raw: str) -> tuple[str, dict | None]:
