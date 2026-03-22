@@ -19,7 +19,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
-  static const _routes = ['/dashboard', '/roadmap', '/applications', '/profile'];
+  static const _routes = ['/dashboard', '/roadmap', '/applications', '/assistant', '/profile'];
 
   late final AnimationController _controller;
   Animation<Offset>? _inAnimation;
@@ -106,6 +106,11 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
               icon: const Icon(Icons.work_outline_rounded),
               selectedIcon: Icon(Icons.work_rounded, color: cs.primary),
               label: t.t('nav.applications'),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.auto_awesome_outlined),
+              selectedIcon: Icon(Icons.auto_awesome_rounded, color: cs.primary),
+              label: t.t('nav.assistant'),
             ),
             NavigationDestination(
               icon: const Icon(Icons.person_outline_rounded),

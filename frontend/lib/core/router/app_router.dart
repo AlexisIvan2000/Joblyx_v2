@@ -18,6 +18,10 @@ import 'package:frontend/features/roadmap/presentation/screens/roadmap_history_s
 import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/edit_career_screen.dart';
 import 'package:frontend/features/applications/presentation/screens/edit_application_screen.dart';
+import 'package:frontend/features/assistant/presentation/screens/assistant_screen.dart';
+import 'package:frontend/features/assistant/presentation/screens/coach_form_screen.dart';
+import 'package:frontend/features/assistant/presentation/screens/coach_result_screen.dart';
+import 'package:frontend/features/assistant/presentation/screens/coach_detail_screen.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
@@ -47,6 +51,10 @@ final appRouter = GoRouter(
         ApplicationDetailScreen(applicationId: state.pathParameters['id']!)),
     _slideRoute(AppRoutes.applicationEdit, (state) =>
         EditApplicationScreen(applicationId: state.pathParameters['id']!)),
+    _slideRoute(AppRoutes.coachForm, (_) => const CoachFormScreen()),
+    _slideRoute(AppRoutes.coachResult, (_) => const CoachResultScreen()),
+    _slideRoute(AppRoutes.coachDetail, (state) =>
+        CoachDetailScreen(sessionId: state.pathParameters['id']!)),
 
     // Shell avec bottom navigation
     ShellRoute(
@@ -59,6 +67,7 @@ final appRouter = GoRouter(
         _noTransitionRoute(AppRoutes.dashboard, (_) => const DashboardScreen()),
         _noTransitionRoute(AppRoutes.roadmap, (_) => const RoadmapScreen()),
         _noTransitionRoute(AppRoutes.applications, (_) => const ApplicationsScreen()),
+        _noTransitionRoute(AppRoutes.assistant, (_) => const AssistantScreen()),
         _noTransitionRoute(AppRoutes.profile, (_) => const ProfileScreen()),
       ],
     ),
@@ -68,7 +77,8 @@ final appRouter = GoRouter(
 int _tabIndex(String path) {
   if (path.startsWith('/roadmap')) return 1;
   if (path.startsWith('/applications')) return 2;
-  if (path.startsWith('/profile')) return 3;
+  if (path.startsWith('/assistant')) return 3;
+  if (path.startsWith('/profile')) return 4;
   return 0; // dashboard
 }
 

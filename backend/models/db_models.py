@@ -34,6 +34,9 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+    coach_usage_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    coach_usage_reset_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
+
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
@@ -158,6 +161,24 @@ class Application(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
+
+    user: Mapped["User"] = relationship()
+
+
+class CoachSession(Base):
+    __tablename__ = "coach_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    job_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    company_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    job_description: Mapped[str] = mapped_column(Text)
+    cv_file_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    cv_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    compatibility_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    analysis: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    language: Mapped[str | None] = mapped_column(String(10), server_default="fr", nullable=True)
+    created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
 
     user: Mapped["User"] = relationship()
 

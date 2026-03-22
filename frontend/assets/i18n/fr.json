@@ -3,6 +3,7 @@
         "home": "Accueil",
         "roadmap": "Roadmap",
         "applications": "Candidatures",
+        "assistant": "Assistant",
         "profile": "Profil"
     },
 
@@ -418,6 +419,45 @@
         "project_desc_hint": "Description",
         "project_techs_hint": "Technologies (séparées par des virgules)",
         "save_phase": "Enregistrer la phase"
+    },
+
+    "assistant": {
+        "title": "Assistant",
+        "coach_title": "Optimiser mon CV",
+        "coach_subtitle": "Analysez votre CV face à une offre d'emploi",
+        "simulator_title": "Simuler un entretien",
+        "simulator_subtitle": "Entraînez-vous avec un recruteur IA",
+        "coming_soon": "Bientôt",
+        "recent_history": "Historique récent",
+        "no_history": "Aucune analyse pour le moment",
+        "remaining_analyses": "{count} analyses restantes cette semaine",
+        "cv_label": "Votre CV (PDF)",
+        "cv_pick": "Sélectionnez un fichier PDF",
+        "job_desc_label": "Description de l'offre",
+        "job_desc_hint": "Collez l'offre d'emploi complète ici...",
+        "job_desc_required": "La description de l'offre est requise",
+        "job_title_label": "Titre du poste (optionnel)",
+        "job_title_hint": "ex. Développeur Full Stack",
+        "company_label": "Nom de l'entreprise (optionnel)",
+        "company_hint": "ex. Google",
+        "language_label": "Langue de l'analyse",
+        "analyze_button": "Analyser mon CV",
+        "analyze_error": "Une erreur est survenue pendant l'analyse",
+        "limit_reached": "Limite hebdomadaire atteinte (3 par semaine)",
+        "result_title": "Analyse du CV",
+        "session_not_found": "Session introuvable"
+    },
+
+    "coach": {
+        "ats_title": "Mots-clés ATS",
+        "keyword_match": "Correspondance",
+        "keywords_found": "Trouvés",
+        "keywords_missing": "Manquants",
+        "structure_title": "Structure du CV",
+        "experience_title": "Optimisation des expériences",
+        "strengths_title": "Points forts",
+        "recommendations_title": "Recommandations",
+        "missing_sections_title": "Sections manquantes"
     },
 
     "settings": {

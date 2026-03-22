@@ -3,6 +3,7 @@
         "home": "Home",
         "roadmap": "Roadmap",
         "applications": "Applications",
+        "assistant": "Assistant",
         "profile": "Profile"
     },
 
@@ -417,6 +418,45 @@
         "project_desc_hint": "Description",
         "project_techs_hint": "Technologies (comma-separated)",
         "save_phase": "Save phase"
+    },
+
+    "assistant": {
+        "title": "Assistant",
+        "coach_title": "Optimize my CV",
+        "coach_subtitle": "Analyze your CV against a job posting",
+        "simulator_title": "Interview simulator",
+        "simulator_subtitle": "Practice with an AI recruiter",
+        "coming_soon": "Coming soon",
+        "recent_history": "Recent history",
+        "no_history": "No analysis yet",
+        "remaining_analyses": "{count} analyses remaining this week",
+        "cv_label": "Your CV (PDF)",
+        "cv_pick": "Select a PDF file",
+        "job_desc_label": "Job description",
+        "job_desc_hint": "Paste the full job posting here...",
+        "job_desc_required": "Job description is required",
+        "job_title_label": "Job title (optional)",
+        "job_title_hint": "e.g. Full Stack Developer",
+        "company_label": "Company name (optional)",
+        "company_hint": "e.g. Google",
+        "language_label": "Analysis language",
+        "analyze_button": "Analyze my CV",
+        "analyze_error": "An error occurred during analysis",
+        "limit_reached": "Weekly limit reached (3 per week)",
+        "result_title": "CV Analysis",
+        "session_not_found": "Session not found"
+    },
+
+    "coach": {
+        "ats_title": "ATS Keywords",
+        "keyword_match": "Keyword match",
+        "keywords_found": "Found",
+        "keywords_missing": "Missing",
+        "structure_title": "CV Structure",
+        "experience_title": "Experience Optimization",
+        "strengths_title": "Strengths",
+        "recommendations_title": "Recommendations",
+        "missing_sections_title": "Missing Sections"
     },
 
     "settings": {

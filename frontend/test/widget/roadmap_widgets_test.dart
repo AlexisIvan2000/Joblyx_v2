@@ -229,7 +229,7 @@ void main() {
     testWidgets('affiche les 3 options du menu', (tester) async {
       await tester.pumpWidget(_testApp(
         Builder(builder: (context) {
-          final cs = Theme.of(context).colorScheme;
+          
           return PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
             onSelected: (_) {},

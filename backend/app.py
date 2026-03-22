@@ -12,6 +12,7 @@ from api.routers.auth import router as auth_router
 from api.routers.users import router as users_router
 from api.routers.roadmap import router as roadmap_router
 from api.routers.applications import router as applications_router
+from api.routers.assistant import router as assistant_router
 
 scheduler = AsyncIOScheduler()
 
@@ -50,6 +51,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(roadmap_router)
 app.include_router(applications_router)
+app.include_router(assistant_router)
 
 @app.get("/health")
 async def health_check():

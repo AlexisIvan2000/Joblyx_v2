@@ -15,4 +15,8 @@ class AppRoutes {
   static const createRoadmap = '/roadmap/create';
   static const editCareer = '/profile/career';
   static const applicationEdit = '/applications/:id/edit';
+  static const assistant = '/assistant';
+  static const coachForm = '/assistant/coach';
+  static const coachResult = '/assistant/coach/result';
+  static const coachDetail = '/assistant/coach/:id';
 }
