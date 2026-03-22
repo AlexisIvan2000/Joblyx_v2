@@ -15,6 +15,10 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
+# Alias pour le WebSocket (qui ne peut pas utiliser Depends)
+async_session_factory = AsyncSessionLocal
+
+
 async def get_db_session():
     async with AsyncSessionLocal() as session:
         try:

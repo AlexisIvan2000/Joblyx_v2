@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/features/assistant/presentation/providers/coach_provider.dart';
+import 'package:frontend/features/assistant/presentation/providers/interview_provider.dart';
 
 class AssistantScreen extends ConsumerWidget {
   const AssistantScreen({super.key});
@@ -43,24 +44,21 @@ class AssistantScreen extends ConsumerWidget {
           ),
           SizedBox(height: 10.h),
 
-          // Carte Simulateur d'entretien (bientôt disponible)
+          // Carte Simulateur d'entretien
           _AssistantCard(
             icon: Icons.chat_outlined,
             iconColor: cs.tertiary,
             title: t.t('assistant.simulator_title'),
             subtitle: t.t('assistant.simulator_subtitle'),
-            trailing: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-              decoration: BoxDecoration(
-                color: cs.tertiary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8.r),
+            trailing: ref.watch(interviewUsageProvider).when(
+              data: (usage) => Text(
+                '${usage['used']}/${usage['limit']}',
+                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: cs.tertiary),
               ),
-              child: Text(
-                t.t('assistant.coming_soon'),
-                style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600, color: cs.tertiary),
-              ),
+              loading: () => SizedBox(width: 14.w, height: 14.w, child: const CircularProgressIndicator(strokeWidth: 2)),
+              error: (_, _) => const SizedBox.shrink(),
             ),
-            onTap: null, // Désactivé
+            onTap: () => context.push('/assistant/interview'),
             cs: cs,
           ),
           SizedBox(height: 24.h),

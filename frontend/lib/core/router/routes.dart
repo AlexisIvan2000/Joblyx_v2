@@ -20,4 +20,7 @@ class AppRoutes {
   static const coachResult = '/assistant/coach/result';
   static const coachDetail = '/assistant/coach/:id';
   static const coachHistory = '/assistant/coach/history';
+  static const interviewList = '/assistant/interview';
+  static const interviewChat = '/assistant/interview/chat/:id';
+  static const interviewSummary = '/assistant/interview/summary/:id';
 }

@@ -23,6 +23,9 @@ import 'package:frontend/features/assistant/presentation/screens/coach_form_scre
 import 'package:frontend/features/assistant/presentation/screens/coach_result_screen.dart';
 import 'package:frontend/features/assistant/presentation/screens/coach_detail_screen.dart';
 import 'package:frontend/features/assistant/presentation/screens/coach_history_screen.dart';
+import 'package:frontend/features/assistant/presentation/screens/interview_list_screen.dart';
+import 'package:frontend/features/assistant/presentation/screens/interview_chat_screen.dart';
+import 'package:frontend/features/assistant/presentation/screens/interview_summary_screen.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
@@ -57,6 +60,11 @@ final appRouter = GoRouter(
     _slideRoute(AppRoutes.coachHistory, (_) => const CoachHistoryScreen()),
     _slideRoute(AppRoutes.coachDetail, (state) =>
         CoachDetailScreen(sessionId: state.pathParameters['id']!)),
+    _slideRoute(AppRoutes.interviewList, (_) => const InterviewListScreen()),
+    _slideRoute(AppRoutes.interviewChat, (state) =>
+        InterviewChatScreen(sessionId: state.pathParameters['id']!)),
+    _slideRoute(AppRoutes.interviewSummary, (state) =>
+        InterviewSummaryScreen(sessionId: state.pathParameters['id']!)),
 
     // Shell avec bottom navigation
     ShellRoute(
