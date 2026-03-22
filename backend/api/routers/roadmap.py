@@ -21,7 +21,7 @@ from models.schemas import (
 from models.db_models import User, Career, UserSkill
 from api.dependencies import get_current_user, get_roadmap_service
 from services.roadmap.roadmap_service import RoadmapService
-from services.ai.cv_parser import extract_skills_from_cv
+from services.ai.cv_parser import extract_skills_from_cv, extract_skills_from_cv_stream
 
 router = APIRouter(prefix="/roadmap", tags=["roadmap"])
 
@@ -265,8 +265,18 @@ async def extract_skills(
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File too large (max 5 MB)")
 
-    skills = await extract_skills_from_cv(content)
-    return {"skills": skills}
+    async def _stream():
+        yield 'event: status\ndata: {"status":"extracting"}\n\n'
+        async for event_type, data in extract_skills_from_cv_stream(content):
+            if event_type == "chunk":
+                yield f'event: chunk\ndata: {json.dumps({"text": data})}\n\n'
+            elif event_type == "done":
+                yield f'event: skills\ndata: {json.dumps({"skills": data})}\n\n'
+                yield 'event: complete\ndata: {"status":"done"}\n\n'
+            elif event_type == "error":
+                yield f'event: error\ndata: {json.dumps({"error": data})}\n\n'
+
+    return StreamingResponse(_stream(), media_type="text/event-stream")
 
 
 # ─── Status endpoints ────────────────────────────────────────────

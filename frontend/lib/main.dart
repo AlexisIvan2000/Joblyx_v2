@@ -8,6 +8,7 @@ import 'package:frontend/core/theme/theme_color.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,12 +31,14 @@ void main() async {
   runApp(const ProviderScope(child: MainApp()));
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeColor = ThemeColor();
+    final prefs = ref.watch(preferencesProvider);
+
     return ScreenUtilInit(
       designSize: const Size(360, 690),
       minTextAdapt: true,
@@ -46,7 +49,9 @@ class MainApp extends StatelessWidget {
           title: 'Joblyx',
           theme: themeColor.lightTheme,
           darkTheme: themeColor.darkTheme,
-          themeMode: ThemeMode.system,
+          themeMode: prefs.themeMode,
+          // Langue : préférence utilisateur ou langue système
+          locale: prefs.locale,
           routerConfig: appRouter,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [
@@ -55,6 +60,17 @@ class MainApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          // Si la locale n'est pas supportée → fallback en anglais
+          localeResolutionCallback: (deviceLocale, supportedLocales) {
+            // Si l'utilisateur a choisi une langue, l'utiliser
+            if (prefs.locale != null) return prefs.locale;
+            // Sinon, utiliser la langue du système si supportée
+            for (final locale in supportedLocales) {
+              if (locale.languageCode == deviceLocale?.languageCode) return locale;
+            }
+            // Fallback anglais
+            return const Locale('en');
+          },
         );
       },
     );

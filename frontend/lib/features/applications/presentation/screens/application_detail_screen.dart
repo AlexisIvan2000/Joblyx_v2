@@ -20,6 +20,7 @@ class ApplicationDetailScreen extends ConsumerStatefulWidget {
 class _ApplicationDetailScreenState
     extends ConsumerState<ApplicationDetailScreen> {
   Map<String, dynamic>? _app;
+  bool _descriptionExpanded = false;
 
   @override
   void initState() {
@@ -212,10 +213,15 @@ class _ApplicationDetailScreenState
                 cs,
               ),
 
-            // Description
+            // Description (pliable)
             if (description != null && description.isNotEmpty) ...[
               SizedBox(height: 20.h),
-              _section(t.t('application_detail.description'), description, cs),
+              _expandableSection(
+                t.t('application_detail.description'),
+                description,
+                cs,
+                t,
+              ),
             ],
 
             // Notes
@@ -332,6 +338,113 @@ class _ApplicationDetailScreenState
           ),
         ),
       ),
+    );
+  }
+
+  Widget _expandableSection(
+    String title,
+    String content,
+    ColorScheme cs,
+    AppLocalizations t,
+  ) {
+    const maxLines = 4;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w700,
+            color: cs.onSurface,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(14.w),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnimatedCrossFade(
+                firstChild: Text(
+                  content,
+                  maxLines: maxLines,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: cs.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+                secondChild: Text(
+                  content,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: cs.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+                crossFadeState: _descriptionExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 250),
+              ),
+              // Afficher le bouton seulement si le texte dépasse maxLines
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final tp = TextPainter(
+                    text: TextSpan(
+                      text: content,
+                      style: TextStyle(fontSize: 13.sp, height: 1.5),
+                    ),
+                    maxLines: maxLines,
+                    textDirection: TextDirection.ltr,
+                  )..layout(maxWidth: constraints.maxWidth);
+
+                  if (!tp.didExceedMaxLines) return const SizedBox.shrink();
+
+                  return GestureDetector(
+                    onTap: () => setState(
+                      () => _descriptionExpanded = !_descriptionExpanded,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 8.h),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _descriptionExpanded
+                                ? t.t('application_detail.show_less')
+                                : t.t('application_detail.show_more'),
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: cs.primary,
+                            ),
+                          ),
+                          SizedBox(width: 4.w),
+                          Icon(
+                            _descriptionExpanded
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            size: 16.sp,
+                            color: cs.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

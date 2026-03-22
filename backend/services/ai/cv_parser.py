@@ -52,32 +52,8 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     return text.strip()
 
 
-async def extract_skills_from_cv(pdf_bytes: bytes) -> list[dict]:
-    """Parse le CV, extrait les skills via GPT, et les normalise."""
-    cv_text = extract_text_from_pdf(pdf_bytes)
-    if not cv_text:
-        return []
-
-    # Tronquer à 9k chars (suffisant pour un CV, réduit les tokens d'entrée)
-    if len(cv_text) > 9000:
-        cv_text = cv_text[:9000]
-
-    response = await client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": cv_text},
-        ],
-        temperature=0.2,
-        max_tokens=1000,
-        response_format={"type": "json_object"},
-    )
-
-    content = response.choices[0].message.content
-    result = json.loads(content)
-    raw_skills = result.get("skills", [])
-
-    # Normaliser et valider contre le référentiel
+def _validate_skills(raw_skills: list[dict]) -> list[dict]:
+    """Normalise et valide les skills contre le référentiel."""
     validated = []
     seen = set()
     for s in raw_skills:
@@ -106,3 +82,71 @@ async def extract_skills_from_cv(pdf_bytes: bytes) -> list[dict]:
                 })
 
     return validated
+
+
+async def extract_skills_from_cv(pdf_bytes: bytes) -> list[dict]:
+    """Parse le CV, extrait les skills via GPT, et les normalise."""
+    cv_text = extract_text_from_pdf(pdf_bytes)
+    if not cv_text:
+        return []
+
+    if len(cv_text) > 9000:
+        cv_text = cv_text[:9000]
+
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "user", "content": cv_text},
+        ],
+        temperature=0.2,
+        max_tokens=1000,
+        response_format={"type": "json_object"},
+    )
+
+    content = response.choices[0].message.content
+    result = json.loads(content)
+    return _validate_skills(result.get("skills", []))
+
+
+async def extract_skills_from_cv_stream(pdf_bytes: bytes):
+    """Version streaming — yield (event_type, data) tuples.
+
+    Events:
+      ("chunk", partial_text)  — token brut du stream GPT
+      ("done", validated_skills)  — liste finale de skills validées
+      ("error", error_msg)  — en cas d'erreur
+    """
+    cv_text = extract_text_from_pdf(pdf_bytes)
+    if not cv_text:
+        yield ("done", [])
+        return
+
+    if len(cv_text) > 9000:
+        cv_text = cv_text[:9000]
+
+    stream = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "user", "content": cv_text},
+        ],
+        temperature=0.2,
+        max_tokens=1000,
+        response_format={"type": "json_object"},
+        stream=True,
+    )
+
+    accumulated = ""
+    async for chunk in stream:
+        delta = chunk.choices[0].delta
+        if delta.content:
+            accumulated += delta.content
+            yield ("chunk", delta.content)
+
+    try:
+        parsed = json.loads(accumulated)
+        validated = _validate_skills(parsed.get("skills", []))
+        yield ("done", validated)
+    except json.JSONDecodeError as e:
+        yield ("error", f"Invalid JSON from GPT: {e}")

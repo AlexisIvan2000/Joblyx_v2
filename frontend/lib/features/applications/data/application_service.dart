@@ -4,7 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:frontend/core/network/api_client.dart';
 
 class ApplicationService {
-  final Dio _dio = ApiClient().dio;
+  final Dio _dio;
+
+  ApplicationService() : _dio = ApiClient().dio;
+  ApplicationService.withDio(this._dio);
 
   Future<List<dynamic>> getAll({String? status}) async {
     final params = <String, dynamic>{};
@@ -35,8 +38,21 @@ class ApplicationService {
     return response.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> update(String id, Map<String, dynamic> data) async {
-    final response = await _dio.put('/applications/$id', data: data);
+  Future<Map<String, dynamic>> update(
+    String id,
+    Map<String, dynamic> data, {
+    String? cvPath,
+    String? cvFilename,
+  }) async {
+    final map = <String, dynamic>{'data': jsonEncode(data)};
+    if (cvPath != null) {
+      map['cv'] = await MultipartFile.fromFile(
+        cvPath,
+        filename: cvFilename ?? 'cv.pdf',
+      );
+    }
+    final formData = FormData.fromMap(map);
+    final response = await _dio.put('/applications/$id', data: formData);
     return response.data as Map<String, dynamic>;
   }
 

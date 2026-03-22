@@ -306,6 +306,9 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     final appsAsync = ref.watch(applicationsProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(t.t('applications_screen.title')),
+      ),
       floatingActionButton: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16.r),
@@ -326,8 +329,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
           child: Icon(Icons.add_rounded, size: 28.sp),
         ),
       ),
-      body: SafeArea(
-        child: appsAsync.when(
+      body: appsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, _) =>
               Center(child: Text(t.t('applications_screen.add_error'))),
@@ -336,29 +338,15 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // En-tête
+                // Compteur de résultats
                 Padding(
-                  padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t.t('applications_screen.title'),
-                        style: TextStyle(
-                          fontSize: 22.sp,
-                          fontWeight: FontWeight.w800,
-                          color: cs.onSurface,
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        '${filtered.length} ${t.t('applications_screen.results_count')}',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 0),
+                  child: Text(
+                    '${filtered.length} ${t.t('applications_screen.results_count')}',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: cs.onSurfaceVariant,
+                    ),
                   ),
                 ),
                 SizedBox(height: 14.h),
@@ -400,7 +388,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
             );
           },
         ),
-      ),
     );
   }
 
@@ -502,22 +489,21 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 80.r,
-              height: 80.r,
-              decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+            if (!globalEmpty)
+              Container(
+                width: 80.r,
+                height: 80.r,
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.search_off_rounded,
+                  size: 36.sp,
+                  color: cs.primary,
+                ),
               ),
-              child: Icon(
-                globalEmpty
-                    ? Icons.work_outline_rounded
-                    : Icons.search_off_rounded,
-                size: 36.sp,
-                color: cs.primary,
-              ),
-            ),
-            SizedBox(height: 20.h),
+            if (!globalEmpty) SizedBox(height: 20.h),
             Text(
               globalEmpty
                   ? t.t('applications_screen.empty_title')
@@ -535,15 +521,6 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
                 t.t('applications_screen.empty_subtitle'),
                 style: TextStyle(fontSize: 14.sp, color: cs.onSurfaceVariant),
                 textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 24.h),
-              FilledButton.icon(
-                onPressed: () => _showAdd(t),
-                icon: Icon(Icons.add_rounded, size: 18.sp),
-                label: Text(t.t('applications_screen.empty_add')),
-                style: FilledButton.styleFrom(
-                  minimumSize: Size(0, 44.h),
-                ),
               ),
             ],
           ],

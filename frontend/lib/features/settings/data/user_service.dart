@@ -3,7 +3,10 @@ import 'package:frontend/core/network/api_client.dart';
 import 'package:http_parser/http_parser.dart';
 
 class UserService {
-  final Dio _dio = ApiClient().dio;
+  final Dio _dio;
+
+  UserService() : _dio = ApiClient().dio;
+  UserService.withDio(this._dio);
 
   Future<Map<String, dynamic>> getMe() async {
     final response = await _dio.get('/users/me');

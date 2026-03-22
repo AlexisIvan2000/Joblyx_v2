@@ -37,9 +37,26 @@ class ApplicationService:
     ) -> list[Application]:
         return await self.repo.get_all_by_user(user_id, status_filter)
 
-    async def update(self, app_id: str, user_id: str, data: dict) -> Application:
+    async def update(
+        self,
+        app_id: str,
+        user_id: str,
+        data: dict,
+        cv_bytes: bytes | None = None,
+        cv_filename: str | None = None,
+    ) -> Application:
         # Retirer les champs None
         data = {k: v for k, v in data.items() if v is not None}
+
+        # Upload du nouveau CV si fourni
+        if cv_bytes and cv_filename:
+            # Supprimer l'ancien CV s'il existe
+            existing = await self.repo.get_by_id(app_id, user_id)
+            if existing and existing.cv_file_key:
+                await self.r2.delete_cv(existing.cv_file_key)
+            file_key = await self.r2.upload_cv(user_id, cv_bytes, cv_filename)
+            data["cv_file_key"] = file_key
+
         if not data:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

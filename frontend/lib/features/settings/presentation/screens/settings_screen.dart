@@ -1,181 +1,226 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
-import 'package:frontend/core/widgets/app_snackbar.dart';
-import 'package:frontend/features/authentication/data/auth_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
-import 'package:frontend/features/settings/presentation/widgets/change_password_dialog.dart';
-import 'package:frontend/features/settings/presentation/widgets/change_email_dialog.dart';
-import 'package:frontend/features/settings/presentation/widgets/edit_profile_dialog.dart';
+import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
+
+const _termsUrl = 'https://joblyx.com/conditions-utilisation';
+const _privacyUrl = 'https://joblyx.com/politiques-confidentialit%C3%A9';
+const _linkedinUrl = 'https://www.linkedin.com/company/joblyx/';
+const _supportEmail = 'support@joblyx.com';
+const _appVersion = '0.1.0';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
-    final userAsync = ref.watch(userProvider);
+    final prefs = ref.watch(preferencesProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.t('settings.title')),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20.sp),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: userAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline_rounded, size: 48.sp, color: cs.error),
-              SizedBox(height: 12.h),
-              Text(t.t('settings.load_error')),
-              SizedBox(height: 12.h),
-              FilledButton(
-                onPressed: () => ref.read(userProvider.notifier).refresh(),
-                child: Text(t.t('settings.retry')),
-              ),
-            ],
+      appBar: AppBar(title: Text(t.t('settings.title'))),
+      body: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
+        children: [
+          // ── Général ──────────────────────────────────────────
+          _SectionTitle(label: t.t('settings.section_general')),
+          SizedBox(height: 6.h),
+
+          // Langue
+          _MenuItem(
+            icon: Icons.language_rounded,
+            iconColor: const Color(0xFF2563EB),
+            title: t.t('settings.language'),
+            subtitle: _localeName(prefs.localeCode, t),
+            cs: cs,
+            onTap: () => _showLanguagePicker(context, ref, t, cs, prefs.localeCode),
           ),
-        ),
-        data: (user) => _buildContent(context, ref, theme, cs, t, user),
+
+          // Thème
+          _MenuItem(
+            icon: Icons.palette_outlined,
+            iconColor: const Color(0xFF7C3AED),
+            title: t.t('settings.theme'),
+            subtitle: _themeName(prefs.themeMode, t),
+            cs: cs,
+            onTap: () => _showThemePicker(context, ref, t, cs, prefs.themeMode),
+          ),
+
+          SizedBox(height: 20.h),
+
+          // ── Légal ────────────────────────────────────────────
+          _SectionTitle(label: t.t('settings.section_legal')),
+          SizedBox(height: 6.h),
+
+          _MenuItem(
+            icon: Icons.description_outlined,
+            iconColor: const Color(0xFF059669),
+            title: t.t('settings.terms'),
+            subtitle: 'joblyx.com',
+            cs: cs,
+            onTap: () => launchUrl(Uri.parse(_termsUrl), mode: LaunchMode.externalApplication),
+          ),
+
+          _MenuItem(
+            icon: Icons.shield_outlined,
+            iconColor: const Color(0xFF0891B2),
+            title: t.t('settings.privacy'),
+            subtitle: 'joblyx.com',
+            cs: cs,
+            onTap: () => launchUrl(Uri.parse(_privacyUrl), mode: LaunchMode.externalApplication),
+          ),
+
+          SizedBox(height: 20.h),
+
+          // ── Nous contacter ─────────────────────────────────────
+          _SectionTitle(label: t.t('settings.section_contact')),
+          SizedBox(height: 6.h),
+
+          _MenuItem(
+            icon: Icons.email_outlined,
+            iconColor: const Color(0xFFD97706),
+            title: t.t('settings.contact_email'),
+            subtitle: _supportEmail,
+            cs: cs,
+            onTap: () => launchUrl(
+              Uri(scheme: 'mailto', path: _supportEmail,
+                  queryParameters: {'subject': 'Bug/Suggestion'}),
+            ),
+          ),
+
+          _MenuItem(
+            icon: Icons.business_rounded,
+            iconColor: const Color(0xFF0A66C2),
+            title: 'LinkedIn',
+            subtitle: 'Joblyx',
+            cs: cs,
+            onTap: () => launchUrl(Uri.parse(_linkedinUrl), mode: LaunchMode.externalApplication),
+          ),
+
+          SizedBox(height: 20.h),
+
+          // ── Supprimer le compte ──────────────────────────────
+          _DeleteAccountButton(cs: cs, t: t),
+
+          SizedBox(height: 24.h),
+
+          // Version
+          Center(
+            child: Text(
+              '${t.t('settings.app_version')} $_appVersion',
+              style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildContent(
-    BuildContext context,
-    WidgetRef ref,
-    ThemeData theme,
-    ColorScheme cs,
-    AppLocalizations t,
-    Map<String, dynamic> user,
-  ) {
-    final firstName = user['first_name'] as String? ?? '';
-    final lastName = user['last_name'] as String? ?? '';
-    final email = user['email'] as String? ?? '';
-    final avatarUrl = user['avatar_url'] as String?;
-    final pendingEmail = user['pending_email'] as String?;
+  // ── Helpers pour les labels ─────────────────────────────────
 
-    return ListView(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      children: [
-        // Avatar + nom
-        Center(
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 44.r,
-                backgroundImage: avatarUrl != null ? CachedNetworkImageProvider(avatarUrl) : null,
-                child: avatarUrl == null
-                    ? Text(
-                        '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}',
-                        style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold),
-                      )
-                    : null,
-              ),
-              SizedBox(height: 12.h),
-              Text(
-                '$firstName $lastName',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 2.h),
-              Text(email, style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-              if (pendingEmail != null) ...[
-                SizedBox(height: 4.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    '${t.t('settings.pending_email')}: $pendingEmail',
-                    style: TextStyle(fontSize: 11.sp, color: Colors.amber[800]),
-                  ),
-                ),
-              ],
-            ],
-          ),
+  String _localeName(String? code, AppLocalizations t) => switch (code) {
+        'fr' => t.t('settings.language_fr'),
+        'en' => t.t('settings.language_en'),
+        _ => t.t('settings.language_system'),
+      };
+
+  String _themeName(ThemeMode mode, AppLocalizations t) => switch (mode) {
+        ThemeMode.light => t.t('settings.theme_light'),
+        ThemeMode.dark => t.t('settings.theme_dark'),
+        _ => t.t('settings.theme_system'),
+      };
+
+  // ── Pickers ─────────────────────────────────────────────────
+
+  void _showLanguagePicker(BuildContext context, WidgetRef ref, AppLocalizations t, ColorScheme cs, String? current) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cs.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: 8.h),
+            Container(width: 40.w, height: 4.h,
+                decoration: BoxDecoration(color: cs.outlineVariant, borderRadius: BorderRadius.circular(2.r))),
+            SizedBox(height: 16.h),
+            Text(t.t('settings.language'), style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+            SizedBox(height: 12.h),
+            _RadioOption(
+              label: t.t('settings.language_system'),
+              selected: current == null,
+              onTap: () { ref.read(preferencesProvider.notifier).setLocale(null); Navigator.pop(ctx); },
+              cs: cs,
+            ),
+            _RadioOption(
+              label: t.t('settings.language_fr'),
+              selected: current == 'fr',
+              onTap: () { ref.read(preferencesProvider.notifier).setLocale('fr'); Navigator.pop(ctx); },
+              cs: cs,
+            ),
+            _RadioOption(
+              label: t.t('settings.language_en'),
+              selected: current == 'en',
+              onTap: () { ref.read(preferencesProvider.notifier).setLocale('en'); Navigator.pop(ctx); },
+              cs: cs,
+            ),
+            SizedBox(height: 12.h),
+          ],
         ),
-        SizedBox(height: 24.h),
-        // Section profil
-        _SectionTitle(label: t.t('settings.section_profile')),
-        _SettingsTile(
-          icon: Icons.person_outline_rounded,
-          title: t.t('settings.edit_profile'),
-          subtitle: t.t('settings.edit_profile_sub'),
-          onTap: () async {
-            final changed = await showDialog<bool>(
-              context: context,
-              builder: (_) => EditProfileDialog(
-                firstName: firstName,
-                lastName: lastName,
-              ),
-            );
-            if (changed == true) ref.read(userProvider.notifier).refresh();
-          },
+      ),
+    );
+  }
+
+  void _showThemePicker(BuildContext context, WidgetRef ref, AppLocalizations t, ColorScheme cs, ThemeMode current) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cs.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: 8.h),
+            Container(width: 40.w, height: 4.h,
+                decoration: BoxDecoration(color: cs.outlineVariant, borderRadius: BorderRadius.circular(2.r))),
+            SizedBox(height: 16.h),
+            Text(t.t('settings.theme'), style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+            SizedBox(height: 12.h),
+            _RadioOption(
+              label: t.t('settings.theme_system'),
+              icon: Icons.phone_android_rounded,
+              selected: current == ThemeMode.system,
+              onTap: () { ref.read(preferencesProvider.notifier).setThemeMode(ThemeMode.system); Navigator.pop(ctx); },
+              cs: cs,
+            ),
+            _RadioOption(
+              label: t.t('settings.theme_light'),
+              icon: Icons.light_mode_rounded,
+              selected: current == ThemeMode.light,
+              onTap: () { ref.read(preferencesProvider.notifier).setThemeMode(ThemeMode.light); Navigator.pop(ctx); },
+              cs: cs,
+            ),
+            _RadioOption(
+              label: t.t('settings.theme_dark'),
+              icon: Icons.dark_mode_rounded,
+              selected: current == ThemeMode.dark,
+              onTap: () { ref.read(preferencesProvider.notifier).setThemeMode(ThemeMode.dark); Navigator.pop(ctx); },
+              cs: cs,
+            ),
+            SizedBox(height: 12.h),
+          ],
         ),
-        // Section sécurité
-        SizedBox(height: 16.h),
-        _SectionTitle(label: t.t('settings.section_security')),
-        _SettingsTile(
-          icon: Icons.lock_outline_rounded,
-          title: t.t('settings.change_password'),
-          subtitle: t.t('settings.change_password_sub'),
-          onTap: () async {
-            final changed = await showDialog<bool>(
-              context: context,
-              builder: (_) => const ChangePasswordDialog(),
-            );
-            if (changed == true && context.mounted) {
-              AppSnackbar.success(context, t.t('settings.password_changed'));
-            }
-          },
-        ),
-        _SettingsTile(
-          icon: Icons.email_outlined,
-          title: t.t('settings.change_email'),
-          subtitle: email,
-          onTap: () async {
-            final changed = await showDialog<bool>(
-              context: context,
-              builder: (_) => ChangeEmailDialog(currentEmail: email),
-            );
-            if (changed == true) {
-              ref.read(userProvider.notifier).refresh();
-              if (context.mounted) {
-                AppSnackbar.success(context, t.t('settings.email_changed'));
-              }
-            }
-          },
-        ),
-        // Section compte
-        SizedBox(height: 16.h),
-        _SectionTitle(label: t.t('settings.section_account')),
-        _SettingsTile(
-          icon: Icons.logout_rounded,
-          title: t.t('settings.logout'),
-          subtitle: t.t('settings.logout_sub'),
-          isDestructive: true,
-          onTap: () async {
-            await AuthService().logout();
-            if (!context.mounted) return;
-            context.go('/first-page');
-          },
-        ),
-      ],
+      ),
     );
   }
 }
+
+// ─── Widgets privés ──────────────────────────────────────────
 
 class _SectionTitle extends StatelessWidget {
   final String label;
@@ -184,49 +229,121 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(left: 4.w, bottom: 6.h),
-      child: Text(
-        label.toUpperCase(),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.2,
+      padding: EdgeInsets.only(left: 4.w, bottom: 2.h),
+      child: Text(label.toUpperCase(),
+          style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 1.2)),
+    );
+  }
+}
+
+class _MenuItem extends StatelessWidget {
+  final IconData icon;
+  final Color? iconColor;
+  final String title, subtitle;
+  final ColorScheme cs;
+  final VoidCallback onTap;
+
+  const _MenuItem({required this.icon, this.iconColor, required this.title, required this.subtitle, required this.cs, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = iconColor ?? cs.primary;
+    return Padding(
+      padding: EdgeInsets.only(bottom: 4.h),
+      child: Material(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(14.r),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14.r),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            child: Row(
+              children: [
+                Container(
+                  width: 40.w, height: 40.w,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Icon(icon, size: 20.sp, color: color),
+                ),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.onSurface)),
+                      SizedBox(height: 2.h),
+                      Text(subtitle, style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
+                          overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, size: 20.sp, color: cs.onSurfaceVariant),
+              ],
             ),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
+class _RadioOption extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final bool selected;
   final VoidCallback onTap;
-  final bool isDestructive;
+  final ColorScheme cs;
 
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.isDestructive = false,
-  });
+  const _RadioOption({required this.label, this.icon, required this.selected, required this.onTap, required this.cs});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final color = isDestructive ? cs.error : cs.onSurface;
+    return ListTile(
+      leading: icon != null ? Icon(icon, color: selected ? cs.primary : cs.onSurfaceVariant, size: 22.sp) : null,
+      title: Text(label, style: TextStyle(fontSize: 14.sp, fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          color: selected ? cs.primary : cs.onSurface)),
+      trailing: Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off,
+          color: selected ? cs.primary : cs.onSurfaceVariant, size: 22.sp),
+      onTap: onTap,
+    );
+  }
+}
 
-    return Card(
-      margin: EdgeInsets.only(bottom: 6.h),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-      child: ListTile(
-        leading: Icon(icon, color: color, size: 22.sp),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: color, fontSize: 14.sp)),
-        subtitle: Text(subtitle, style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant)),
-        trailing: Icon(Icons.chevron_right_rounded, size: 20.sp, color: cs.onSurfaceVariant),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-        onTap: onTap,
+class _DeleteAccountButton extends StatelessWidget {
+  final ColorScheme cs;
+  final AppLocalizations t;
+  const _DeleteAccountButton({required this.cs, required this.t});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(30.r),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30.r),
+        onTap: () {
+          // TODO: implémenter la suppression de compte
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30.r),
+            border: Border.all(color: cs.error.withValues(alpha: 0.5)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.delete_forever_rounded, size: 20.sp, color: cs.error),
+              SizedBox(width: 8.w),
+              Text(t.t('settings.delete_account'),
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.error)),
+            ],
+          ),
+        ),
       ),
     );
   }

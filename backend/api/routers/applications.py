@@ -83,12 +83,35 @@ async def get_application(
 @router.put("/{app_id}", response_model=ApplicationResponse)
 async def update_application(
     app_id: str,
-    body: ApplicationUpdate,
+    data: str = Form(...),
+    cv: UploadFile | None = File(None),
     current_user: User = Depends(get_current_user),
     svc: ApplicationService = Depends(get_application_service),
 ):
-    app = await svc.update(app_id, str(current_user.id), body.model_dump())
-    return _to_response(app)
+    try:
+        body = ApplicationUpdate(**json.loads(data))
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    cv_bytes = None
+    cv_filename = None
+    if cv:
+        if not cv.content_type or "pdf" not in cv.content_type:
+            raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+        cv_bytes = await cv.read()
+        if len(cv_bytes) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large (max 5 MB)")
+        cv_filename = cv.filename or "cv.pdf"
+
+    app = await svc.update(
+        app_id, str(current_user.id), body.model_dump(),
+        cv_bytes=cv_bytes, cv_filename=cv_filename,
+    )
+    # Générer l'URL signée du CV si présent
+    cv_url = None
+    if app.cv_file_key:
+        cv_url = await svc.get_cv_url(app_id, str(current_user.id))
+    return _to_response(app, cv_url=cv_url)
 
 
 @router.delete("/{app_id}")

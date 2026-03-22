@@ -1,9 +1,11 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
+import 'package:frontend/features/applications/presentation/widgets/cv_picker.dart';
 import 'package:frontend/features/applications/presentation/widgets/status_selector.dart';
 
 class EditApplicationScreen extends ConsumerStatefulWidget {
@@ -22,6 +24,9 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
   final _descriptionController = TextEditingController();
   final _notesController = TextEditingController();
   String _status = 'saved';
+  DateTime _appliedAt = DateTime.now();
+  PlatformFile? _cvFile;
+  String? _existingCvKey;
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -42,6 +47,11 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
         _descriptionController.text = data['job_description'] as String? ?? '';
         _notesController.text = data['notes'] as String? ?? '';
         _status = data['status'] as String? ?? 'saved';
+        final appliedStr = data['applied_at'] as String?;
+        if (appliedStr != null) {
+          _appliedAt = DateTime.tryParse(appliedStr) ?? DateTime.now();
+        }
+        _existingCvKey = data['cv_file_key'] as String?;
         _isLoading = false;
       });
     } catch (_) {
@@ -59,6 +69,16 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
     super.dispose();
   }
 
+  Future<void> _pickCv() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (result != null && result.files.isNotEmpty) {
+      setState(() => _cvFile = result.files.first);
+    }
+  }
+
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
@@ -70,12 +90,18 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
         'company_name': _companyController.text.trim(),
         'job_title': _jobTitleController.text.trim(),
         'status': _status,
+        'applied_at': _appliedAt.toIso8601String(),
         'job_url': _jobUrlController.text.trim().isEmpty ? null : _jobUrlController.text.trim(),
         'job_description': _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
         'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       };
 
-      await ref.read(applicationsProvider.notifier).updateApplication(widget.applicationId, data);
+      await ref.read(applicationsProvider.notifier).updateApplication(
+        widget.applicationId,
+        data,
+        cvPath: _cvFile?.path,
+        cvFilename: _cvFile?.name,
+      );
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (_) {
@@ -140,6 +166,37 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
                   StatusSelector(current: _status, onChanged: (s) => setState(() => _status = s)),
                   SizedBox(height: 16.h),
 
+                  // Date de candidature
+                  _label(t.t('applications_screen.date_label'), cs),
+                  SizedBox(height: 6.h),
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _appliedAt,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) setState(() => _appliedAt = picked);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(children: [
+                        Icon(Icons.calendar_today_rounded, size: 18.sp, color: cs.onSurfaceVariant),
+                        SizedBox(width: 10.w),
+                        Text(
+                          '${_appliedAt.day.toString().padLeft(2, '0')}/${_appliedAt.month.toString().padLeft(2, '0')}/${_appliedAt.year}',
+                          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: cs.onSurface),
+                        ),
+                      ]),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+
                   // Job URL
                   _label(t.t('applications_screen.job_url_label'), cs),
                   SizedBox(height: 6.h),
@@ -169,6 +226,46 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
                     maxLines: 3,
                     decoration: _deco(t.t('applications_screen.notes_hint'), cs),
                   ),
+                  SizedBox(height: 16.h),
+
+                  // CV
+                  _label(t.t('applications_screen.cv_label'), cs),
+                  SizedBox(height: 6.h),
+                  if (_cvFile == null && _existingCvKey != null)
+                    // Affiche le CV existant avec option de remplacement
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: cs.primary.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.picture_as_pdf_rounded, size: 24.sp, color: cs.primary),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              t.t('applications_screen.cv_attached'),
+                              style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: cs.onSurface),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _pickCv,
+                            child: Text(
+                              t.t('applications_screen.cv_replace'),
+                              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    CvPicker(
+                      file: _cvFile,
+                      onPick: _pickCv,
+                      onRemove: () => setState(() => _cvFile = null),
+                    ),
                 ],
               ),
             ),

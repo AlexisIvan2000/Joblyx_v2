@@ -35,9 +35,14 @@ class ApplicationsNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
     await refresh();
   }
 
-  Future<void> updateApplication(String id, Map<String, dynamic> data) async {
+  Future<void> updateApplication(
+    String id,
+    Map<String, dynamic> data, {
+    String? cvPath,
+    String? cvFilename,
+  }) async {
     final svc = ref.read(applicationServiceProvider);
-    await svc.update(id, data);
+    await svc.update(id, data, cvPath: cvPath, cvFilename: cvFilename);
     await refresh();
   }
 

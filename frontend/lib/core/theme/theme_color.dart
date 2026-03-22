@@ -24,15 +24,10 @@ class ThemeColor {
     ),
     scaffoldBackgroundColor: const Color(0xFFF5F7F8),
     textTheme: GoogleFonts.plusJakartaSansTextTheme(),
-    appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFFF5F7F8),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFFF5F7F8),
       elevation: 0,
       scrolledUnderElevation: 0,
-      titleTextStyle: GoogleFonts.plusJakartaSans(
-        fontSize: 20,
-        fontWeight: FontWeight.w800,
-        color: const Color(0xFF0F172A),
-      ),
     ),
     cardTheme: CardThemeData(
       color: Colors.white,
@@ -91,15 +86,10 @@ class ThemeColor {
     ),
     scaffoldBackgroundColor: const Color(0xFF0F172A),
     textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
-    appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFF0F172A),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF0F172A),
       elevation: 0,
       scrolledUnderElevation: 0,
-      titleTextStyle: GoogleFonts.plusJakartaSans(
-        fontSize: 20,
-        fontWeight: FontWeight.w800,
-        color: Colors.white,
-      ),
     ),
     cardTheme: CardThemeData(
       color: const Color(0xFF1E293B),

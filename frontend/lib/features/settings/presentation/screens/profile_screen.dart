@@ -6,15 +6,16 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/shimmer_loading.dart';
 import 'package:frontend/core/widgets/staggered_list.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
-import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
-import 'package:frontend/features/settings/presentation/widgets/edit_profile_dialog.dart';
-import 'package:frontend/features/settings/presentation/widgets/change_password_dialog.dart';
-import 'package:frontend/features/settings/presentation/widgets/change_email_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 import 'package:frontend/features/settings/data/user_service.dart';
+import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
+import 'package:frontend/features/settings/presentation/widgets/edit_profile_dialog.dart';
+import 'package:frontend/features/settings/presentation/widgets/change_password_dialog.dart';
+import 'package:frontend/features/settings/presentation/widgets/change_email_dialog.dart';
+import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -25,8 +26,18 @@ class ProfileScreen extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final userAsync = ref.watch(userProvider);
     final regenAsync = ref.watch(regenerationStatusProvider);
+    final appsAsync = ref.watch(applicationsProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(t.t('profile_screen.title')),
+        actions: [
+          IconButton(
+            onPressed: () => context.push('/settings'),
+            icon: Icon(Icons.settings_rounded, size: 22.sp),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: userAsync.when(
           loading: () => const ProfileSkeleton(),
@@ -45,7 +56,7 @@ class ProfileScreen extends ConsumerWidget {
               ],
             ),
           ),
-          data: (user) => _buildContent(context, ref, cs, t, user, regenAsync),
+          data: (user) => _buildContent(context, ref, cs, t, user, regenAsync, appsAsync),
         ),
       ),
     );
@@ -58,18 +69,21 @@ class ProfileScreen extends ConsumerWidget {
     AppLocalizations t,
     Map<String, dynamic> user,
     AsyncValue<Map<String, dynamic>> regenAsync,
+    AsyncValue<List<Map<String, dynamic>>> appsAsync,
   ) {
     final firstName = user['first_name'] as String? ?? '';
     final lastName = user['last_name'] as String? ?? '';
     final email = user['email'] as String? ?? '';
     final avatarUrl = user['avatar_url'] as String?;
     final regenRemaining = (regenAsync.whenOrNull(data: (s) => s['remaining']) ?? 0) as int;
+    final totalApps = appsAsync.whenOrNull(data: (apps) => apps.length) ?? 0;
     final initials = '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}';
 
     return RefreshIndicator(
       onRefresh: () async {
         ref.read(userProvider.notifier).refresh();
         ref.read(regenerationStatusProvider.notifier).refresh();
+        ref.read(applicationsProvider.notifier).refresh();
       },
       child: ListView(
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
@@ -77,16 +91,10 @@ class ProfileScreen extends ConsumerWidget {
         children: [
           StaggeredList(
             children: [
-              // Titre
-              Text(t.t('profile_screen.title'),
-                  style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w800, color: cs.onSurface)),
-              SizedBox(height: 24.h),
-
               // Avatar + nom + email
               Center(
                 child: Column(
                   children: [
-                    // Avatar avec bouton pour changer la photo
                     Stack(
                       children: [
                         CircleAvatar(
@@ -98,18 +106,14 @@ class ProfileScreen extends ConsumerWidget {
                                   style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w800, color: cs.primary))
                               : null,
                         ),
-                        // Bouton caméra en bas à droite
                         Positioned(
-                          bottom: 0,
-                          right: 0,
+                          bottom: 0, right: 0,
                           child: GestureDetector(
                             onTap: () => _showPhotoPickerDialog(context, ref, cs, t),
                             child: Container(
-                              width: 32.r,
-                              height: 32.r,
+                              width: 32.r, height: 32.r,
                               decoration: BoxDecoration(
-                                color: cs.primary,
-                                shape: BoxShape.circle,
+                                color: cs.primary, shape: BoxShape.circle,
                                 border: Border.all(color: cs.surface, width: 2),
                               ),
                               child: Icon(Icons.camera_alt_rounded, size: 16.sp, color: Colors.white),
@@ -130,10 +134,12 @@ class ProfileScreen extends ConsumerWidget {
               ),
               SizedBox(height: 24.h),
 
-              // Régénérations restantes
+              // Stats : régénérations + candidatures
               Row(
                 children: [
                   _StatBox(value: '$regenRemaining', label: t.t('profile_screen.regenerations_left'), cs: cs),
+                  SizedBox(width: 10.w),
+                  _StatBox(value: '$totalApps', label: t.t('profile_screen.total_applications'), cs: cs),
                 ],
               ),
               SizedBox(height: 24.h),
@@ -141,6 +147,7 @@ class ProfileScreen extends ConsumerWidget {
               // Informations personnelles
               _MenuItem(
                 icon: Icons.person_outline_rounded,
+                iconColor: const Color(0xFF2563EB),
                 title: t.t('profile_screen.personal_info'),
                 subtitle: t.t('profile_screen.personal_info_sub'),
                 cs: cs,
@@ -160,7 +167,8 @@ class ProfileScreen extends ConsumerWidget {
 
               // Profil carrière
               _MenuItem(
-                icon: Icons.work_outline_rounded,
+                icon: Icons.trending_up_rounded,
+                iconColor: const Color(0xFF059669),
                 title: t.t('profile_screen.career_profile'),
                 subtitle: t.t('profile_screen.career_profile_sub'),
                 cs: cs,
@@ -170,6 +178,7 @@ class ProfileScreen extends ConsumerWidget {
               // Mot de passe
               _MenuItem(
                 icon: Icons.lock_outline_rounded,
+                iconColor: const Color(0xFF7C3AED),
                 title: t.t('profile_screen.security'),
                 subtitle: t.t('profile_screen.security_sub'),
                 cs: cs,
@@ -186,7 +195,8 @@ class ProfileScreen extends ConsumerWidget {
 
               // Changer email
               _MenuItem(
-                icon: Icons.email_outlined,
+                icon: Icons.alternate_email_rounded,
+                iconColor: const Color(0xFFD97706),
                 title: t.t('settings.change_email'),
                 subtitle: email,
                 cs: cs,
@@ -204,7 +214,16 @@ class ProfileScreen extends ConsumerWidget {
               SizedBox(height: 16.h),
 
               // Déconnexion
-              _LogoutButton(cs: cs, t: t),
+              _OutlinedDestructiveButton(
+                icon: Icons.logout_rounded,
+                label: t.t('profile_screen.logout'),
+                cs: cs,
+                onTap: () async {
+                  await AuthService().logout();
+                  if (!context.mounted) return;
+                  context.go('/first-page');
+                },
+              ),
             ],
           ),
         ],
@@ -212,7 +231,6 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// Dialog pour choisir entre prendre ou choisir une photo.
   void _showPhotoPickerDialog(BuildContext context, WidgetRef ref, ColorScheme cs, AppLocalizations t) {
     showDialog(
       context: context,
@@ -230,10 +248,7 @@ class ProfileScreen extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _pickAndUpload(context, ref, t, ImageSource.camera);
-                  },
+                  onPressed: () { Navigator.pop(ctx); _pickAndUpload(context, ref, t, ImageSource.camera); },
                   icon: Icon(Icons.camera_rounded, size: 20.sp),
                   label: Text(t.t('profile_screen.take_photo')),
                   style: FilledButton.styleFrom(minimumSize: Size(0, 48.h)),
@@ -243,10 +258,7 @@ class ProfileScreen extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _pickAndUpload(context, ref, t, ImageSource.gallery);
-                  },
+                  onPressed: () { Navigator.pop(ctx); _pickAndUpload(context, ref, t, ImageSource.gallery); },
                   icon: Icon(Icons.photo_library_rounded, size: 20.sp),
                   label: Text(t.t('profile_screen.choose_photo')),
                   style: OutlinedButton.styleFrom(minimumSize: Size(0, 48.h)),
@@ -259,7 +271,6 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// Ouvre le picker (caméra ou galerie), upload sur le serveur, met à jour le state.
   Future<void> _pickAndUpload(BuildContext context, WidgetRef ref, AppLocalizations t, ImageSource source) async {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: source, maxWidth: 800, maxHeight: 800, imageQuality: 85);
@@ -268,7 +279,6 @@ class ProfileScreen extends ConsumerWidget {
     try {
       final result = await UserService().uploadAvatar(image.path);
       if (!context.mounted) return;
-      // Update optimiste avec l'URL signée retournée par le serveur
       final avatarUrl = result['avatar_url'] as String?;
       if (avatarUrl != null) {
         ref.read(userProvider.notifier).updateAvatar(avatarUrl);
@@ -314,12 +324,14 @@ class _StatBox extends StatelessWidget {
 
 class _MenuItem extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String title, subtitle;
   final ColorScheme cs;
   final VoidCallback onTap;
 
   const _MenuItem({
     required this.icon,
+    required this.iconColor,
     required this.title,
     required this.subtitle,
     required this.cs,
@@ -343,10 +355,10 @@ class _MenuItem extends StatelessWidget {
                 Container(
                   width: 40.w, height: 40.w,
                   decoration: BoxDecoration(
-                    color: cs.primary.withValues(alpha: 0.08),
+                    color: iconColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  child: Icon(icon, size: 20.sp, color: cs.primary),
+                  child: Icon(icon, size: 20.sp, color: iconColor),
                 ),
                 SizedBox(width: 14.w),
                 Expanded(
@@ -370,32 +382,34 @@ class _MenuItem extends StatelessWidget {
   }
 }
 
-class _LogoutButton extends StatelessWidget {
+/// Bouton destructif avec contour rouge (moins agressif qu'un fond rouge).
+class _OutlinedDestructiveButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
   final ColorScheme cs;
-  final AppLocalizations t;
-  const _LogoutButton({required this.cs, required this.t});
+  final VoidCallback onTap;
+  const _OutlinedDestructiveButton({required this.icon, required this.label, required this.cs, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: cs.error,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(30.r),
       child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
-        onTap: () async {
-          await AuthService().logout();
-          if (!context.mounted) return;
-          context.go('/first-page');
-        },
-        child: Padding(
+        onTap: onTap,
+        child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30.r),
+            border: Border.all(color: cs.error.withValues(alpha: 0.5)),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.logout_rounded, size: 20.sp, color: Colors.white),
+              Icon(icon, size: 20.sp, color: cs.error),
               SizedBox(width: 8.w),
-              Text(t.t('profile_screen.logout'),
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: Colors.white)),
+              Text(label, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.error)),
             ],
           ),
         ),

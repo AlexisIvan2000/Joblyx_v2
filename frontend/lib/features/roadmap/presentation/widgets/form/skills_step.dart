@@ -13,6 +13,7 @@ class SkillsStep extends StatelessWidget {
   final List<SkillChipData> selectedSkills;
   final List<String> allSkillNames;
   final bool isUploadingCv;
+  final String streamingText;
   final TextEditingController searchController;
   final FocusNode searchFocusNode;
   final VoidCallback onUploadCv;
@@ -26,6 +27,7 @@ class SkillsStep extends StatelessWidget {
     required this.selectedSkills,
     required this.allSkillNames,
     required this.isUploadingCv,
+    required this.streamingText,
     required this.searchController,
     required this.searchFocusNode,
     required this.onUploadCv,
@@ -52,11 +54,36 @@ class SkillsStep extends StatelessWidget {
           // Bouton d'upload du CV pour extraction automatique des compétences
           CvUploadButton(isUploading: isUploadingCv, onUpload: onUploadCv),
           SizedBox(height: 4.h),
-          Text(
-            t.t('onboarding.upload_cv_sub'),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-            textAlign: TextAlign.center,
-          ),
+          if (streamingText.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Container(
+              width: double.infinity,
+              constraints: BoxConstraints(maxHeight: 120.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
+              ),
+              child: SingleChildScrollView(
+                reverse: true,
+                child: Text(
+                  streamingText,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontFamily: 'monospace',
+                    color: cs.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+          ] else
+            Text(
+              t.t('onboarding.upload_cv_sub'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
           SizedBox(height: 20.h),
 
           // Séparateur "ou ajouter manuellement"

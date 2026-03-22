@@ -154,18 +154,56 @@ class RoadmapService {
     return response.data as Map<String, dynamic>;
   }
 
-  /// Extracts skills from a CV (PDF)
-  Future<List<Map<String, dynamic>>> extractSkills(String filePath) async {
+  /// Extrait les skills d'un CV via SSE streaming.
+  /// Yield des events : {event: "status"|"chunk"|"skills"|"complete"|"error", data: {...}}
+  Stream<Map<String, dynamic>> extractSkillsStream(String filePath) async* {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
         filePath,
         contentType: MediaType('application', 'pdf'),
       ),
     });
-    final response =
-        await _dio.post('/roadmap/extract-skills', data: formData);
-    final skills = response.data['skills'] as List;
-    return skills.cast<Map<String, dynamic>>();
+    final response = await _dio.post(
+      '/roadmap/extract-skills',
+      data: formData,
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+      ),
+    );
+
+    final stream = response.data.stream as Stream<List<int>>;
+    String buffer = '';
+
+    await for (final chunk in stream) {
+      buffer += utf8.decode(chunk);
+
+      while (buffer.contains('\n\n')) {
+        final eventEnd = buffer.indexOf('\n\n');
+        final rawEvent = buffer.substring(0, eventEnd);
+        buffer = buffer.substring(eventEnd + 2);
+
+        String? eventType;
+        String? eventData;
+
+        for (final line in rawEvent.split('\n')) {
+          if (line.startsWith('event: ')) {
+            eventType = line.substring(7);
+          } else if (line.startsWith('data: ')) {
+            eventData = line.substring(6);
+          }
+        }
+
+        if (eventType != null && eventData != null) {
+          try {
+            final parsed = jsonDecode(eventData) as Map<String, dynamic>;
+            yield {'event': eventType, 'data': parsed};
+          } catch (_) {
+            yield {'event': eventType, 'data': {'raw': eventData}};
+          }
+        }
+      }
+    }
   }
 
   Future<List<dynamic>> getHistory() async {

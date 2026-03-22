@@ -68,6 +68,8 @@
         "date_label": "Date de candidature",
         "cv_label": "CV (optionnel)",
         "cv_pick": "Joindre un CV (PDF)",
+        "cv_attached": "CV joint",
+        "cv_replace": "Remplacer",
         "cv_too_large": "Le fichier doit faire moins de 5 Mo",
         "search_hint": "Rechercher une entreprise ou un poste...",
         "time_all": "Tout",
@@ -99,12 +101,15 @@
         "update_error": "Impossible de mettre à jour",
         "save_button": "Sauvegarder",
         "edit_title": "Modifier la candidature",
-        "prepare_interview": "Préparer l'entretien"
+        "prepare_interview": "Préparer l'entretien",
+        "show_more": "Voir plus",
+        "show_less": "Voir moins"
     },
 
     "profile_screen": {
         "title": "Profil",
         "regenerations_left": "Régénérations restantes",
+        "total_applications": "Candidatures totales",
         "skills_acquired": "Skills acquis",
         "personal_info": "Informations personnelles",
         "personal_info_sub": "Nom, prénom",
@@ -427,7 +432,25 @@
         "logout_sub": "Quitter votre compte",
         "cancel": "Annuler",
         "save": "Enregistrer",
-        "required": "Ce champ est requis"
+        "required": "Ce champ est requis",
+        "section_general": "Général",
+        "language": "Langue",
+        "language_sub": "Choisir la langue de l'application",
+        "language_fr": "Français",
+        "language_en": "English",
+        "language_system": "Système",
+        "theme": "Thème",
+        "theme_sub": "Apparence de l'application",
+        "theme_light": "Clair",
+        "theme_dark": "Sombre",
+        "theme_system": "Système",
+        "section_legal": "Légal",
+        "terms": "Conditions d'utilisation",
+        "privacy": "Politique de confidentialité",
+        "section_contact": "Nous contacter",
+        "contact_email": "Email du support",
+        "delete_account": "Supprimer mon compte",
+        "app_version": "Version"
     },
 
     "settings_error": {
