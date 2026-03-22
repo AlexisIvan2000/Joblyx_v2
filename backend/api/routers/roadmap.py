@@ -1,4 +1,6 @@
+import asyncio
 import copy
+import json
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
@@ -268,10 +270,11 @@ async def extract_skills(
     async def _stream():
         yield 'event: status\ndata: {"status":"extracting"}\n\n'
         async for event_type, data in extract_skills_from_cv_stream(content):
-            if event_type == "chunk":
-                yield f'event: chunk\ndata: {json.dumps({"text": data})}\n\n'
-            elif event_type == "done":
-                yield f'event: skills\ndata: {json.dumps({"skills": data})}\n\n'
+            if event_type == "done":
+                # Émettre chaque skill avec un délai pour l'effet visuel
+                for skill in data:
+                    yield f'event: skill\ndata: {json.dumps(skill)}\n\n'
+                    await asyncio.sleep(0.15)
                 yield 'event: complete\ndata: {"status":"done"}\n\n'
             elif event_type == "error":
                 yield f'event: error\ndata: {json.dumps({"error": data})}\n\n'

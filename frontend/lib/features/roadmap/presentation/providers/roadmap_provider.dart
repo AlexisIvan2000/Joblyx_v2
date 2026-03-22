@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/roadmap/data/roadmap_service.dart';
 
@@ -9,12 +10,16 @@ class RoadmapState {
   final String generationStatus; // idle | generating | ready | error
   final bool hasRoadmap;
   final Map<String, dynamic>? roadmap;
+  final String streamingText;
+  final List<Map<String, dynamic>> streamingPhases;
 
   const RoadmapState({
     this.isLoading = true,
     this.generationStatus = 'idle',
     this.hasRoadmap = false,
     this.roadmap,
+    this.streamingText = '',
+    this.streamingPhases = const [],
   });
 
   RoadmapState copyWith({
@@ -22,6 +27,8 @@ class RoadmapState {
     String? generationStatus,
     bool? hasRoadmap,
     Map<String, dynamic>? roadmap,
+    String? streamingText,
+    List<Map<String, dynamic>>? streamingPhases,
     bool clearRoadmap = false,
   }) {
     return RoadmapState(
@@ -29,6 +36,8 @@ class RoadmapState {
       generationStatus: generationStatus ?? this.generationStatus,
       hasRoadmap: hasRoadmap ?? this.hasRoadmap,
       roadmap: clearRoadmap ? null : (roadmap ?? this.roadmap),
+      streamingText: streamingText ?? this.streamingText,
+      streamingPhases: streamingPhases ?? this.streamingPhases,
     );
   }
 }
@@ -44,6 +53,71 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
   }
 
   RoadmapService get _svc => ref.read(roadmapServiceProvider);
+
+  // ── Parsing progressif du JSON GPT ──────────────────────────
+  int _parsedPhaseCount = 0;
+
+  /// Tente d'extraire les phases complètes du buffer JSON accumulé.
+  /// Utilise le comptage d'accolades pour détecter les objets complets.
+  void _tryParsePhases(String buffer) {
+    // Chercher le début du tableau "phases"
+    final phasesStart = buffer.indexOf('"phases"');
+    if (phasesStart == -1) return;
+
+    // Trouver le [ d'ouverture du tableau
+    final bracketStart = buffer.indexOf('[', phasesStart);
+    if (bracketStart == -1) return;
+
+    // Parcourir après le [ pour extraire les objets phase complets
+    final content = buffer.substring(bracketStart + 1);
+    final phases = <Map<String, dynamic>>[];
+    int depth = 0;
+    int objStart = -1;
+    bool inString = false;
+    bool escaped = false;
+
+    for (int i = 0; i < content.length; i++) {
+      final c = content[i];
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (c == '\\') {
+        escaped = true;
+        continue;
+      }
+      if (c == '"') {
+        inString = !inString;
+        continue;
+      }
+      if (inString) continue;
+
+      if (c == '{') {
+        if (depth == 0) objStart = i;
+        depth++;
+      } else if (c == '}') {
+        depth--;
+        if (depth == 0 && objStart != -1) {
+          // Objet phase complet
+          final objStr = content.substring(objStart, i + 1);
+          try {
+            final parsed = jsonDecode(objStr) as Map<String, dynamic>;
+            phases.add(parsed);
+          } catch (_) {
+            // JSON invalide — ignorer (sera rattrapé à la fin)
+          }
+          objStart = -1;
+        }
+      }
+    }
+
+    // Ne mettre à jour que si on a trouvé de nouvelles phases
+    if (phases.length > _parsedPhaseCount) {
+      _parsedPhaseCount = phases.length;
+      state = state.copyWith(streamingPhases: phases);
+    }
+  }
 
   Future<void> loadStatus() async {
     try {
@@ -76,6 +150,17 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
 
   /// Generate roadmap with AI via SSE streaming.
   /// Returns a Stream so the UI can react to events.
+  /// Traite les events SSE communs (chunk / complete / error).
+  void _handleStreamEvent(Map<String, dynamic> event) {
+    final eventType = event['event'] as String;
+    if (eventType == 'chunk') {
+      final text = (event['data'] as Map<String, dynamic>)['text'] as String? ?? '';
+      final newText = state.streamingText + text;
+      state = state.copyWith(streamingText: newText);
+      _tryParsePhases(newText);
+    }
+  }
+
   Stream<Map<String, dynamic>> generateWithAI({
     required String level,
     required int yearsExperience,
@@ -86,7 +171,11 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
     String? previousField,
     required List<Map<String, String>> skills,
   }) async* {
-    state = state.copyWith(generationStatus: 'generating', isLoading: false);
+    _parsedPhaseCount = 0;
+    state = state.copyWith(
+      generationStatus: 'generating', isLoading: false,
+      streamingText: '', streamingPhases: [],
+    );
 
     await for (final event in _svc.generateWithAI(
       level: level,
@@ -101,37 +190,56 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
       yield event;
 
       final eventType = event['event'] as String;
-      if (eventType == 'complete') {
+      if (eventType == 'chunk') {
+        _handleStreamEvent(event);
+      } else if (eventType == 'complete') {
         await loadRoadmap();
         state = state.copyWith(
           generationStatus: 'ready',
           hasRoadmap: true,
+          streamingText: '',
+          streamingPhases: [],
         );
-        // Refresh regeneration count
         ref.invalidate(regenerationStatusProvider);
       } else if (eventType == 'error') {
-        state = state.copyWith(generationStatus: 'error');
+        state = state.copyWith(
+          generationStatus: 'error',
+          streamingText: '',
+          streamingPhases: [],
+        );
       }
     }
   }
 
-  /// Regenerate roadmap using existing career data (no form).
+  /// Régénère la roadmap avec les données carrière existantes.
   Stream<Map<String, dynamic>> regenerate() async* {
-    state = state.copyWith(generationStatus: 'generating', isLoading: false);
+    _parsedPhaseCount = 0;
+    state = state.copyWith(
+      generationStatus: 'generating', isLoading: false,
+      streamingText: '', streamingPhases: [],
+    );
 
     await for (final event in _svc.regenerate()) {
       yield event;
 
       final eventType = event['event'] as String;
-      if (eventType == 'complete') {
+      if (eventType == 'chunk') {
+        _handleStreamEvent(event);
+      } else if (eventType == 'complete') {
         await loadRoadmap();
         state = state.copyWith(
           generationStatus: 'ready',
           hasRoadmap: true,
+          streamingText: '',
+          streamingPhases: [],
         );
         ref.invalidate(regenerationStatusProvider);
       } else if (eventType == 'error') {
-        state = state.copyWith(generationStatus: 'error');
+        state = state.copyWith(
+          generationStatus: 'error',
+          streamingText: '',
+          streamingPhases: [],
+        );
       }
     }
   }

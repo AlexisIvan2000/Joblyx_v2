@@ -26,7 +26,6 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isUploadingCv = false;
-  String _streamingText = '';
 
   // Champs carrière
   String _level = 'junior';
@@ -181,10 +180,12 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
 
   Future<void> _uploadCv() async {
     final t = AppLocalizations.of(context);
+    // Fermer le clavier et l'overlay autocomplete avant d'ouvrir le picker
+    _skillSearchFocusNode.unfocus();
     final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
     if (result == null || result.files.isEmpty || result.files.first.path == null) return;
 
-    setState(() { _isUploadingCv = true; _streamingText = ''; });
+    setState(() => _isUploadingCv = true);
     try {
       final svc = ref.read(roadmapServiceProvider);
       int added = 0;
@@ -194,22 +195,17 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
         final eventType = event['event'] as String;
         final data = event['data'] as Map<String, dynamic>;
 
-        if (eventType == 'chunk') {
-          setState(() => _streamingText += (data['text'] as String? ?? ''));
-        } else if (eventType == 'skills') {
-          final skills = (data['skills'] as List?) ?? [];
-          for (final s in skills) {
-            final skill = s as Map<String, dynamic>;
-            final name = skill['skill_name'] as String;
-            if (!_selectedSkills.any((c) => c.skillName == name)) {
+        if (eventType == 'skill') {
+          final name = data['skill_name'] as String;
+          if (!_selectedSkills.any((c) => c.skillName == name)) {
+            setState(() {
               _selectedSkills.add(SkillChipData(
-                skillName: name, category: skill['category'] as String,
-                proficiency: skill['proficiency'] as String? ?? 'intermediate',
+                skillName: name, category: data['category'] as String,
+                proficiency: data['proficiency'] as String? ?? 'intermediate',
               ));
-              added++;
-            }
+            });
+            added++;
           }
-          setState(() {});
         } else if (eventType == 'error') {
           if (mounted) AppSnackbar.error(context, t.t('onboarding.upload_cv_error'));
           break;
@@ -222,7 +218,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     } catch (_) {
       if (mounted) AppSnackbar.error(context, t.t('onboarding.upload_cv_error'));
     } finally {
-      if (mounted) setState(() { _isUploadingCv = false; _streamingText = ''; });
+      if (mounted) setState(() => _isUploadingCv = false);
     }
   }
 
@@ -391,31 +387,6 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     _SectionTitle(title: t.t('onboarding.step_skills_title')),
     SizedBox(height: 12.h),
     CvUploadButton(isUploading: _isUploadingCv, onUpload: _uploadCv),
-    if (_streamingText.isNotEmpty) ...[
-      SizedBox(height: 8.h),
-      Container(
-        width: double.infinity,
-        constraints: BoxConstraints(maxHeight: 120.h),
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
-        ),
-        child: SingleChildScrollView(
-          reverse: true,
-          child: Text(
-            _streamingText,
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontFamily: 'monospace',
-              color: cs.onSurfaceVariant,
-              height: 1.4,
-            ),
-          ),
-        ),
-      ),
-    ],
     SizedBox(height: 16.h),
     SkillSearchField(
       controller: _skillSearchController, focusNode: _skillSearchFocusNode,

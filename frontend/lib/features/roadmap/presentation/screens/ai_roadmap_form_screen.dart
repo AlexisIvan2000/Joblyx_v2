@@ -48,7 +48,6 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
   List<String> _allSkillNames = [];
   final List<SkillChipData> _selectedSkills = [];
   bool _isUploadingCv = false;
-  String _streamingText = '';
   final _skillSearchController = TextEditingController();
   final _skillSearchFocusNode = FocusNode();
 
@@ -183,6 +182,8 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
 
   Future<void> _uploadCv() async {
     final t = AppLocalizations.of(context);
+    // Fermer le clavier et l'overlay autocomplete avant d'ouvrir le picker
+    _skillSearchFocusNode.unfocus();
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'],
@@ -191,10 +192,7 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
     final file = result.files.first;
     if (file.path == null) return;
 
-    setState(() {
-      _isUploadingCv = true;
-      _streamingText = '';
-    });
+    setState(() => _isUploadingCv = true);
 
     try {
       final svc = ref.read(roadmapServiceProvider);
@@ -205,26 +203,19 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
         final eventType = event['event'] as String;
         final data = event['data'] as Map<String, dynamic>;
 
-        if (eventType == 'chunk') {
-          // Afficher le texte brut en streaming
-          setState(() => _streamingText += (data['text'] as String? ?? ''));
-        } else if (eventType == 'skills') {
-          // Ajouter les skills validées
-          final skills = (data['skills'] as List?) ?? [];
-          for (final s in skills) {
-            final skill = s as Map<String, dynamic>;
-            final name = skill['skill_name'] as String;
-            final alreadyExists = _selectedSkills.any((c) => c.skillName == name);
-            if (!alreadyExists) {
+        if (eventType == 'skill') {
+          // Ajouter chaque skill une par une
+          final name = data['skill_name'] as String;
+          if (!_selectedSkills.any((c) => c.skillName == name)) {
+            setState(() {
               _selectedSkills.add(SkillChipData(
                 skillName: name,
-                category: skill['category'] as String,
-                proficiency: skill['proficiency'] as String? ?? 'intermediate',
+                category: data['category'] as String,
+                proficiency: data['proficiency'] as String? ?? 'intermediate',
               ));
-              added++;
-            }
+            });
+            added++;
           }
-          setState(() {});
         } else if (eventType == 'error') {
           if (mounted) AppSnackbar.error(context, t.t('onboarding.upload_cv_error'));
           break;
@@ -238,16 +229,12 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
           t.t('onboarding.skills_extracted').replaceAll('{count}', '$added'),
         );
       }
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('extractSkillsStream error: $e\n$st');
       if (!mounted) return;
       AppSnackbar.error(context, t.t('onboarding.upload_cv_error'));
     } finally {
-      if (mounted) {
-        setState(() {
-          _isUploadingCv = false;
-          _streamingText = '';
-        });
-      }
+      if (mounted) setState(() => _isUploadingCv = false);
     }
   }
 
@@ -404,7 +391,6 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
                     selectedSkills: _selectedSkills,
                     allSkillNames: _allSkillNames,
                     isUploadingCv: _isUploadingCv,
-                    streamingText: _streamingText,
                     searchController: _skillSearchController,
                     searchFocusNode: _skillSearchFocusNode,
                     onUploadCv: _uploadCv,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
@@ -174,7 +173,7 @@ class RoadmapScreen extends ConsumerWidget {
 
   Widget _buildBody(BuildContext context, WidgetRef ref, ThemeData theme, ColorScheme cs, AppLocalizations t, RoadmapState state) {
     if (state.generationStatus == 'generating') {
-      return _buildGenerating(theme, cs, t);
+      return _buildGenerating(theme, cs, t, state);
     }
     if (state.generationStatus == 'error') {
       return _buildError(context, ref, theme, cs, t);
@@ -185,31 +184,98 @@ class RoadmapScreen extends ConsumerWidget {
     return _buildEmpty(context, ref, theme, cs, t);
   }
 
-  Widget _buildGenerating(ThemeData theme, ColorScheme cs, AppLocalizations t) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SvgPicture.asset('assets/images/processing.svg', width: 220.w, height: 220.h),
-            SizedBox(height: 24.h),
-            Text(t.t('dashboard.generating_title'),
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center),
-            SizedBox(height: 8.h),
-            Text(t.t('dashboard.generating_subtitle'),
-                style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                textAlign: TextAlign.center),
-            SizedBox(height: 24.h),
-            SizedBox(
-              width: 180.w,
-              child: LinearProgressIndicator(borderRadius: BorderRadius.circular(4.r)),
-            ),
-          ],
+  Widget _buildGenerating(ThemeData theme, ColorScheme cs, AppLocalizations t, RoadmapState state) {
+    final phases = state.streamingPhases;
+    final hasPhases = phases.isNotEmpty;
+
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      children: [
+        // En-tête
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+          child: Column(
+            children: [
+              Text(t.t('dashboard.generating_title'),
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center),
+              SizedBox(height: 6.h),
+              Text(t.t('dashboard.generating_subtitle'),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                  textAlign: TextAlign.center),
+              SizedBox(height: 12.h),
+              SizedBox(
+                width: 180.w,
+                child: LinearProgressIndicator(borderRadius: BorderRadius.circular(4.r)),
+              ),
+            ],
+          ),
         ),
-      ),
+        SizedBox(height: 8.h),
+
+        // Phases parsées progressivement (en lecture seule)
+        ...List.generate(phases.length, (i) {
+          return _StreamingPhaseCard(
+            key: ValueKey('streaming_phase_$i'),
+            index: i,
+            phase: phases[i],
+            isLast: false,
+          );
+        }),
+
+        // Shimmer placeholders pour les phases pas encore reçues
+        if (hasPhases)
+          ..._buildShimmerPlaceholders(cs, 2)
+        else
+          ..._buildShimmerPlaceholders(cs, 3),
+
+        SizedBox(height: 80.h),
+      ],
     );
+  }
+
+  List<Widget> _buildShimmerPlaceholders(ColorScheme cs, int count) {
+    return List.generate(count, (i) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 8.h),
+        child: ShimmerLoading(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Timeline shimmer
+              Column(
+                children: [
+                  Container(
+                    width: 24.w, height: 24.w,
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Container(
+                    width: 2.w, height: 80.h,
+                    color: cs.surfaceContainerHighest,
+                  ),
+                ],
+              ),
+              SizedBox(width: 12.w),
+              // Card shimmer
+              Expanded(
+                child: Container(
+                  height: 100.h,
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildError(BuildContext context, WidgetRef ref, ThemeData theme, ColorScheme cs, AppLocalizations t) {
@@ -321,6 +387,177 @@ class RoadmapScreen extends ConsumerWidget {
           }),
           SizedBox(height: 80.h),
         ],
+      ),
+    );
+  }
+}
+
+/// Carte de phase simplifiée (lecture seule) affichée pendant le streaming.
+/// Apparaît avec une animation fade-in + slide-up.
+class _StreamingPhaseCard extends StatefulWidget {
+  final int index;
+  final Map<String, dynamic> phase;
+  final bool isLast;
+
+  const _StreamingPhaseCard({
+    super.key,
+    required this.index,
+    required this.phase,
+    required this.isLast,
+  });
+
+  @override
+  State<_StreamingPhaseCard> createState() => _StreamingPhaseCardState();
+}
+
+class _StreamingPhaseCardState extends State<_StreamingPhaseCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final phase = widget.phase;
+    final title = phase['title'] as String? ?? 'Phase ${widget.index + 1}';
+    final objective = phase['objective'] as String? ?? '';
+    final durationWeeks = phase['duration_weeks'];
+    final actions = (phase['actions'] as List?) ?? [];
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: 8.h),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Timeline
+              Column(
+                children: [
+                  Container(
+                    width: 28.w,
+                    height: 28.w,
+                    decoration: BoxDecoration(
+                      color: cs.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${widget.index + 1}',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w800,
+                          color: cs.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!widget.isLast)
+                    Container(
+                      width: 2.w,
+                      height: 80.h,
+                      color: cs.primary.withValues(alpha: 0.3),
+                    ),
+                ],
+              ),
+              SizedBox(width: 12.w),
+              // Contenu
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ),
+                          if (durationWeeks != null)
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                              decoration: BoxDecoration(
+                                color: cs.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Text(
+                                '${durationWeeks}w',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.primary,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (objective.isNotEmpty) ...[
+                        SizedBox(height: 6.h),
+                        Text(
+                          objective,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: cs.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      if (actions.isNotEmpty) ...[
+                        SizedBox(height: 8.h),
+                        Text(
+                          '${actions.length} actions',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
