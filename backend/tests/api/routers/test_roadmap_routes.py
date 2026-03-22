@@ -157,3 +157,88 @@ class TestGetHistory:
         resp = test_client.get("/roadmap/history")
         assert resp.status_code == 200
         assert resp.json() == []
+
+
+class TestPostRegenerate:
+    def test_returns_sse_stream(self, test_client):
+        svc = test_client._mock_roadmap_svc
+        svc._get_career.return_value = MagicMock(generation_status="ready")
+        svc.check_regeneration_limit.return_value = {
+            "allowed": True, "used": 1, "remaining": 4,
+            "resets_at": "2026-04-01T00:00:00+00:00",
+        }
+
+        resp = test_client.post("/roadmap/regenerate")
+        assert resp.status_code == 200
+        assert resp.headers["content-type"].startswith("text/event-stream")
+
+    def test_returns_404_when_no_career(self, test_client):
+        svc = test_client._mock_roadmap_svc
+        svc._get_career.return_value = None
+
+        resp = test_client.post("/roadmap/regenerate")
+        assert resp.status_code == 404
+
+    def test_returns_429_when_limit_reached(self, test_client):
+        svc = test_client._mock_roadmap_svc
+        svc._get_career.return_value = MagicMock(generation_status="ready")
+        svc.check_regeneration_limit.return_value = {
+            "allowed": False, "used": 5, "remaining": 0,
+            "resets_at": "2026-04-01T00:00:00+00:00",
+        }
+
+        resp = test_client.post("/roadmap/regenerate")
+        assert resp.status_code == 429
+
+
+class TestPostArchive:
+    def test_archives_active_roadmap(self, test_client):
+        svc = test_client._mock_roadmap_svc
+        svc.repo.get_active_roadmap.return_value = _mock_roadmap()
+
+        resp = test_client.post("/roadmap/archive")
+        assert resp.status_code == 200
+        svc.repo.archive_active.assert_called_once()
+
+    def test_returns_404_when_no_active(self, test_client):
+        svc = test_client._mock_roadmap_svc
+        svc.repo.get_active_roadmap.return_value = None
+
+        resp = test_client.post("/roadmap/archive")
+        assert resp.status_code == 404
+
+
+class TestDeleteRoadmap:
+    def test_deletes_roadmap(self, test_client):
+        svc = test_client._mock_roadmap_svc
+        svc.repo.delete_roadmap = AsyncMock(return_value=True)
+
+        resp = test_client.delete("/roadmap/aaaa-bbbb")
+        assert resp.status_code == 200
+        assert resp.json()["message"] == "Roadmap deleted"
+
+    def test_returns_404_when_not_found(self, test_client):
+        svc = test_client._mock_roadmap_svc
+        svc.repo.delete_roadmap = AsyncMock(return_value=False)
+
+        resp = test_client.delete("/roadmap/nonexistent")
+        assert resp.status_code == 404
+
+
+class TestDeleteAllRoadmaps:
+    def test_deletes_all_archived(self, test_client):
+        svc = test_client._mock_roadmap_svc
+        svc.repo.delete_all_archived = AsyncMock(return_value=3)
+
+        resp = test_client.delete("/roadmap")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["count"] == 3
+
+    def test_returns_zero_when_none(self, test_client):
+        svc = test_client._mock_roadmap_svc
+        svc.repo.delete_all_archived = AsyncMock(return_value=0)
+
+        resp = test_client.delete("/roadmap")
+        assert resp.status_code == 200
+        assert resp.json()["count"] == 0

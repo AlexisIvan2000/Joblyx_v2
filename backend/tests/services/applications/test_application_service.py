@@ -118,6 +118,35 @@ class TestUpdate:
             await service.update(FAKE_APP_ID, FAKE_USER_ID, {"status": "offer"})
         assert exc.value.status_code == 404
 
+    @pytest.mark.asyncio
+    async def test_updates_with_new_cv(self, service, mock_repo, mock_r2):
+        mock_repo.get_by_id.return_value = _mock_app(cv_file_key=None)
+        await service.update(
+            FAKE_APP_ID, FAKE_USER_ID, {"status": "applied"},
+            cv_bytes=b"new-pdf", cv_filename="new_cv.pdf",
+        )
+        mock_r2.upload_cv.assert_called_once_with(FAKE_USER_ID, b"new-pdf", "new_cv.pdf")
+        # Le cv_file_key est ajouté aux données
+        call_data = mock_repo.update.call_args[0][2]
+        assert call_data["cv_file_key"] == "user/abc.pdf"
+
+    @pytest.mark.asyncio
+    async def test_replaces_existing_cv(self, service, mock_repo, mock_r2):
+        mock_repo.get_by_id.return_value = _mock_app(cv_file_key="old/cv.pdf")
+        await service.update(
+            FAKE_APP_ID, FAKE_USER_ID, {"status": "applied"},
+            cv_bytes=b"new-pdf", cv_filename="new_cv.pdf",
+        )
+        # L'ancien CV doit être supprimé
+        mock_r2.delete_cv.assert_called_once_with("old/cv.pdf")
+        mock_r2.upload_cv.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_update_without_cv_does_not_touch_r2(self, service, mock_repo, mock_r2):
+        await service.update(FAKE_APP_ID, FAKE_USER_ID, {"status": "offer"})
+        mock_r2.upload_cv.assert_not_called()
+        mock_r2.delete_cv.assert_not_called()
+
 
 class TestDelete:
     @pytest.mark.asyncio

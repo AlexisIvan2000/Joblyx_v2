@@ -206,6 +206,22 @@ class RoadmapService {
     }
   }
 
+  /// Archive la roadmap active sans en créer une nouvelle.
+  Future<void> archiveRoadmap() async {
+    await _dio.post('/roadmap/archive');
+  }
+
+  /// Supprime une roadmap et ses phases.
+  Future<void> deleteRoadmap(String roadmapId) async {
+    await _dio.delete('/roadmap/$roadmapId');
+  }
+
+  /// Supprime toutes les roadmaps archivées.
+  Future<int> deleteAllArchived() async {
+    final response = await _dio.delete('/roadmap');
+    return response.data['count'] as int? ?? 0;
+  }
+
   Future<List<dynamic>> getHistory() async {
     final response = await _dio.get('/roadmap/history');
     return response.data as List<dynamic>;

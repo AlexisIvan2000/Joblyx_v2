@@ -1,4 +1,4 @@
-"""Tests pour repositories/roadmap_repository.py."""
+# Tests pour repositories/roadmap_repository.py.
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -71,6 +71,54 @@ class TestArchiveActive:
         await repo.archive_active(FAKE_USER_ID)
         mock_session.execute.assert_called_once()
         mock_session.flush.assert_called_once()
+
+
+class TestDeleteRoadmap:
+    @pytest.mark.asyncio
+    async def test_deletes_existing_roadmap(self, repo, mock_session):
+        fake_roadmap = MagicMock()
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = fake_roadmap
+        mock_session.execute.return_value = result_mock
+
+        deleted = await repo.delete_roadmap("roadmap-id", FAKE_USER_ID)
+        assert deleted is True
+        mock_session.delete.assert_called_once_with(fake_roadmap)
+
+    @pytest.mark.asyncio
+    async def test_returns_false_when_not_found(self, repo, mock_session):
+        result_mock = MagicMock()
+        result_mock.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = result_mock
+
+        deleted = await repo.delete_roadmap("nonexistent", FAKE_USER_ID)
+        assert deleted is False
+        mock_session.delete.assert_not_called()
+
+
+class TestDeleteAllArchived:
+    @pytest.mark.asyncio
+    async def test_deletes_archived_roadmaps(self, repo, mock_session):
+        # Simuler 2 roadmaps archivées
+        result_mock = MagicMock()
+        result_mock.all.return_value = [("id-1",), ("id-2",)]
+        mock_session.execute.return_value = result_mock
+
+        count = await repo.delete_all_archived(FAKE_USER_ID)
+        assert count == 2
+        # 1 select + 2 deletes (phases + roadmaps)
+        assert mock_session.execute.call_count == 3
+
+    @pytest.mark.asyncio
+    async def test_returns_zero_when_no_archived(self, repo, mock_session):
+        result_mock = MagicMock()
+        result_mock.all.return_value = []
+        mock_session.execute.return_value = result_mock
+
+        count = await repo.delete_all_archived(FAKE_USER_ID)
+        assert count == 0
+        # Seulement le select, pas de delete
+        mock_session.execute.assert_called_once()
 
 
 class TestSetGenerationStatus:

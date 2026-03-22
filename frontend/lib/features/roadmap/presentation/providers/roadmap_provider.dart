@@ -244,6 +244,16 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
     }
   }
 
+  /// Archive la roadmap active sans en créer une nouvelle.
+  Future<void> archiveRoadmap() async {
+    await _svc.archiveRoadmap();
+    state = state.copyWith(
+      hasRoadmap: false,
+      generationStatus: 'idle',
+      clearRoadmap: true,
+    );
+  }
+
   // ─── Phase operations (use phase ID) ──────────────────────────
 
   Future<void> togglePhaseComplete(String phaseId) async {

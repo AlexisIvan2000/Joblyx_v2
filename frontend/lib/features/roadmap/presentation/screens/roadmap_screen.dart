@@ -24,12 +24,39 @@ class RoadmapScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(t.t('dashboard.title')),
         actions: [
-          // Bouton régénérer (appel direct API)
+          // Menu contextuel (régénérer, manuelle, archiver)
           if (state.hasRoadmap && state.generationStatus != 'generating')
-            IconButton(
-              onPressed: () => _regenerate(context, ref, t),
-              icon: Icon(Icons.refresh_rounded, size: 22.sp),
-              tooltip: t.t('dashboard.regenerate'),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert_rounded, size: 22.sp),
+              onSelected: (value) => _onMenuSelected(context, ref, t, value),
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'regenerate',
+                  child: Row(children: [
+                    Icon(Icons.auto_awesome_rounded, size: 18.sp, color: cs.primary),
+                    SizedBox(width: 10.w),
+                    Text(t.t('dashboard.menu_regenerate')),
+                  ]),
+                ),
+                PopupMenuItem(
+                  value: 'manual',
+                  child: Row(children: [
+                    Icon(Icons.edit_note_rounded, size: 18.sp, color: cs.tertiary),
+                    SizedBox(width: 10.w),
+                    Text(t.t('dashboard.menu_manual')),
+                  ]),
+                ),
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: 'archive',
+                  child: Row(children: [
+                    Icon(Icons.archive_outlined, size: 18.sp, color: cs.error),
+                    SizedBox(width: 10.w),
+                    Text(t.t('dashboard.menu_archive'),
+                        style: TextStyle(color: cs.error)),
+                  ]),
+                ),
+              ],
             ),
           // Bouton historique
           IconButton(
@@ -77,29 +104,43 @@ class RoadmapScreen extends ConsumerWidget {
     }
   }
 
-  /// Régénérer la roadmap directement via l'API.
+  /// Dispatch des actions du menu contextuel.
+  Future<void> _onMenuSelected(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    String value,
+  ) async {
+    switch (value) {
+      case 'regenerate':
+        await _regenerate(context, ref, t);
+      case 'manual':
+        await _newManual(context, ref, t);
+      case 'archive':
+        await _archive(context, ref, t);
+    }
+  }
+
+  /// Régénérer la roadmap avec l'IA.
   Future<void> _regenerate(
     BuildContext context,
     WidgetRef ref,
     AppLocalizations t,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        title: Text(t.t('dashboard.regenerate')),
-        content: Text(t.t('dashboard.regenerate_confirm')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(t.t('settings.cancel')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(t.t('dashboard.regenerate')),
-          ),
-        ],
-      ),
+    // Vérifier la limite de régénérations
+    final regenStatus = await ref.read(regenerationStatusProvider.future);
+    final remaining = regenStatus['remaining'] as int? ?? 0;
+    if (remaining <= 0) {
+      if (!context.mounted) return;
+      AppSnackbar.error(context, t.t('dashboard.regen_limit_reached'));
+      return;
+    }
+
+    if (!context.mounted) return;
+    final confirmed = await _confirmDialog(
+      context, t,
+      title: t.t('dashboard.menu_regenerate'),
+      content: t.t('dashboard.regenerate_confirm'),
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -109,10 +150,90 @@ class RoadmapScreen extends ConsumerWidget {
         final eventType = event['event'] as String;
         if (eventType == 'error') break;
       }
-    } catch (e) {
+    } catch (_) {
       if (!context.mounted) return;
       AppSnackbar.error(context, t.t('dashboard.error_title'));
     }
+  }
+
+  /// Archiver l'actuelle et passer en mode manuel (roadmap vide).
+  Future<void> _newManual(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+  ) async {
+    final confirmed = await _confirmDialog(
+      context, t,
+      title: t.t('dashboard.menu_manual'),
+      content: t.t('dashboard.manual_confirm'),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      final notifier = ref.read(roadmapProvider.notifier);
+      // Créer une roadmap manuelle vide (archive l'actuelle côté backend)
+      await notifier.createRoadmap([]);
+      if (context.mounted) {
+        AppSnackbar.success(context, t.t('dashboard.manual_created'));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackbar.error(context, t.t('dashboard.error_title'));
+      }
+    }
+  }
+
+  /// Archiver la roadmap actuelle sans en créer une nouvelle.
+  Future<void> _archive(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+  ) async {
+    final confirmed = await _confirmDialog(
+      context, t,
+      title: t.t('dashboard.menu_archive'),
+      content: t.t('dashboard.archive_confirm'),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref.read(roadmapProvider.notifier).archiveRoadmap();
+      if (context.mounted) {
+        AppSnackbar.success(context, t.t('dashboard.archived'));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackbar.error(context, t.t('dashboard.error_title'));
+      }
+    }
+  }
+
+  /// Dialog de confirmation réutilisable.
+  Future<bool?> _confirmDialog(
+    BuildContext context,
+    AppLocalizations t, {
+    required String title,
+    required String content,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: cs.surface,
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.t('settings.cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(t.t('settings.confirm')),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Confirmer puis supprimer une phase.
@@ -420,6 +541,10 @@ class RoadmapScreen extends ConsumerWidget {
     final phases = (roadmap['phases'] as List?) ?? [];
     final notifier = ref.read(roadmapProvider.notifier);
 
+    // Vérifier si toutes les phases sont complétées
+    final allCompleted = phases.isNotEmpty &&
+        phases.every((p) => (p as Map<String, dynamic>)['completed'] == true);
+
     return RefreshIndicator(
       onRefresh: () => notifier.loadRoadmap(),
       child: ListView(
@@ -428,6 +553,10 @@ class RoadmapScreen extends ConsumerWidget {
         ),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         children: [
+          // Carte de félicitations si tout est complété
+          if (allCompleted)
+            _buildCongratulations(context, ref, cs, t),
+
           ...List.generate(phases.length, (i) {
             final phase = phases[i] as Map<String, dynamic>;
             final phaseId = phase['id'] as String;
@@ -459,6 +588,79 @@ class RoadmapScreen extends ConsumerWidget {
             );
           }),
           SizedBox(height: 80.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCongratulations(
+    BuildContext context,
+    WidgetRef ref,
+    ColorScheme cs,
+    AppLocalizations t,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            cs.primary.withValues(alpha: 0.12),
+            cs.tertiary.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.emoji_events_rounded, size: 40.sp, color: cs.primary),
+          SizedBox(height: 10.h),
+          Text(
+            t.t('dashboard.congrats_title'),
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w800,
+              color: cs.onSurface,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            t.t('dashboard.congrats_subtitle'),
+            style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 16.h),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _regenerate(context, ref, t),
+                  icon: Icon(Icons.auto_awesome_rounded, size: 16.sp),
+                  label: Text(t.t('dashboard.congrats_ai'),
+                      style: TextStyle(fontSize: 12.sp)),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size(0, 40.h),
+                    side: BorderSide(color: cs.primary.withValues(alpha: 0.5)),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _newManual(context, ref, t),
+                  icon: Icon(Icons.edit_note_rounded, size: 16.sp),
+                  label: Text(t.t('dashboard.congrats_manual'),
+                      style: TextStyle(fontSize: 12.sp)),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size(0, 40.h),
+                    side: BorderSide(color: cs.tertiary.withValues(alpha: 0.5)),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

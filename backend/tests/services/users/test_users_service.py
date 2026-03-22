@@ -47,13 +47,13 @@ class TestChangePassword:
         assert "changed" in result["message"].lower()
 
     @pytest.mark.asyncio
-    async def test_wrong_current_password_raises_401(self, user_service, mock_auth_repo, fake_user_dict):
+    async def test_wrong_current_password_raises_400(self, user_service, mock_auth_repo, fake_user_dict):
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
         with patch("services.users.users.Security") as MockSec:
             MockSec.verify_password.return_value = False
             with pytest.raises(HTTPException) as exc_info:
                 await user_service.change_password(FAKE_USER_ID, "wrong", "NewPass1!")
-        assert exc_info.value.status_code == 401
+        assert exc_info.value.status_code == 400
 
 
 # ─── forgot_password ─────────────────────────────────────────────────
@@ -207,13 +207,13 @@ class TestRequestEmailChange:
         mock_otp_service.send_email_change_otp.assert_called_once_with("new@example.com", FAKE_USER_ID)
 
     @pytest.mark.asyncio
-    async def test_wrong_password_raises_401(self, user_service, mock_auth_repo, fake_user_dict):
+    async def test_wrong_password_raises_400(self, user_service, mock_auth_repo, fake_user_dict):
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
         with patch("services.users.users.Security") as MockSec:
             MockSec.verify_password.return_value = False
             with pytest.raises(HTTPException) as exc_info:
                 await user_service.request_email_change(FAKE_USER_ID, "new@example.com", "wrong")
-        assert exc_info.value.status_code == 401
+        assert exc_info.value.status_code == 400
 
     @pytest.mark.asyncio
     async def test_email_taken_raises_400(self, user_service, mock_auth_repo, fake_user_dict):

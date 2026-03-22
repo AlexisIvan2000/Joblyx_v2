@@ -182,6 +182,9 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     final t = AppLocalizations.of(context);
     // Fermer le clavier et l'overlay autocomplete avant d'ouvrir le picker
     _skillSearchFocusNode.unfocus();
+    _skillSearchController.clear();
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!mounted) return;
     final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
     if (result == null || result.files.isEmpty || result.files.first.path == null) return;
 

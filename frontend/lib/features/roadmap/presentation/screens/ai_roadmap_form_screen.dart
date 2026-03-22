@@ -184,6 +184,10 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
     final t = AppLocalizations.of(context);
     // Fermer le clavier et l'overlay autocomplete avant d'ouvrir le picker
     _skillSearchFocusNode.unfocus();
+    _skillSearchController.clear();
+    // Laisser Flutter nettoyer l'overlay RawAutocomplete avant le changement d'activité
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (!mounted) return;
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'],

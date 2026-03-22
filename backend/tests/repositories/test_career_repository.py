@@ -1,4 +1,4 @@
-"""Tests for repositories/career_repository.py — async stub."""
+# Tests for repositories/career_repository.py — async stub.
 
 from unittest.mock import AsyncMock
 

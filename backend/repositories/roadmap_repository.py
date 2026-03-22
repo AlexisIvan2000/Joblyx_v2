@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -144,6 +144,41 @@ class RoadmapRepository:
                 .values(position=i, phase_number=i + 1)
             )
         await self.session.flush()
+
+    # Suppression de roadmaps
+    # Supprime une roadmap et ses phases (cascade)
+    async def delete_roadmap(self, roadmap_id: str, user_id: str) -> bool:
+        roadmap = await self.get_by_id(roadmap_id, user_id)
+        if not roadmap:
+            return False
+        # Supprimer les phases d'abord
+        await self.session.execute(
+            delete(RoadmapPhase).where(RoadmapPhase.roadmap_id == roadmap_id)
+        )
+        await self.session.delete(roadmap)
+        await self.session.flush()
+        return True
+    
+    # Supprime toutes les roadmaps archivées d'un utilisateur
+    async def delete_all_archived(self, user_id: str) -> int:
+        # Récupérer les IDs des roadmaps archivées
+        result = await self.session.execute(
+            select(Roadmap.id).where(
+                Roadmap.user_id == user_id, Roadmap.status == "archived"
+            )
+        )
+        ids = [r[0] for r in result.all()]
+        if not ids:
+            return 0
+        # Supprimer les phases puis les roadmaps
+        await self.session.execute(
+            delete(RoadmapPhase).where(RoadmapPhase.roadmap_id.in_(ids))
+        )
+        await self.session.execute(
+            delete(Roadmap).where(Roadmap.id.in_(ids))
+        )
+        await self.session.flush()
+        return len(ids)
 
     # Career generation status
 

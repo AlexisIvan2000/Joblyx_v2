@@ -42,7 +42,7 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
     }
   }
 
-  /// Bottom sheet avec les deux options : voir détails / restaurer.
+  /// Bottom sheet avec les options : voir détails / restaurer / supprimer.
   void _showOptions(Map<String, dynamic> item) {
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
@@ -59,7 +59,6 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(height: 8.h),
-            // Indicateur de drag
             Container(
               width: 36.w,
               height: 4.h,
@@ -69,7 +68,6 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
               ),
             ),
             SizedBox(height: 8.h),
-            // Voir les détails
             ListTile(
               leading: Icon(Icons.visibility_outlined, color: cs.primary),
               title: Text(t.t('dashboard.history_view')),
@@ -78,7 +76,6 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
                 context.push('/roadmap/history/$id');
               },
             ),
-            // Restaurer ce roadmap
             ListTile(
               leading: Icon(Icons.restore_rounded, color: cs.tertiary),
               title: Text(t.t('dashboard.history_restore')),
@@ -89,6 +86,15 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
               onTap: () {
                 Navigator.of(context).pop();
                 _confirmRestore(id);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_outline_rounded, color: cs.error),
+              title: Text(t.t('dashboard.history_delete'),
+                  style: TextStyle(color: cs.error)),
+              onTap: () {
+                Navigator.of(context).pop();
+                _confirmDelete(id);
               },
             ),
             SizedBox(height: 8.h),
@@ -127,12 +133,90 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
       await ref.read(roadmapProvider.notifier).restoreRoadmap(roadmapId);
       if (mounted) {
         AppSnackbar.success(context, t.t('dashboard.history_restored'));
-        // Retourner à la page roadmap
         context.pop();
       }
     } catch (_) {
       if (mounted) {
         AppSnackbar.error(context, t.t('dashboard.history_restore_error'));
+      }
+    }
+  }
+
+  /// Supprimer une roadmap archivée.
+  Future<void> _confirmDelete(String roadmapId) async {
+    final cs = Theme.of(context).colorScheme;
+    final t = AppLocalizations.of(context);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: cs.surface,
+        title: Text(t.t('dashboard.history_delete')),
+        content: Text(t.t('dashboard.history_delete_confirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.t('settings.cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(t.t('application_detail.delete'),
+                style: TextStyle(color: cs.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(roadmapServiceProvider).deleteRoadmap(roadmapId);
+      if (mounted) {
+        AppSnackbar.success(context, t.t('dashboard.history_deleted'));
+        _loadHistory();
+      }
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.error(context, t.t('dashboard.history_delete_error'));
+      }
+    }
+  }
+
+  /// Supprimer toutes les roadmaps archivées.
+  Future<void> _confirmDeleteAll() async {
+    final cs = Theme.of(context).colorScheme;
+    final t = AppLocalizations.of(context);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: cs.surface,
+        title: Text(t.t('dashboard.history_delete_all')),
+        content: Text(t.t('dashboard.history_delete_all_confirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.t('settings.cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(t.t('application_detail.delete'),
+                style: TextStyle(color: cs.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final count = await ref.read(roadmapServiceProvider).deleteAllArchived();
+      if (mounted) {
+        AppSnackbar.success(context,
+            t.t('dashboard.history_deleted_all').replaceAll('{count}', '$count'));
+        _loadHistory();
+      }
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.error(context, t.t('dashboard.history_delete_error'));
       }
     }
   }
@@ -143,7 +227,17 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
     final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.t('dashboard.history'))),
+      appBar: AppBar(
+        title: Text(t.t('dashboard.history')),
+        actions: [
+          if (_history != null && _history!.isNotEmpty)
+            IconButton(
+              onPressed: _confirmDeleteAll,
+              icon: Icon(Icons.delete_sweep_rounded, size: 22.sp),
+              tooltip: t.t('dashboard.history_delete_all'),
+            ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

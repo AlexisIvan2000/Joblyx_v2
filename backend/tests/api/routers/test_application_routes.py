@@ -141,20 +141,55 @@ class TestUpdateApplication:
         svc = test_client._mock_app_svc
         svc.update.return_value = _mock_app(status="offer")
 
+        data = json.dumps({"status": "offer"})
         resp = test_client.put(
             f"/applications/{FAKE_APP_ID}",
-            json={"status": "offer"},
+            data={"data": data},
         )
         assert resp.status_code == 200
         assert resp.json()["status"] == "offer"
+
+    def test_updates_with_cv(self, test_client):
+        svc = test_client._mock_app_svc
+        svc.update.return_value = _mock_app(status="applied", cv_file_key="user/new.pdf")
+        svc.get_cv_url.return_value = "https://signed.url/new.pdf"
+
+        data = json.dumps({"status": "applied"})
+        resp = test_client.put(
+            f"/applications/{FAKE_APP_ID}",
+            data={"data": data},
+            files={"cv": ("new_cv.pdf", b"%PDF-fake", "application/pdf")},
+        )
+        assert resp.status_code == 200
+        svc.update.assert_called_once()
+        # Vérifier que cv_bytes et cv_filename sont passés
+        call_kwargs = svc.update.call_args
+        assert call_kwargs.kwargs.get("cv_filename") == "new_cv.pdf"
+
+    def test_rejects_non_pdf_cv(self, test_client):
+        data = json.dumps({"status": "applied"})
+        resp = test_client.put(
+            f"/applications/{FAKE_APP_ID}",
+            data={"data": data},
+            files={"cv": ("doc.docx", b"fake", "application/msword")},
+        )
+        assert resp.status_code == 400
+
+    def test_rejects_invalid_json(self, test_client):
+        resp = test_client.put(
+            f"/applications/{FAKE_APP_ID}",
+            data={"data": "not json"},
+        )
+        assert resp.status_code == 400
 
     def test_returns_404_when_not_found(self, test_client):
         svc = test_client._mock_app_svc
         svc.update.side_effect = HTTPException(status_code=404, detail="Not found")
 
+        data = json.dumps({"status": "offer"})
         resp = test_client.put(
             f"/applications/{FAKE_APP_ID}",
-            json={"status": "offer"},
+            data={"data": data},
         )
         assert resp.status_code == 404
 

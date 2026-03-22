@@ -311,6 +311,22 @@ async def roadmap_status(
     }
 
 
+# ─── Archive ─────────────────────────────────────────────────────
+
+@router.post("/archive")
+async def archive_roadmap(
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    user_id = str(current_user.id)
+    roadmap = await svc.repo.get_active_roadmap(user_id)
+    if not roadmap:
+        raise HTTPException(status_code=404, detail="No active roadmap to archive")
+    await svc.repo.archive_active(user_id)
+    await svc.session.commit()
+    return {"message": "Roadmap archived"}
+
+
 # ─── Get roadmap ─────────────────────────────────────────────────
 
 @router.get("", response_model=RoadmapResponse)
@@ -356,6 +372,31 @@ async def restore_roadmap(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Roadmap not found or not archived")
     await svc.session.commit()
     return _roadmap_to_response(roadmap)
+
+
+# ─── Delete roadmaps ─────────────────────────────────────────────
+
+@router.delete("/{roadmap_id}")
+async def delete_roadmap(
+    roadmap_id: str,
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    deleted = await svc.repo.delete_roadmap(roadmap_id, str(current_user.id))
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Roadmap not found")
+    await svc.session.commit()
+    return {"message": "Roadmap deleted"}
+
+
+@router.delete("")
+async def delete_all_roadmaps(
+    current_user: User = Depends(get_current_user),
+    svc: RoadmapService = Depends(get_roadmap_service),
+):
+    count = await svc.repo.delete_all_archived(str(current_user.id))
+    await svc.session.commit()
+    return {"message": f"{count} roadmap(s) deleted", "count": count}
 
 
 # ─── Phase endpoints ─────────────────────────────────────────────
