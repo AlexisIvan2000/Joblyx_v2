@@ -61,6 +61,7 @@ class ProfileScreen extends ConsumerWidget {
     final email = user['email'] as String? ?? '';
     final avatarUrl = user['avatar_url'] as String?;
     final regenRemaining = (regenAsync.whenOrNull(data: (s) => s['remaining']) ?? 0) as int;
+    final initials = '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}';
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -73,140 +74,187 @@ class ProfileScreen extends ConsumerWidget {
         children: [
           StaggeredList(
             children: [
-          // Titre
-          Text(t.t('profile_screen.title'),
-              style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w800, color: cs.onSurface)),
-          SizedBox(height: 24.h),
+              // Titre
+              Text(t.t('profile_screen.title'),
+                  style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w800, color: cs.onSurface)),
+              SizedBox(height: 24.h),
 
-          // Avatar + nom + email
-          Center(
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 48.r,
-                  backgroundColor: cs.primary.withValues(alpha: 0.1),
-                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                  child: avatarUrl == null
-                      ? Text(
-                          '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}',
-                          style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w800, color: cs.primary),
-                        )
-                      : null,
+              // Avatar + nom + email
+              Center(
+                child: Column(
+                  children: [
+                    // Avatar avec bouton pour changer la photo
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 48.r,
+                          backgroundColor: cs.primary.withValues(alpha: 0.1),
+                          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                          child: avatarUrl == null
+                              ? Text(initials,
+                                  style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w800, color: cs.primary))
+                              : null,
+                        ),
+                        // Bouton caméra en bas à droite
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: () => _showPhotoPickerDialog(context, cs, t),
+                            child: Container(
+                              width: 32.r,
+                              height: 32.r,
+                              decoration: BoxDecoration(
+                                color: cs.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: cs.surface, width: 2),
+                              ),
+                              child: Icon(Icons.camera_alt_rounded, size: 16.sp, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 14.h),
+                    Text('$firstName $lastName',
+                        style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w800, color: cs.onSurface)),
+                    SizedBox(height: 4.h),
+                    Text(email,
+                        style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
+                        overflow: TextOverflow.ellipsis, maxLines: 1),
+                  ],
                 ),
-                SizedBox(height: 14.h),
-                Text('$firstName $lastName',
-                    style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w800, color: cs.onSurface)),
-                SizedBox(height: 4.h),
-                Text(email, style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant)),
-              ],
-            ),
-          ),
-          SizedBox(height: 24.h),
-
-          // Stats row
-          Row(
-            children: [
-              _StatBox(
-                value: '$regenRemaining',
-                label: t.t('profile_screen.regenerations_left'),
-                cs: cs,
               ),
-            ],
-          ),
-          SizedBox(height: 24.h),
+              SizedBox(height: 24.h),
 
-          // Menu items
-          _MenuItem(
-            icon: Icons.person_outline_rounded,
-            title: t.t('profile_screen.personal_info'),
-            subtitle: t.t('profile_screen.personal_info_sub'),
-            cs: cs,
-            onTap: () async {
-              final changed = await showDialog<bool>(
-                context: context,
-                builder: (_) => EditProfileDialog(firstName: firstName, lastName: lastName),
-              );
-              if (changed == true) ref.read(userProvider.notifier).refresh();
-            },
-          ),
-          _MenuItem(
-            icon: Icons.work_outline_rounded,
-            title: t.t('profile_screen.career_profile'),
-            subtitle: t.t('profile_screen.career_profile_sub'),
-            cs: cs,
-            onTap: () => context.push('/profile/career'),
-          ),
-          _MenuItem(
-            icon: Icons.lock_outline_rounded,
-            title: t.t('profile_screen.security'),
-            subtitle: t.t('profile_screen.security_sub'),
-            cs: cs,
-            onTap: () async {
-              final changed = await showDialog<bool>(
-                context: context,
-                builder: (_) => const ChangePasswordDialog(),
-              );
-              if (changed == true && context.mounted) {
-                AppSnackbar.success(context, t.t('settings.password_changed'));
-              }
-            },
-          ),
-          _MenuItem(
-            icon: Icons.email_outlined,
-            title: t.t('settings.change_email'),
-            subtitle: email,
-            cs: cs,
-            onTap: () async {
-              final changed = await showDialog<bool>(
-                context: context,
-                builder: (_) => ChangeEmailDialog(currentEmail: email),
-              );
-              if (changed == true) {
-                ref.read(userProvider.notifier).refresh();
-                if (context.mounted) {
-                  AppSnackbar.success(context, t.t('settings.email_changed'));
-                }
-              }
-            },
-          ),
-          _MenuItem(
-            icon: Icons.language_rounded,
-            title: t.t('profile_screen.language'),
-            subtitle: t.t('profile_screen.language_sub'),
-            cs: cs,
-            onTap: () {
-              // TODO: language picker
-            },
-          ),
-          _MenuItem(
-            icon: Icons.notifications_none_rounded,
-            title: t.t('profile_screen.notifications'),
-            subtitle: t.t('profile_screen.notifications_sub'),
-            cs: cs,
-            onTap: () {
-              // TODO: notification settings
-            },
-          ),
-          _MenuItem(
-            icon: Icons.description_outlined,
-            title: t.t('profile_screen.my_cvs'),
-            subtitle: t.t('profile_screen.my_cvs_sub'),
-            cs: cs,
-            onTap: () {
-              // TODO: CVs list
-            },
-          ),
-          SizedBox(height: 16.h),
+              // Régénérations restantes
+              Row(
+                children: [
+                  _StatBox(value: '$regenRemaining', label: t.t('profile_screen.regenerations_left'), cs: cs),
+                ],
+              ),
+              SizedBox(height: 24.h),
 
-          // Logout
-          _LogoutButton(cs: cs, t: t),
+              // Informations personnelles
+              _MenuItem(
+                icon: Icons.person_outline_rounded,
+                title: t.t('profile_screen.personal_info'),
+                subtitle: t.t('profile_screen.personal_info_sub'),
+                cs: cs,
+                onTap: () async {
+                  final changed = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => EditProfileDialog(firstName: firstName, lastName: lastName),
+                  );
+                  if (changed == true) ref.read(userProvider.notifier).refresh();
+                },
+              ),
+
+              // Profil carrière
+              _MenuItem(
+                icon: Icons.work_outline_rounded,
+                title: t.t('profile_screen.career_profile'),
+                subtitle: t.t('profile_screen.career_profile_sub'),
+                cs: cs,
+                onTap: () => context.push('/profile/career'),
+              ),
+
+              // Mot de passe
+              _MenuItem(
+                icon: Icons.lock_outline_rounded,
+                title: t.t('profile_screen.security'),
+                subtitle: t.t('profile_screen.security_sub'),
+                cs: cs,
+                onTap: () async {
+                  final changed = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => const ChangePasswordDialog(),
+                  );
+                  if (changed == true && context.mounted) {
+                    AppSnackbar.success(context, t.t('settings.password_changed'));
+                  }
+                },
+              ),
+
+              // Changer email
+              _MenuItem(
+                icon: Icons.email_outlined,
+                title: t.t('settings.change_email'),
+                subtitle: email,
+                cs: cs,
+                onTap: () async {
+                  final changed = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => ChangeEmailDialog(currentEmail: email),
+                  );
+                  if (changed == true) {
+                    ref.read(userProvider.notifier).refresh();
+                    if (context.mounted) {
+                      AppSnackbar.success(context, t.t('settings.email_changed'));
+                    }
+                  }
+                },
+              ),
+              SizedBox(height: 16.h),
+
+              // Déconnexion
+              _LogoutButton(cs: cs, t: t),
             ],
           ),
         ],
       ),
     );
   }
+
+  /// Dialog pour choisir entre prendre ou choisir une photo.
+  void _showPhotoPickerDialog(BuildContext context, ColorScheme cs, AppLocalizations t) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 10.h),
+              Text(t.t('profile_screen.change_photo'),
+                  style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: cs.onSurface)),
+              SizedBox(height: 20.h),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    // TODO: ouvrir la caméra
+                  },
+                  icon: Icon(Icons.camera_rounded, size: 20.sp),
+                  label: Text(t.t('profile_screen.take_photo')),
+                  style: FilledButton.styleFrom(minimumSize: Size(0, 48.h)),
+                ),
+              ),
+              SizedBox(height: 10.h),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    // TODO: ouvrir la galerie
+                  },
+                  icon: Icon(Icons.photo_library_rounded, size: 20.sp),
+                  label: Text(t.t('profile_screen.choose_photo')),
+                  style: OutlinedButton.styleFrom(minimumSize: Size(0, 48.h)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+
+// ─── Widgets privés ──────────────────────────────────────────
 
 class _StatBox extends StatelessWidget {
   final String value, label;
@@ -225,12 +273,10 @@ class _StatBox extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(value,
-                style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.w800, color: cs.primary)),
+            Text(value, style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.w800, color: cs.primary)),
             SizedBox(width: 10.w),
             Expanded(
-              child: Text(label,
-                  style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+              child: Text(label, style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
             ),
           ],
         ),
@@ -268,8 +314,7 @@ class _MenuItem extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 40.w,
-                  height: 40.w,
+                  width: 40.w, height: 40.w,
                   decoration: BoxDecoration(
                     color: cs.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12.r),
@@ -281,11 +326,9 @@ class _MenuItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
-                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.onSurface)),
+                      Text(title, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.onSurface)),
                       SizedBox(height: 2.h),
-                      Text(subtitle,
-                          style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
+                      Text(subtitle, style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
                           overflow: TextOverflow.ellipsis),
                     ],
                   ),

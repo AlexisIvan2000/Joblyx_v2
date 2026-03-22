@@ -87,7 +87,6 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     icon: Icon(_showCurrent ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 20.sp),
                     onPressed: () => setState(() => _showCurrent = !_showCurrent),
                   ),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
                 ),
                 validator: (v) => (v == null || v.isEmpty) ? t.t('settings.required') : null,
               ),
@@ -102,7 +101,6 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     icon: Icon(_showNew ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 20.sp),
                     onPressed: () => setState(() => _showNew = !_showNew),
                   ),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return t.t('settings.required');
@@ -119,7 +117,6 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                 decoration: InputDecoration(
                   labelText: t.t('settings.confirm_password'),
                   prefixIcon: Icon(Icons.lock_open_rounded, size: 20.sp),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
                 ),
                 validator: (v) {
                   if (v != _newController.text) return t.t('settings.passwords_mismatch');

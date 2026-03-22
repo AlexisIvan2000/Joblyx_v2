@@ -91,7 +91,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                 decoration: InputDecoration(
                   labelText: t.t('settings.first_name'),
                   prefixIcon: Icon(Icons.person_outline, size: 20.sp),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty) ? t.t('settings.required') : null,
               ),
@@ -102,7 +101,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                 decoration: InputDecoration(
                   labelText: t.t('settings.last_name'),
                   prefixIcon: Icon(Icons.person_outline, size: 20.sp),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty) ? t.t('settings.required') : null,
               ),

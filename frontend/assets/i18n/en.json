@@ -107,11 +107,11 @@
         "regenerations_left": "Regenerations left",
         "skills_acquired": "Skills acquired",
         "personal_info": "Personal information",
-        "personal_info_sub": "Name, email, avatar",
+        "personal_info_sub": "First name, last name",
         "career_profile": "Career profile",
         "career_profile_sub": "Level, target jobs, skills",
-        "security": "Security",
-        "security_sub": "Password, sessions",
+        "security": "Change password",
+        "security_sub": "***********",
         "language": "Language",
         "language_sub": "English",
         "notifications": "Notifications",
@@ -120,7 +120,10 @@
         "my_cvs_sub": "Uploaded CVs",
         "logout": "Log out",
         "career_saved": "Career profile updated",
-        "career_save_error": "Failed to save career profile"
+        "career_save_error": "Failed to save career profile",
+        "change_photo": "Change profile photo",
+        "take_photo": "Take a photo",
+        "choose_photo": "Choose a photo"
     },
 
     "splash": {

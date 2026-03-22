@@ -125,7 +125,6 @@ class _ChangeEmailDialogState extends State<ChangeEmailDialog> {
                 decoration: InputDecoration(
                   labelText: t.t('settings.new_email'),
                   prefixIcon: Icon(Icons.alternate_email_rounded, size: 20.sp),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
                 ),
               ),
               SizedBox(height: 14.h),
@@ -135,7 +134,6 @@ class _ChangeEmailDialogState extends State<ChangeEmailDialog> {
                 decoration: InputDecoration(
                   labelText: t.t('settings.password_confirm'),
                   prefixIcon: Icon(Icons.lock_rounded, size: 20.sp),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
                 ),
               ),
               SizedBox(height: 20.h),

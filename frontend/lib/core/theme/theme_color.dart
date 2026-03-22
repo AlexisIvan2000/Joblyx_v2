@@ -61,7 +61,7 @@ class ThemeColor {
       border: OutlineInputBorder(borderRadius: _inputBorder),
       enabledBorder: OutlineInputBorder(
         borderRadius: _inputBorder,
-        borderSide: const BorderSide(color: Color(0xFFE8ECF0)),
+        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: _inputBorder,
