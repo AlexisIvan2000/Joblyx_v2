@@ -86,6 +86,16 @@ async def get_history(
     ]
 
 
+# ─── Usage (AVANT la route {session_id} pour éviter le conflit) ──
+
+@router.get("/coach/usage")
+async def get_usage(
+    current_user: User = Depends(get_current_user),
+    svc: CoachService = Depends(get_coach_service),
+):
+    return await svc.check_usage(str(current_user.id))
+
+
 # ─── Détail d'une session ───────────────────────────────────────
 
 @router.get("/coach/{session_id}")
@@ -126,13 +136,3 @@ async def delete_all_sessions(
 ):
     count = await svc.delete_all(str(current_user.id))
     return {"message": f"{count} session(s) deleted", "count": count}
-
-
-# ─── Usage ───────────────────────────────────────────────────────
-
-@router.get("/coach/usage")
-async def get_usage(
-    current_user: User = Depends(get_current_user),
-    svc: CoachService = Depends(get_coach_service),
-):
-    return await svc.check_usage(str(current_user.id))

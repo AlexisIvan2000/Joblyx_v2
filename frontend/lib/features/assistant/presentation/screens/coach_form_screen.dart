@@ -24,11 +24,28 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
   bool _isAnalyzing = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Reset le state d'analyse quand on arrive sur le formulaire
+    Future.microtask(() => ref.read(coachAnalysisProvider.notifier).reset());
+  }
+
+  @override
   void dispose() {
     _descriptionController.dispose();
     _jobTitleController.dispose();
     _companyController.dispose();
     super.dispose();
+  }
+
+  void _resetForm() {
+    _descriptionController.clear();
+    _jobTitleController.clear();
+    _companyController.clear();
+    setState(() {
+      _cvFile = null;
+      _language = 'fr';
+    });
   }
 
   Future<void> _pickCv() async {
@@ -63,6 +80,8 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
         final eventType = event['event'] as String;
         if (eventType == 'error') break;
       }
+      // Reset le formulaire après une analyse réussie
+      if (mounted) _resetForm();
     } catch (e) {
       if (!mounted) return;
       if (e.toString().contains('429')) {

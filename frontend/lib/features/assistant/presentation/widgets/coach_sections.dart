@@ -28,7 +28,7 @@ class CoachAnalysisView extends StatelessWidget {
       child: Column(
         children: [
           // Score de compatibilité
-          _ScoreCircle(score: score),
+          CoachScoreWidget(score: score),
           SizedBox(height: 12.h),
 
           // Résumé
@@ -90,9 +90,9 @@ class CoachAnalysisView extends StatelessWidget {
 
 // ─── Score circulaire ──────────────────────────────────────────
 
-class _ScoreCircle extends StatelessWidget {
+class CoachScoreWidget extends StatelessWidget {
   final int score;
-  const _ScoreCircle({required this.score});
+  const CoachScoreWidget({super.key, required this.score});
 
   @override
   Widget build(BuildContext context) {

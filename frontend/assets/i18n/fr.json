@@ -2,7 +2,7 @@
     "nav": {
         "home": "Accueil",
         "roadmap": "Roadmap",
-        "applications": "Candidatures",
+        "applications": "Suivi",
         "assistant": "Assistant",
         "profile": "Profil"
     },
@@ -445,7 +445,18 @@
         "analyze_error": "Une erreur est survenue pendant l'analyse",
         "limit_reached": "Limite hebdomadaire atteinte (3 par semaine)",
         "result_title": "Analyse du CV",
-        "session_not_found": "Session introuvable"
+        "analyzing_title": "Analyse en cours...",
+        "analyzing_subtitle": "Notre IA compare votre CV avec l'offre d'emploi.",
+        "session_not_found": "Session introuvable",
+        "view_all": "Voir tout",
+        "history_title": "Historique des analyses",
+        "delete_session": "Supprimer cette analyse",
+        "delete_session_confirm": "Cette analyse sera définitivement supprimée.",
+        "session_deleted": "Analyse supprimée",
+        "delete_all": "Tout supprimer",
+        "delete_all_confirm": "Toutes les analyses seront définitivement supprimées.",
+        "all_deleted": "{count} analyse(s) supprimée(s)",
+        "delete_error": "Impossible de supprimer"
     },
 
     "coach": {

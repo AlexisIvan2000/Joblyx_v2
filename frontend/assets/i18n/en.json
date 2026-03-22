@@ -2,7 +2,7 @@
     "nav": {
         "home": "Home",
         "roadmap": "Roadmap",
-        "applications": "Applications",
+        "applications": "Tracking",
         "assistant": "Assistant",
         "profile": "Profile"
     },
@@ -444,7 +444,18 @@
         "analyze_error": "An error occurred during analysis",
         "limit_reached": "Weekly limit reached (3 per week)",
         "result_title": "CV Analysis",
-        "session_not_found": "Session not found"
+        "analyzing_title": "Analyzing your CV...",
+        "analyzing_subtitle": "Our AI is comparing your CV against the job posting.",
+        "session_not_found": "Session not found",
+        "view_all": "View all",
+        "history_title": "Analysis History",
+        "delete_session": "Delete this analysis",
+        "delete_session_confirm": "This analysis will be permanently deleted.",
+        "session_deleted": "Analysis deleted",
+        "delete_all": "Delete all",
+        "delete_all_confirm": "All analyses will be permanently deleted.",
+        "all_deleted": "{count} analysis(es) deleted",
+        "delete_error": "Could not delete"
     },
 
     "coach": {

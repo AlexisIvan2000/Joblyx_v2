@@ -25,6 +25,7 @@ class _StaggeredListState extends State<StaggeredList>
   final List<AnimationController> _controllers = [];
   final List<Animation<double>> _fadeAnimations = [];
   final List<Animation<Offset>> _slideAnimations = [];
+  int _generation = 0; // Empêche les Future.delayed orphelins
 
   @override
   void initState() {
@@ -33,6 +34,9 @@ class _StaggeredListState extends State<StaggeredList>
   }
 
   void _setupAnimations() {
+    _generation++;
+    final currentGen = _generation;
+
     for (int i = 0; i < widget.children.length; i++) {
       final controller = AnimationController(
         vsync: this,
@@ -51,7 +55,8 @@ class _StaggeredListState extends State<StaggeredList>
       );
 
       Future.delayed(widget.itemDelay * i, () {
-        if (mounted) controller.forward();
+        // Vérifier que le widget est toujours monté ET que la génération n'a pas changé
+        if (mounted && _generation == currentGen) controller.forward();
       });
     }
   }

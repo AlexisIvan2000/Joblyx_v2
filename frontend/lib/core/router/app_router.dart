@@ -22,6 +22,7 @@ import 'package:frontend/features/assistant/presentation/screens/assistant_scree
 import 'package:frontend/features/assistant/presentation/screens/coach_form_screen.dart';
 import 'package:frontend/features/assistant/presentation/screens/coach_result_screen.dart';
 import 'package:frontend/features/assistant/presentation/screens/coach_detail_screen.dart';
+import 'package:frontend/features/assistant/presentation/screens/coach_history_screen.dart';
 
 final _shellKey = GlobalKey<NavigatorState>();
 
@@ -53,6 +54,7 @@ final appRouter = GoRouter(
         EditApplicationScreen(applicationId: state.pathParameters['id']!)),
     _slideRoute(AppRoutes.coachForm, (_) => const CoachFormScreen()),
     _slideRoute(AppRoutes.coachResult, (_) => const CoachResultScreen()),
+    _slideRoute(AppRoutes.coachHistory, (_) => const CoachHistoryScreen()),
     _slideRoute(AppRoutes.coachDetail, (state) =>
         CoachDetailScreen(sessionId: state.pathParameters['id']!)),
 

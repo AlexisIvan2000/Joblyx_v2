@@ -19,4 +19,5 @@ class AppRoutes {
   static const coachForm = '/assistant/coach';
   static const coachResult = '/assistant/coach/result';
   static const coachDetail = '/assistant/coach/:id';
+  static const coachHistory = '/assistant/coach/history';
 }

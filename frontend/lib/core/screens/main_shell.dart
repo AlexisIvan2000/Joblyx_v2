@@ -79,45 +79,53 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
           color: Theme.of(context).scaffoldBackgroundColor,
           border: Border(top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3))),
         ),
-        child: NavigationBar(
-          selectedIndex: widget.currentIndex,
-          onDestinationSelected: (i) {
-            if (i != widget.currentIndex) {
-              context.go(_routes[i]);
-            }
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          height: 64.h,
-          indicatorColor: cs.primary.withValues(alpha: 0.1),
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded, color: cs.primary),
-              label: t.t('nav.home'),
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            navigationBarTheme: NavigationBarThemeData(
+              iconTheme: WidgetStateProperty.all(IconThemeData(size: 20.sp)),
+              labelTextStyle: WidgetStateProperty.all(TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600)),
             ),
-            NavigationDestination(
-              icon: const Icon(Icons.route_outlined),
-              selectedIcon: Icon(Icons.route_rounded, color: cs.primary),
-              label: t.t('nav.roadmap'),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.work_outline_rounded),
-              selectedIcon: Icon(Icons.work_rounded, color: cs.primary),
-              label: t.t('nav.applications'),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.auto_awesome_outlined),
-              selectedIcon: Icon(Icons.auto_awesome_rounded, color: cs.primary),
-              label: t.t('nav.assistant'),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.person_outline_rounded),
-              selectedIcon: Icon(Icons.person_rounded, color: cs.primary),
-              label: t.t('nav.profile'),
-            ),
-          ],
+          ),
+          child: NavigationBar(
+            selectedIndex: widget.currentIndex,
+            onDestinationSelected: (i) {
+              if (i != widget.currentIndex) {
+                context.go(_routes[i]);
+              }
+            },
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            height: 60.h,
+            indicatorColor: cs.primary.withValues(alpha: 0.1),
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home_rounded, color: cs.primary),
+                label: t.t('nav.home'),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.route_outlined),
+                selectedIcon: Icon(Icons.route_rounded, color: cs.primary),
+                label: t.t('nav.roadmap'),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.work_outline_rounded),
+                selectedIcon: Icon(Icons.work_rounded, color: cs.primary),
+                label: t.t('nav.applications'),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.auto_awesome_outlined),
+                selectedIcon: Icon(Icons.auto_awesome_rounded, color: cs.primary),
+                label: t.t('nav.assistant'),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.person_outline_rounded),
+                selectedIcon: Icon(Icons.person_rounded, color: cs.primary),
+                label: t.t('nav.profile'),
+              ),
+            ],
+          ),
         ),
       ),
     );
