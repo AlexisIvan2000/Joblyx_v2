@@ -175,6 +175,41 @@ void main() {
       container.dispose();
     });
 
+    test('archiveRoadmap resets state', () async {
+      final (:container, :adapter, :notifier) = _setup(
+        statusResponse: {'generation_status': 'ready', 'has_roadmap': true},
+        roadmapResponse: {
+          'id': 'r1',
+          'summary': {},
+          'phases': [],
+          'status': 'active',
+        },
+      );
+      await notifier.loadStatus();
+
+      adapter.onPost('/roadmap/archive', (server) {
+        server.reply(200, {'message': 'Roadmap archived'});
+      });
+
+      await notifier.archiveRoadmap();
+
+      final state = container.read(roadmapProvider);
+      expect(state.hasRoadmap, false);
+      expect(state.generationStatus, 'idle');
+      expect(state.roadmap, isNull);
+      container.dispose();
+    });
+
+    test('streamingPhases est vide par défaut', () async {
+      final (:container, :adapter, :notifier) = _setup();
+      await notifier.loadStatus();
+
+      final state = container.read(roadmapProvider);
+      expect(state.streamingPhases, isEmpty);
+      expect(state.streamingText, isEmpty);
+      container.dispose();
+    });
+
     test('updatePhaseNotes updates phase and reloads', () async {
       final (:container, :adapter, :notifier) = _setup(
         statusResponse: {'generation_status': 'ready', 'has_roadmap': true},

@@ -314,6 +314,17 @@ class _HistoryCard extends StatelessWidget {
     final createdAt = item['created_at'] as String? ?? '';
     final phases = (item['phases'] as List?) ?? [];
     final phaseCount = phases.length;
+    final completedCount = phases
+        .where((p) => (p as Map<String, dynamic>)['completed'] == true)
+        .length;
+    final progress = phaseCount > 0 ? completedCount / phaseCount : 0.0;
+
+    // Titres des phases (max 3)
+    final phaseTitles = phases
+        .take(3)
+        .map((p) => (p as Map<String, dynamic>)['title'] as String? ?? '')
+        .where((t) => t.isNotEmpty)
+        .toList();
 
     // Formater la date
     String dateStr = '';
@@ -337,7 +348,7 @@ class _HistoryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Date de création
+              // En-tête : date + chevron
               Row(
                 children: [
                   Icon(Icons.calendar_today_rounded,
@@ -358,15 +369,86 @@ class _HistoryCard extends StatelessWidget {
               ),
               SizedBox(height: 10.h),
 
-              // Phase count
-              if (phaseCount > 0)
-                Text(
-                  '$phaseCount ${t.t('dashboard.phases_label').toLowerCase()}',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: cs.onSurfaceVariant,
+              // Titres des phases
+              if (phaseTitles.isNotEmpty) ...[
+                ...phaseTitles.asMap().entries.map((e) => Padding(
+                      padding: EdgeInsets.only(bottom: 3.h),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 18.w,
+                            height: 18.w,
+                            decoration: BoxDecoration(
+                              color: cs.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${e.key + 1}',
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              e.value,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: cs.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+                if (phaseCount > 3)
+                  Padding(
+                    padding: EdgeInsets.only(left: 26.w),
+                    child: Text(
+                      '+${phaseCount - 3} ${t.t('dashboard.history_more_phases')}',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
                   ),
-                ),
+                SizedBox(height: 10.h),
+              ],
+
+              // Barre de progression
+              Row(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4.r),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6.h,
+                        backgroundColor: cs.surfaceContainerHighest,
+                        color: completedCount == phaseCount && phaseCount > 0
+                            ? const Color(0xFF5DCAA5)
+                            : cs.primary,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Text(
+                    '$completedCount/$phaseCount',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

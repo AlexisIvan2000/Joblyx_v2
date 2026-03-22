@@ -349,6 +349,7 @@
         "history_delete_all": "Tout supprimer",
         "history_delete_all_confirm": "Toutes les roadmaps archivées seront définitivement supprimées. Cette action est irréversible.",
         "history_deleted_all": "{count} roadmap(s) supprimée(s)",
+        "history_more_phases": "phase(s) de plus",
         "add_phase": "Ajouter une phase",
         "add_phase_title": "Nouvelle phase",
         "phase_title_label": "Titre de la phase",

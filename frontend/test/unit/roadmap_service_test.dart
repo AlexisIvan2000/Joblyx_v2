@@ -215,5 +215,47 @@ void main() {
       final result = await svc.restoreRoadmap('r1');
       expect(result['status'], 'active');
     });
+
+    // archiveRoadmap
+    test('archiveRoadmap appelle POST /roadmap/archive', () async {
+      final (:svc, :adapter) = _createMockService();
+      adapter.onPost('/roadmap/archive', (server) {
+        server.reply(200, {'message': 'Roadmap archived'});
+      });
+
+      // Ne doit pas throw
+      await svc.archiveRoadmap();
+    });
+
+    // deleteRoadmap
+    test('deleteRoadmap appelle DELETE /roadmap/{id}', () async {
+      final (:svc, :adapter) = _createMockService();
+      adapter.onDelete('/roadmap/r1', (server) {
+        server.reply(200, {'message': 'Roadmap deleted'});
+      });
+
+      await svc.deleteRoadmap('r1');
+    });
+
+    // deleteAllArchived
+    test('deleteAllArchived retourne le nombre supprimé', () async {
+      final (:svc, :adapter) = _createMockService();
+      adapter.onDelete('/roadmap', (server) {
+        server.reply(200, {'message': '3 roadmap(s) deleted', 'count': 3});
+      });
+
+      final count = await svc.deleteAllArchived();
+      expect(count, 3);
+    });
+
+    test('deleteAllArchived retourne 0 si aucune archivée', () async {
+      final (:svc, :adapter) = _createMockService();
+      adapter.onDelete('/roadmap', (server) {
+        server.reply(200, {'message': '0 roadmap(s) deleted', 'count': 0});
+      });
+
+      final count = await svc.deleteAllArchived();
+      expect(count, 0);
+    });
   });
 }

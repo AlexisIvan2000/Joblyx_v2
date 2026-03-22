@@ -348,6 +348,7 @@
         "history_delete_all": "Delete all",
         "history_delete_all_confirm": "All archived roadmaps will be permanently deleted. This action cannot be undone.",
         "history_deleted_all": "{count} roadmap(s) deleted",
+        "history_more_phases": "more phase(s)",
         "add_phase": "Add phase",
         "add_phase_title": "New phase",
         "phase_title_label": "Phase title",

@@ -156,7 +156,7 @@ class RoadmapScreen extends ConsumerWidget {
     }
   }
 
-  /// Archiver l'actuelle et passer en mode manuel (roadmap vide).
+  /// Archiver l'actuelle et naviguer vers le formulaire de création manuelle.
   Future<void> _newManual(
     BuildContext context,
     WidgetRef ref,
@@ -170,12 +170,8 @@ class RoadmapScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
 
     try {
-      final notifier = ref.read(roadmapProvider.notifier);
-      // Créer une roadmap manuelle vide (archive l'actuelle côté backend)
-      await notifier.createRoadmap([]);
-      if (context.mounted) {
-        AppSnackbar.success(context, t.t('dashboard.manual_created'));
-      }
+      await ref.read(roadmapProvider.notifier).archiveRoadmap();
+      if (context.mounted) context.push('/roadmap/create');
     } catch (_) {
       if (context.mounted) {
         AppSnackbar.error(context, t.t('dashboard.error_title'));
