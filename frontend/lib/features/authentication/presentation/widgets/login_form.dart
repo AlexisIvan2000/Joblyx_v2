@@ -6,6 +6,7 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
 import 'package:frontend/features/authentication/presentation/widgets/verify_email_dialog.dart';
+import 'package:frontend/features/authentication/presentation/widgets/forgot_password_dialog.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -184,7 +185,10 @@ class _LoginFormState extends State<LoginForm> {
             Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
-                onTap: () {},
+                onTap: () => showForgotPasswordDialog(
+                  context,
+                  initialEmail: _emailController.text.trim(),
+                ),
                 child: Text(
                   t.t('login.forgot_password'),
                   style: theme.textTheme.bodyMedium?.copyWith(

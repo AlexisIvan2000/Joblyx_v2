@@ -1,7 +1,7 @@
 """Tests for services/users/users.py — user profile operations."""
 
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
@@ -12,8 +12,15 @@ from tests.conftest import FAKE_USER_ID, FAKE_OTP_CODE, FAKE_OTP_HASH, _make_use
 
 
 @pytest.fixture
-def user_service(mock_auth_repo, mock_otp_service):
-    return UserService(mock_auth_repo, mock_otp_service)
+def mock_rt_repo():
+    repo = AsyncMock()
+    repo.revoke_all_for_user = AsyncMock()
+    return repo
+
+
+@pytest.fixture
+def user_service(mock_auth_repo, mock_otp_service, mock_rt_repo):
+    return UserService(mock_auth_repo, mock_otp_service, mock_rt_repo)
 
 
 # ─── update_profile ──────────────────────────────────────────────────

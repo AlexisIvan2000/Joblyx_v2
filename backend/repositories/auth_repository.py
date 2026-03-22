@@ -71,3 +71,10 @@ class AuthRepository:
             update(User).where(User.id == user_id).values(verification_attempts=0)
         )
         await self.session.flush()
+
+    async def delete_user(self, user_id: str) -> None:
+        """Supprime le user — les FK CASCADE suppriment toutes les données liées."""
+        user = await self.get_user_by_id(user_id)
+        if user:
+            await self.session.delete(user)
+            await self.session.flush()

@@ -76,4 +76,9 @@ class UserService {
     final response = await _dio.post('/users/me/avatar', data: formData);
     return response.data as Map<String, dynamic>;
   }
+
+  /// Supprime le compte de l'utilisateur.
+  Future<void> deleteAccount(String email) async {
+    await _dio.delete('/users/me', queryParameters: {'email': email});
+  }
 }

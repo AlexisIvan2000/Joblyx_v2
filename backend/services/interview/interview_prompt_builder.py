@@ -39,13 +39,14 @@ Le délimiteur <<<FEEDBACK_JSON>>> TOUJOURS présent sur sa propre ligne."""
 
 _SUMMARY_PROMPT = """Bilan d'entretien. Retourne ce JSON :
 {{
-  "overall_score": int,
-  "category_scores": {{"technical": int, "behavioral": int, "communication": int, "problem_solving": int, "candidate_questions": int}},
+  "overall_score": int (0-100),
+  "category_scores": {{"technical": int (0-100), "behavioral": int (0-100), "communication": int (0-100), "problem_solving": int (0-100), "candidate_questions": int (0-100)}},
   "summary": "3-4 phrases",
   "top_strengths": ["str", "str", "str"],
   "areas_to_improve": [{{"area": "str", "advice": "str"}}],
   "recommendation": "Embauche recommandée | À revoir | Pas encore prêt — explication"
 }}
+IMPORTANT : Tous les scores (overall_score et category_scores) sont sur 100. Exemple : 72, 85, 60 — PAS 7, 8, 6.
 candidate_questions = qualité des questions posées par le candidat.
 {lang_instruction}"""
 

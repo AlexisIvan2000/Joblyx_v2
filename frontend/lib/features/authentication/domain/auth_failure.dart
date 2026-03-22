@@ -34,6 +34,7 @@ class AuthFailure {
 
     // Password
     'Current password is incorrect': 'auth_error.wrong_current_password',
+    'New password must be different from current password': 'auth_error.same_password',
     'Invalid password': 'auth_error.invalid_password',
 
     // Refresh token / session

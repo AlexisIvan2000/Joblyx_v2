@@ -86,6 +86,36 @@ class AuthService {
     }
   }
 
+  /// Demande un code de réinitialisation de mot de passe.
+  Future<String> forgotPassword({required String email}) async {
+    try {
+      final response = await _dio.post('/auth/forgot-password', data: {
+        'email': email,
+      });
+      return response.data['message'] as String;
+    } on DioException catch (e) {
+      throw AuthException.fromDioError(e);
+    }
+  }
+
+  /// Réinitialise le mot de passe avec le code OTP.
+  Future<String> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _dio.post('/auth/reset-password', data: {
+        'email': email,
+        'code': code,
+        'new_password': newPassword,
+      });
+      return response.data['message'] as String;
+    } on DioException catch (e) {
+      throw AuthException.fromDioError(e);
+    }
+  }
+
   /// Logout the current user.
   Future<void> logout() async {
     final refreshToken = await _storage.getRefreshToken();

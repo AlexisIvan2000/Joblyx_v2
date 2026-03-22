@@ -208,6 +208,7 @@
         "no_email_change_code": "No email change code found",
         "email_already_in_use": "This email is already in use",
         "wrong_current_password": "Current password is incorrect",
+        "same_password": "New password must be different from your current password",
         "invalid_password": "Invalid password",
         "session_expired": "Your session has expired. Please log in again",
         "user_not_found": "User not found",
@@ -483,6 +484,10 @@
         "chat_ended": "Interview ended",
         "feedback_label": "Feedback",
         "reconnecting": "Connection lost, reconnecting...",
+        "connection_lost": "Connection lost",
+        "reconnect_button": "Reconnect",
+        "timeout_message": "No response received",
+        "resend_button": "Resend",
         "end_button": "End",
         "end_early_title": "End interview?",
         "end_early_confirm": "Are you sure you want to end the interview early?",
@@ -515,6 +520,22 @@
         "strengths_title": "Strengths",
         "recommendations_title": "Recommendations",
         "missing_sections_title": "Missing Sections"
+    },
+
+    "forgot_password": {
+        "title": "Forgot password",
+        "reset_title": "Reset password",
+        "email_instruction": "Enter your email address. If an account exists, you'll receive a reset code.",
+        "send_code": "Send code",
+        "code_instruction": "A 6-digit code has been sent to {email}.",
+        "code_label": "Reset code",
+        "code_invalid": "Code must be 6 digits",
+        "new_password": "New password",
+        "password_required": "Password is required",
+        "password_weak": "At least 8 characters with a special character",
+        "reset_button": "Reset password",
+        "resend_code": "Resend code",
+        "success": "Password reset successfully. You can now log in."
     },
 
     "settings": {
@@ -565,6 +586,11 @@
         "section_contact": "Contact us",
         "contact_email": "Support email",
         "delete_account": "Delete my account",
+        "delete_account_warning": "This will permanently delete your account, all your data, roadmaps, applications, and analyses. This action cannot be undone.",
+        "delete_account_email_hint": "Enter your email to confirm",
+        "delete_account_confirm": "Delete permanently",
+        "delete_account_success": "Account deleted successfully",
+        "delete_account_error": "Could not delete account. Make sure the email matches.",
         "app_version": "Version",
         "save": "Save",
         "required": "This field is required"

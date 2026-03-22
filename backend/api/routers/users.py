@@ -111,6 +111,69 @@ async def upload_avatar(
     return {"avatar_url": avatar_url, "file_key": file_key}
 
 
+@router.delete("/me")
+async def delete_account(
+    email: str,
+    current_user: User = Depends(get_current_user),
+    svc: UserService = Depends(get_user_service),
+    r2: R2Service = Depends(get_r2_service),
+):
+    """Supprime le compte, toutes les données et les fichiers R2."""
+    user_id = str(current_user.id)
+
+    # Vérifier que l'email correspond (confirmation)
+    if current_user.email != email:
+        raise HTTPException(status_code=400, detail="Email does not match your account")
+
+    # Collecter les fichiers R2 AVANT de supprimer le user (CASCADE)
+    from sqlalchemy import select
+    from models.db_models import Application, CoachSession
+    from core.database import get_db_session
+
+    # Récupérer une session DB fraîche via le repo du service
+    session = svc.repo.session
+
+    # CVs des candidatures
+    app_keys = await session.execute(
+        select(Application.cv_file_key).where(
+            Application.user_id == user_id,
+            Application.cv_file_key.isnot(None),
+        )
+    )
+    cv_keys = [r[0] for r in app_keys.all()]
+
+    # CVs du coach
+    coach_keys = await session.execute(
+        select(CoachSession.cv_file_key).where(
+            CoachSession.user_id == user_id,
+            CoachSession.cv_file_key.isnot(None),
+        )
+    )
+    cv_keys.extend(r[0] for r in coach_keys.all())
+
+    # Avatar (file_key R2, pas une URL externe)
+    avatar_key = None
+    if current_user.avatar_url and not current_user.avatar_url.startswith("http"):
+        avatar_key = current_user.avatar_url
+
+    # Supprimer le user en DB (CASCADE supprime tout)
+    await svc.delete_account(user_id, email)
+
+    # Nettoyer R2 (best-effort, ne bloque pas si ça échoue)
+    for key in cv_keys:
+        try:
+            await r2.delete_cv(key)
+        except Exception:
+            pass
+    if avatar_key:
+        try:
+            await r2.delete_avatar(avatar_key)
+        except Exception:
+            pass
+
+    return {"message": "Account deleted successfully"}
+
+
 @router.post("/me/resend-email-verification")
 async def resend_email_verification(
     current_user: User = Depends(get_current_user),

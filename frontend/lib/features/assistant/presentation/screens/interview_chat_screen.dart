@@ -20,28 +20,41 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _tipDismissed = false;
+  // Sauvegarder la ref au notifier pour pouvoir disconnect dans dispose()
+  late final InterviewChatNotifier _chatNotifier;
 
   @override
   void initState() {
     super.initState();
+    _chatNotifier = ref.read(interviewChatProvider.notifier);
     _connectIfNeeded();
   }
 
   void _connectIfNeeded() {
     final chatState = ref.read(interviewChatProvider);
+    final notifier = ref.read(interviewChatProvider.notifier);
 
-    // Si le chat n'est pas initialisé (reprise), charger les messages
+    // Déconnecter toute connexion précédente
+    notifier.disconnect();
+
     if (chatState.sessionId != widget.sessionId || chatState.messages.isEmpty) {
       _loadExistingSession();
     } else {
+      // Session déjà chargée, juste connecter le WS
       _connectWs();
     }
   }
 
   Future<void> _connectWs() async {
+    final notifier = ref.read(interviewChatProvider.notifier);
+    final chatState = ref.read(interviewChatProvider);
+
+    // Ne pas reconnecter si déjà connecté ou si la session est terminée
+    if (chatState.status == 'connected' || chatState.status == 'completed') return;
+
     final token = await AuthStorage().getAccessToken();
     if (token != null && mounted) {
-      ref.read(interviewChatProvider.notifier).connectWebSocket(token);
+      notifier.connectWebSocket(token);
     }
   }
 
@@ -51,13 +64,16 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
       final session = await svc.getSession(widget.sessionId);
       if (!mounted) return;
 
+      final isCompleted = session['status'] == 'completed';
       ref.read(interviewChatProvider.notifier).loadExistingMessages(
         sessionId: widget.sessionId,
         jobTitle: session['job_title'] as String? ?? '',
         messages: (session['messages'] as List?)?.cast<Map<String, dynamic>>() ?? [],
+        isCompleted: isCompleted,
       );
 
-      if (session['status'] == 'in_progress') {
+      // Ne connecter le WS que si la session est en cours
+      if (!isCompleted) {
         await _connectWs();
       }
     } catch (_) {}
@@ -67,7 +83,7 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    ref.read(interviewChatProvider.notifier).disconnect();
+    _chatNotifier.disconnect();
     super.dispose();
   }
 
@@ -127,15 +143,19 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
     // Naviguer vers le bilan quand le summary arrive
     if (chatState.summary != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.go('/assistant/interview/summary/${widget.sessionId}');
+        if (mounted) context.go('/assistant/interview/summary/${widget.sessionId}');
       });
     }
 
     // Auto-scroll quand un nouveau message arrive
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _scrollToBottom();
+    });
 
     final isCompleted = chatState.status == 'completed';
-    final canSend = !chatState.isAiTyping && !isCompleted;
+    final isError = chatState.status == 'error';
+    final isTimeout = chatState.errorMessage == 'timeout';
+    final canSend = !chatState.isAiTyping && !isCompleted && !isError;
 
     return Scaffold(
       appBar: AppBar(
@@ -193,7 +213,7 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
               ),
             ),
 
-          // Reconnexion
+          // Reconnexion / Erreur / Timeout
           if (chatState.status == 'reconnecting')
             Container(
               padding: EdgeInsets.symmetric(vertical: 6.h),
@@ -201,6 +221,42 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
               child: Center(
                 child: Text(t.t('interview.reconnecting'),
                     style: TextStyle(fontSize: 11.sp, color: cs.error)),
+              ),
+            ),
+          if (isError && !isTimeout)
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
+              color: cs.error.withValues(alpha: 0.1),
+              child: Row(
+                children: [
+                  Icon(Icons.wifi_off_rounded, size: 16.sp, color: cs.error),
+                  SizedBox(width: 8.w),
+                  Expanded(child: Text(t.t('interview.connection_lost'),
+                      style: TextStyle(fontSize: 11.sp, color: cs.error))),
+                  TextButton(
+                    onPressed: () => ref.read(interviewChatProvider.notifier).reconnect(),
+                    child: Text(t.t('interview.reconnect_button'),
+                        style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ),
+            ),
+          if (isTimeout)
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
+              color: const Color(0xFFFFB347).withValues(alpha: 0.1),
+              child: Row(
+                children: [
+                  Icon(Icons.timer_off_rounded, size: 16.sp, color: const Color(0xFFFFB347)),
+                  SizedBox(width: 8.w),
+                  Expanded(child: Text(t.t('interview.timeout_message'),
+                      style: TextStyle(fontSize: 11.sp, color: const Color(0xFFFFB347)))),
+                  TextButton(
+                    onPressed: () => ref.read(interviewChatProvider.notifier).resendLastMessage(),
+                    child: Text(t.t('interview.resend_button'),
+                        style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700)),
+                  ),
+                ],
               ),
             ),
 
@@ -224,8 +280,8 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
             ),
           ),
 
-          // Champ de saisie
-          Container(
+          // Champ de saisie (caché en mode lecture)
+          if (!isCompleted) Container(
             padding: EdgeInsets.fromLTRB(12.w, 8.h, 8.w, MediaQuery.of(context).padding.bottom + 8.h),
             decoration: BoxDecoration(
               color: cs.surface,

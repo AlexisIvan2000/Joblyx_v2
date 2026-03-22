@@ -141,11 +141,25 @@ final interviewChatProvider =
 class InterviewChatNotifier extends Notifier<InterviewChatState> {
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
+  bool _active = true;
+  bool _intentionalDisconnect = false;
+  int _reconnectAttempts = 0;
+  String? _lastToken;
+  String? _lastUserMessage;
+  Timer? _responseTimer;
 
   @override
-  InterviewChatState build() => const InterviewChatState();
+  InterviewChatState build() {
+    _active = true;
+    _intentionalDisconnect = false;
+    _reconnectAttempts = 0;
+    return const InterviewChatState();
+  }
 
-  /// Initialise le chat avec la première question (déjà reçue via REST).
+  bool get _canUpdate => _active;
+
+  // ─── Init ─────────────────────────────────────────────────────
+
   void initWithFirstQuestion({
     required String sessionId,
     required String jobTitle,
@@ -153,21 +167,19 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
     required int questionNumber,
   }) {
     state = InterviewChatState(
-      status: 'connected',
+      status: 'idle',
       sessionId: sessionId,
       jobTitle: jobTitle,
-      messages: [
-        ChatMessage(role: 'assistant', content: firstMessage),
-      ],
+      messages: [ChatMessage(role: 'assistant', content: firstMessage)],
       questionNumber: questionNumber,
     );
   }
 
-  /// Charge une session existante (reprise).
   void loadExistingMessages({
     required String sessionId,
     required String jobTitle,
     required List<Map<String, dynamic>> messages,
+    bool isCompleted = false,
   }) {
     final chatMessages = messages.map((m) => ChatMessage(
           role: m['role'] as String,
@@ -175,7 +187,6 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
           feedback: m['feedback'] as Map<String, dynamic>?,
         )).toList();
 
-    // Trouver le dernier question_number
     int lastQ = 0;
     for (final m in messages) {
       final f = m['feedback'] as Map<String, dynamic>?;
@@ -185,7 +196,7 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
     }
 
     state = InterviewChatState(
-      status: 'connected',
+      status: isCompleted ? 'completed' : 'idle',
       sessionId: sessionId,
       jobTitle: jobTitle,
       messages: chatMessages,
@@ -193,35 +204,88 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
     );
   }
 
-  /// Connecte le WebSocket.
+  // ─── WebSocket ────────────────────────────────────────────────
+
   void connectWebSocket(String token) {
+    // Fermer toute connexion existante
+    _closeChannel();
+
+    _active = true;
+    _intentionalDisconnect = false;
+    _lastToken = token;
+    _reconnectAttempts = 0;
+
+    debugPrint('[WS] Connecting to session ${state.sessionId}');
+
     final svc = ref.read(interviewServiceProvider);
     _channel = svc.connectWebSocket(state.sessionId, token);
-    state = state.copyWith(status: 'connected');
 
     _subscription = _channel!.stream.listen(
-      (data) => _handleWebSocketMessage(data as String),
+      (data) {
+        _reconnectAttempts = 0; // Réinitialiser le compteur de reconnexion
+        _handleWebSocketMessage(data as String);
+      },
       onDone: () {
-        if (state.status == 'connected') {
+        debugPrint('[WS] Connection closed (intentional=$_intentionalDisconnect)');
+        if (!_canUpdate || _intentionalDisconnect) return;
+
+        // UNE seule tentative de reconnexion
+        if (_reconnectAttempts < 1 && _lastToken != null) {
+          _reconnectAttempts++;
           state = state.copyWith(status: 'reconnecting');
-          // Tentative de reconnexion après 2s
           Future.delayed(const Duration(seconds: 2), () {
-            if (state.status == 'reconnecting') {
-              connectWebSocket(token);
+            if (_canUpdate && state.status == 'reconnecting' && _lastToken != null) {
+              debugPrint('[WS] Reconnection attempt $_reconnectAttempts');
+              connectWebSocket(_lastToken!);
             }
           });
+        } else {
+          state = state.copyWith(
+            status: 'error',
+            errorMessage: 'Connection lost',
+            isAiTyping: false,
+          );
         }
       },
       onError: (e) {
-        debugPrint('WebSocket error: $e');
-        state = state.copyWith(status: 'error', errorMessage: e.toString());
+        debugPrint('[WS] Error: $e');
+        if (!_canUpdate) return;
+        state = state.copyWith(
+          status: 'error',
+          errorMessage: e.toString(),
+          isAiTyping: false,
+        );
       },
     );
+
+    state = state.copyWith(status: 'connected');
   }
 
-  /// Envoie un message utilisateur.
+  /// Reconnexion manuelle (depuis le bouton "Reconnecter").
+  void reconnect() {
+    if (_lastToken != null) {
+      _reconnectAttempts = 0;
+      connectWebSocket(_lastToken!);
+    }
+  }
+
+  // ─── Envoi de message ─────────────────────────────────────────
+
   void sendMessage(String text) {
     if (text.trim().isEmpty || state.isAiTyping) return;
+
+    // Vérifier que le WebSocket est connecté
+    if (_channel == null || state.status != 'connected') {
+      debugPrint('[WS] Cannot send: not connected (status=${state.status})');
+      // Tenter de reconnecter puis renvoyer
+      if (_lastToken != null) {
+        _lastUserMessage = text.trim();
+        reconnect();
+      }
+      return;
+    }
+
+    _lastUserMessage = text.trim();
 
     // Ajouter le message utilisateur (optimistic UI)
     final updatedMessages = [
@@ -231,16 +295,47 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
     state = state.copyWith(messages: updatedMessages, isAiTyping: true);
 
     // Envoyer via WebSocket
-    _channel?.sink.add(jsonEncode({'message': text.trim()}));
+    debugPrint('[WS] Sending message: ${text.trim().substring(0, text.trim().length.clamp(0, 50))}...');
+    _channel!.sink.add(jsonEncode({'message': text.trim()}));
+
+    // Timer de timeout — 30s sans réponse
+    _responseTimer?.cancel();
+    _responseTimer = Timer(const Duration(seconds: 30), () {
+      if (_canUpdate && state.isAiTyping) {
+        debugPrint('[WS] Response timeout after 30s');
+        state = state.copyWith(
+          isAiTyping: false,
+          errorMessage: 'timeout',
+        );
+      }
+    });
   }
 
+  /// Renvoie le dernier message (après un timeout).
+  void resendLastMessage() {
+    if (_lastUserMessage != null) {
+      // Retirer le dernier message user de la liste (il sera re-ajouté par sendMessage)
+      final messages = List<ChatMessage>.from(state.messages);
+      if (messages.isNotEmpty && messages.last.role == 'user') {
+        messages.removeLast();
+      }
+      state = state.copyWith(messages: messages, isAiTyping: false, errorMessage: null);
+      sendMessage(_lastUserMessage!);
+    }
+  }
+
+  // ─── Handlers WebSocket ───────────────────────────────────────
+
   void _handleWebSocketMessage(String raw) {
+    if (!_canUpdate) return;
     try {
       final data = jsonDecode(raw) as Map<String, dynamic>;
       final type = data['type'] as String? ?? '';
+      debugPrint('[WS] Received: $type');
 
       switch (type) {
         case 'stream':
+          _cancelResponseTimer();
           _handleStreamChunk(data['text'] as String? ?? '');
         case 'stream_end':
           _handleStreamEnd();
@@ -249,24 +344,24 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
         case 'summary':
           _handleSummary(data['data'] as Map<String, dynamic>);
         case 'error':
+          _cancelResponseTimer();
           state = state.copyWith(
             isAiTyping: false,
             errorMessage: data['message'] as String?,
           );
       }
     } catch (e) {
-      debugPrint('WebSocket parse error: $e');
+      debugPrint('[WS] Parse error: $e\nRaw: $raw');
     }
   }
 
   void _handleStreamChunk(String text) {
+    if (!_canUpdate) return;
     final messages = List<ChatMessage>.from(state.messages);
 
     if (messages.isEmpty || messages.last.role != 'assistant' || !messages.last.isStreaming) {
-      // Créer une nouvelle bulle assistant en mode streaming
       messages.add(ChatMessage(role: 'assistant', content: text, isStreaming: true));
     } else {
-      // Ajouter au message assistant en cours
       final last = messages.removeLast();
       messages.add(last.copyWith(content: last.content + text));
     }
@@ -275,6 +370,7 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
   }
 
   void _handleStreamEnd() {
+    if (!_canUpdate) return;
     final messages = List<ChatMessage>.from(state.messages);
     if (messages.isNotEmpty && messages.last.isStreaming) {
       final last = messages.removeLast();
@@ -284,9 +380,10 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
   }
 
   void _handleFeedback(Map<String, dynamic> feedbackData) {
-    final messages = List<ChatMessage>.from(state.messages);
+    if (!_canUpdate) return;
+    _cancelResponseTimer();
 
-    // Attacher le feedback au dernier message assistant
+    final messages = List<ChatMessage>.from(state.messages);
     if (messages.isNotEmpty && messages.last.role == 'assistant') {
       final last = messages.removeLast();
       messages.add(last.copyWith(feedback: feedbackData));
@@ -300,31 +397,51 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
       questionNumber: questionNumber,
       isAiTyping: false,
       status: isLast ? 'completed' : state.status,
+      errorMessage: null,
     );
   }
 
   void _handleSummary(Map<String, dynamic> summaryData) {
+    if (!_canUpdate) return;
+    _cancelResponseTimer();
     state = state.copyWith(
       summary: summaryData,
       status: 'completed',
       isAiTyping: false,
     );
-    // Rafraîchir l'historique et l'usage
     ref.invalidate(interviewHistoryProvider);
     ref.invalidate(interviewUsageProvider);
   }
 
-  /// Ferme la connexion WebSocket.
-  void disconnect() {
-    _subscription?.cancel();
-    _channel?.sink.close();
-    _channel = null;
-    _subscription = null;
+  // ─── Cleanup ──────────────────────────────────────────────────
+
+  void _cancelResponseTimer() {
+    _responseTimer?.cancel();
+    _responseTimer = null;
   }
 
-  /// Reset complet.
+  void _closeChannel() {
+    _subscription?.cancel();
+    _subscription = null;
+    _channel?.sink.close();
+    _channel = null;
+    _cancelResponseTimer();
+  }
+
+  void disconnect() {
+    debugPrint('[WS] Disconnect (intentional)');
+    _active = false;
+    _intentionalDisconnect = true;
+    _closeChannel();
+  }
+
   void reset() {
     disconnect();
+    _active = true;
+    _intentionalDisconnect = false;
+    _reconnectAttempts = 0;
+    _lastToken = null;
+    _lastUserMessage = null;
     state = const InterviewChatState();
   }
 }

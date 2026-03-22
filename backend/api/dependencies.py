@@ -23,8 +23,9 @@ async def get_auth_service(session: AsyncSession = Depends(get_db_session)) -> E
 
 async def get_user_service(session: AsyncSession = Depends(get_db_session)) -> UserService:
     repo = AuthRepository(session)
+    rt_repo = RefreshTokenRepository(session)
     otp_svc = OtpService(repo)
-    return UserService(repo, otp_svc)
+    return UserService(repo, otp_svc, rt_repo)
 
 async def get_roadmap_service(session: AsyncSession = Depends(get_db_session)) -> RoadmapService:
     return RoadmapService(session)

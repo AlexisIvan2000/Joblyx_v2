@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
+import 'package:frontend/core/widgets/app_snackbar.dart';
+import 'package:frontend/features/authentication/data/auth_storage.dart';
+import 'package:frontend/features/settings/data/user_service.dart';
 import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
 
 const _termsUrl = 'https://joblyx.com/conditions-utilisation';
@@ -318,6 +322,59 @@ class _DeleteAccountButton extends StatelessWidget {
   final AppLocalizations t;
   const _DeleteAccountButton({required this.cs, required this.t});
 
+  Future<void> _confirmDelete(BuildContext context) async {
+    final emailController = TextEditingController();
+    final confirmed = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: cs.surface,
+        title: Text(t.t('settings.delete_account')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(t.t('settings.delete_account_warning'),
+                style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant)),
+            SizedBox(height: 14.h),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: t.t('settings.delete_account_email_hint'),
+                prefixIcon: Icon(Icons.email_outlined, size: 20.sp),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(t.t('settings.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, emailController.text.trim()),
+            style: FilledButton.styleFrom(backgroundColor: cs.error),
+            child: Text(t.t('settings.delete_account_confirm')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == null || confirmed.isEmpty || !context.mounted) return;
+
+    try {
+      await UserService().deleteAccount(confirmed);
+      if (!context.mounted) return;
+      await AuthStorage().clearTokens();
+      if (!context.mounted) return;
+      AppSnackbar.success(context, t.t('settings.delete_account_success'));
+      GoRouter.of(context).go('/first-page');
+    } catch (_) {
+      if (!context.mounted) return;
+      AppSnackbar.error(context, t.t('settings.delete_account_error'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -325,9 +382,7 @@ class _DeleteAccountButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(30.r),
       child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
-        onTap: () {
-          // TODO: implémenter la suppression de compte
-        },
+        onTap: () => _confirmDelete(context),
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
           decoration: BoxDecoration(

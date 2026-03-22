@@ -1,3 +1,4 @@
+import re
 from fastapi import HTTPException, status
 from models.schemas import UserCreate, UserLogin
 from core.security import Security
@@ -7,6 +8,7 @@ from services.emailing.otp_service import OtpService
 from datetime import datetime, timedelta, timezone
 
 MAX_VERIFICATION_ATTEMPTS = 5
+_PASSWORD_SPECIAL = re.compile(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''')
 
 
 class EmailPasswordAuth:
@@ -16,6 +18,13 @@ class EmailPasswordAuth:
         self.otp_svc = otp_service
 
     async def register_user(self, user: UserCreate):
+        # Validation mot de passe côté serveur
+        if len(user.password) < 8 or not _PASSWORD_SPECIAL.search(user.password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must be at least 8 characters with a special character"
+            )
+
         if await self.repo.get_user_by_email(user.email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

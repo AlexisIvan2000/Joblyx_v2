@@ -209,6 +209,7 @@
         "no_email_change_code": "Aucun code de changement d'email trouvé",
         "email_already_in_use": "Cet email est déjà utilisé",
         "wrong_current_password": "Le mot de passe actuel est incorrect",
+        "same_password": "Le nouveau mot de passe doit être différent de l'actuel",
         "invalid_password": "Mot de passe invalide",
         "session_expired": "Votre session a expiré. Veuillez vous reconnecter",
         "user_not_found": "Utilisateur introuvable",
@@ -484,6 +485,10 @@
         "chat_ended": "Entretien terminé",
         "feedback_label": "Feedback",
         "reconnecting": "Connexion perdue, reconnexion...",
+        "connection_lost": "Connexion perdue",
+        "reconnect_button": "Reconnecter",
+        "timeout_message": "Réponse non reçue",
+        "resend_button": "Renvoyer",
         "end_button": "Terminer",
         "end_early_title": "Terminer l'entretien ?",
         "end_early_confirm": "Voulez-vous vraiment terminer l'entretien maintenant ?",
@@ -516,6 +521,22 @@
         "strengths_title": "Points forts",
         "recommendations_title": "Recommandations",
         "missing_sections_title": "Sections manquantes"
+    },
+
+    "forgot_password": {
+        "title": "Mot de passe oublié",
+        "reset_title": "Réinitialiser le mot de passe",
+        "email_instruction": "Entrez votre adresse email. Si un compte existe, vous recevrez un code de réinitialisation.",
+        "send_code": "Envoyer le code",
+        "code_instruction": "Un code à 6 chiffres a été envoyé à {email}.",
+        "code_label": "Code de réinitialisation",
+        "code_invalid": "Le code doit contenir 6 chiffres",
+        "new_password": "Nouveau mot de passe",
+        "password_required": "Le mot de passe est requis",
+        "password_weak": "Au moins 8 caractères avec un caractère spécial",
+        "reset_button": "Réinitialiser",
+        "resend_code": "Renvoyer le code",
+        "success": "Mot de passe réinitialisé avec succès. Vous pouvez vous connecter."
     },
 
     "settings": {
@@ -568,6 +589,11 @@
         "section_contact": "Nous contacter",
         "contact_email": "Email du support",
         "delete_account": "Supprimer mon compte",
+        "delete_account_warning": "Ceci supprimera définitivement votre compte, toutes vos données, roadmaps, candidatures et analyses. Cette action est irréversible.",
+        "delete_account_email_hint": "Entrez votre email pour confirmer",
+        "delete_account_confirm": "Supprimer définitivement",
+        "delete_account_success": "Compte supprimé avec succès",
+        "delete_account_error": "Impossible de supprimer le compte. Vérifiez que l'email correspond.",
         "app_version": "Version"
     },
 
