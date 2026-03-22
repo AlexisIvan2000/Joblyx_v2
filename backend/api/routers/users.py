@@ -13,13 +13,17 @@ async def get_me(
     current_user: User = Depends(get_current_user),
     r2: R2Service = Depends(get_r2_service),
 ):
-    # Génère une URL signée si l'utilisateur a un avatar
+    # Si l'avatar est une URL externe (ex: ui-avatars), la retourner directement.
+    # Si c'est un file_key R2 (ex: avatars/uuid.jpg), générer une URL signée.
     avatar_url = None
     if current_user.avatar_url:
-        try:
-            avatar_url = await r2.get_avatar_url(current_user.avatar_url)
-        except Exception:
-            avatar_url = None
+        if current_user.avatar_url.startswith("http"):
+            avatar_url = current_user.avatar_url
+        else:
+            try:
+                avatar_url = await r2.get_avatar_url(current_user.avatar_url)
+            except Exception:
+                avatar_url = None
 
     return {
         "id": str(current_user.id),

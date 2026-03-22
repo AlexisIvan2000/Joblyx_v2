@@ -27,7 +27,7 @@ class UserService:
         db_user = await self.repo.get_user_by_id(user_id)
         if not Security.verify_password(db_user.password_hash, current_password):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Current password is incorrect"
             )
         new_hash = Security.hash_password(new_password)
@@ -78,7 +78,7 @@ class UserService:
         db_user = await self.repo.get_user_by_id(user_id)
         if not Security.verify_password(db_user.password_hash, password):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid password"
             )
         if await self.repo.get_user_by_email(new_email):

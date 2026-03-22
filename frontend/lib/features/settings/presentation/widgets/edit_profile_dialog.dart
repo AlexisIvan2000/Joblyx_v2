@@ -53,7 +53,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
         lastName: _lastNameController.text.trim(),
       );
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop({
+        'first_name': _firstNameController.text.trim(),
+        'last_name': _lastNameController.text.trim(),
+      });
     } on DioException catch (e) {
       if (!mounted) return;
       final detail = e.response?.data is Map ? e.response?.data['detail'] : null;

@@ -51,14 +51,17 @@ class ApiClient {
         handler.next(options);
       },
       onError: (error, handler) async {
-        // Si 401 et pas un endpoint exempt → tenter le refresh
+        // Si 401, pas un endpoint exempt, et pas déjà un retry → tenter le refresh
+        final isRetry = error.requestOptions.extra['_retried'] == true;
         if (error.response?.statusCode == 401 &&
-            !_noRefreshPaths.contains(error.requestOptions.path)) {
+            !_noRefreshPaths.contains(error.requestOptions.path) &&
+            !isRetry) {
           final refreshed = await _refreshWithLock();
           if (refreshed) {
-            // Relancer la requête avec le nouveau token
+            // Relancer la requête une seule fois avec le nouveau token
             final token = await _storage.getAccessToken();
             error.requestOptions.headers['Authorization'] = 'Bearer $token';
+            error.requestOptions.extra['_retried'] = true;
             try {
               final response = await dio.fetch(error.requestOptions);
               return handler.resolve(response);

@@ -80,7 +80,7 @@ class _ChangeEmailDialogState extends State<ChangeEmailDialog> {
     try {
       await _userService.confirmEmailChange(code: _otpCode);
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(_emailController.text.trim());
     } on DioException catch (e) {
       if (!mounted) return;
       final detail = e.response?.data is Map ? e.response?.data['detail'] : null;

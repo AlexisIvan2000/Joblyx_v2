@@ -14,22 +14,30 @@ class UserNotifier extends AsyncNotifier<Map<String, dynamic>> {
     return svc.getMe();
   }
 
+  /// Recharge complète depuis le serveur (pull-to-refresh).
   Future<void> refresh() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => ref.read(userServiceProvider).getMe());
   }
 
-  Future<void> updateProfile({
-    String? firstName,
-    String? lastName,
-    String? avatarUrl,
-  }) async {
-    final svc = ref.read(userServiceProvider);
-    final updated = await svc.updateProfile(
-      firstName: firstName,
-      lastName: lastName,
-      avatarUrl: avatarUrl,
-    );
-    state = AsyncData(updated);
+  /// Met à jour le nom/prénom de manière optimiste.
+  void updateName({required String firstName, required String lastName}) {
+    final current = state.whenOrNull(data: (d) => d);
+    if (current == null) return;
+    state = AsyncData({...current, 'first_name': firstName, 'last_name': lastName});
+  }
+
+  /// Met à jour l'email de manière optimiste.
+  void updateEmail(String newEmail) {
+    final current = state.whenOrNull(data: (d) => d);
+    if (current == null) return;
+    state = AsyncData({...current, 'email': newEmail, 'pending_email': null});
+  }
+
+  /// Met à jour l'avatar de manière optimiste.
+  void updateAvatar(String avatarUrl) {
+    final current = state.whenOrNull(data: (d) => d);
+    if (current == null) return;
+    state = AsyncData({...current, 'avatar_url': avatarUrl});
   }
 }

@@ -145,11 +145,16 @@ class ProfileScreen extends ConsumerWidget {
                 subtitle: t.t('profile_screen.personal_info_sub'),
                 cs: cs,
                 onTap: () async {
-                  final changed = await showDialog<bool>(
+                  final result = await showDialog<Map<String, String>>(
                     context: context,
                     builder: (_) => EditProfileDialog(firstName: firstName, lastName: lastName),
                   );
-                  if (changed == true) ref.read(userProvider.notifier).refresh();
+                  if (result != null) {
+                    ref.read(userProvider.notifier).updateName(
+                      firstName: result['first_name']!,
+                      lastName: result['last_name']!,
+                    );
+                  }
                 },
               ),
 
@@ -186,15 +191,13 @@ class ProfileScreen extends ConsumerWidget {
                 subtitle: email,
                 cs: cs,
                 onTap: () async {
-                  final changed = await showDialog<bool>(
+                  final newEmail = await showDialog<String>(
                     context: context,
                     builder: (_) => ChangeEmailDialog(currentEmail: email),
                   );
-                  if (changed == true) {
-                    ref.read(userProvider.notifier).refresh();
-                    if (context.mounted) {
-                      AppSnackbar.success(context, t.t('settings.email_changed'));
-                    }
+                  if (newEmail != null && context.mounted) {
+                    ref.read(userProvider.notifier).updateEmail(newEmail);
+                    AppSnackbar.success(context, t.t('settings.email_changed'));
                   }
                 },
               ),
@@ -256,16 +259,20 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// Ouvre le picker (caméra ou galerie), upload sur le serveur, puis refresh le profil.
+  /// Ouvre le picker (caméra ou galerie), upload sur le serveur, met à jour le state.
   Future<void> _pickAndUpload(BuildContext context, WidgetRef ref, AppLocalizations t, ImageSource source) async {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: source, maxWidth: 800, maxHeight: 800, imageQuality: 85);
     if (image == null || !context.mounted) return;
 
     try {
-      await UserService().uploadAvatar(image.path);
+      final result = await UserService().uploadAvatar(image.path);
       if (!context.mounted) return;
-      ref.read(userProvider.notifier).refresh();
+      // Update optimiste avec l'URL signée retournée par le serveur
+      final avatarUrl = result['avatar_url'] as String?;
+      if (avatarUrl != null) {
+        ref.read(userProvider.notifier).updateAvatar(avatarUrl);
+      }
       AppSnackbar.success(context, t.t('profile_screen.photo_updated'));
     } catch (_) {
       if (!context.mounted) return;
