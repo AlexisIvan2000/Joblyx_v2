@@ -34,6 +34,9 @@ async def get_application_service(session: AsyncSession = Depends(get_db_session
     r2 = R2Service()
     return ApplicationService(repo, r2)
 
+def get_r2_service() -> R2Service:
+    return R2Service()
+
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     session: AsyncSession = Depends(get_db_session),

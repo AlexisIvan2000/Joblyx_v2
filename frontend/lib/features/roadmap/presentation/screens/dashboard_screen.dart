@@ -8,6 +8,7 @@ import 'package:frontend/core/widgets/staggered_list.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/dashboard_widgets.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -86,7 +87,7 @@ class DashboardScreen extends ConsumerWidget {
                 radius: 20.r,
                 backgroundColor: cs.primary.withValues(alpha: 0.1),
                 backgroundImage:
-                    avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                    avatarUrl != null ? CachedNetworkImageProvider(avatarUrl) : null,
                 child: avatarUrl == null
                     ? Text(initials,
                         style: TextStyle(

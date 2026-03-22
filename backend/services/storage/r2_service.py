@@ -2,7 +2,7 @@ import uuid
 import asyncio
 from functools import partial
 import boto3
-from core.config import R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ENDPOINT_URL, R2_BUCKET_NAME_RESUMES
+from core.config import R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ENDPOINT_URL, R2_BUCKET_NAME_RESUMES, R2_BUCKET_NAME_AVATARS
 
 _s3 = boto3.client(
     "s3",
@@ -53,6 +53,48 @@ class R2Service:
             partial(
                 _s3.delete_object,
                 Bucket=R2_BUCKET_NAME_RESUMES,
+                Key=file_key,
+            ),
+        )
+
+
+    async def upload_avatar(self, user_id: str, file_bytes: bytes, content_type: str) -> str:
+        # Upload un avatar et retourne le file_key. Écrase l'ancien si même user_id.
+        ext = content_type.split("/")[-1] if "/" in content_type else "jpg"
+        file_key = f"avatars/{user_id}.{ext}"
+
+        await asyncio.get_event_loop().run_in_executor(
+            None,
+            partial(
+                _s3.put_object,
+                Bucket=R2_BUCKET_NAME_AVATARS,
+                Key=file_key,
+                Body=file_bytes,
+                ContentType=content_type,
+            ),
+        )
+        return file_key
+
+    async def get_avatar_url(self, file_key: str) -> str:
+        # URL signée temporaire (1h) pour l'avatar.
+        url = await asyncio.get_event_loop().run_in_executor(
+            None,
+            partial(
+                _s3.generate_presigned_url,
+                "get_object",
+                Params={"Bucket": R2_BUCKET_NAME_AVATARS, "Key": file_key},
+                ExpiresIn=3600,
+            ),
+        )
+        return url
+
+    async def delete_avatar(self, file_key: str) -> None:
+        # Supprime un avatar du bucket.
+        await asyncio.get_event_loop().run_in_executor(
+            None,
+            partial(
+                _s3.delete_object,
+                Bucket=R2_BUCKET_NAME_AVATARS,
                 Key=file_key,
             ),
         )

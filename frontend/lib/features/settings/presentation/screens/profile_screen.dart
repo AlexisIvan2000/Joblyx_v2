@@ -10,8 +10,11 @@ import 'package:frontend/features/settings/presentation/providers/user_provider.
 import 'package:frontend/features/settings/presentation/widgets/edit_profile_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_password_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_email_dialog.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
+import 'package:frontend/features/settings/data/user_service.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -89,7 +92,7 @@ class ProfileScreen extends ConsumerWidget {
                         CircleAvatar(
                           radius: 48.r,
                           backgroundColor: cs.primary.withValues(alpha: 0.1),
-                          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                          backgroundImage: avatarUrl != null ? CachedNetworkImageProvider(avatarUrl) : null,
                           child: avatarUrl == null
                               ? Text(initials,
                                   style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w800, color: cs.primary))
@@ -100,7 +103,7 @@ class ProfileScreen extends ConsumerWidget {
                           bottom: 0,
                           right: 0,
                           child: GestureDetector(
-                            onTap: () => _showPhotoPickerDialog(context, cs, t),
+                            onTap: () => _showPhotoPickerDialog(context, ref, cs, t),
                             child: Container(
                               width: 32.r,
                               height: 32.r,
@@ -207,7 +210,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   /// Dialog pour choisir entre prendre ou choisir une photo.
-  void _showPhotoPickerDialog(BuildContext context, ColorScheme cs, AppLocalizations t) {
+  void _showPhotoPickerDialog(BuildContext context, WidgetRef ref, ColorScheme cs, AppLocalizations t) {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -226,7 +229,7 @@ class ProfileScreen extends ConsumerWidget {
                 child: FilledButton.icon(
                   onPressed: () {
                     Navigator.pop(ctx);
-                    // TODO: ouvrir la caméra
+                    _pickAndUpload(context, ref, t, ImageSource.camera);
                   },
                   icon: Icon(Icons.camera_rounded, size: 20.sp),
                   label: Text(t.t('profile_screen.take_photo')),
@@ -239,7 +242,7 @@ class ProfileScreen extends ConsumerWidget {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(ctx);
-                    // TODO: ouvrir la galerie
+                    _pickAndUpload(context, ref, t, ImageSource.gallery);
                   },
                   icon: Icon(Icons.photo_library_rounded, size: 20.sp),
                   label: Text(t.t('profile_screen.choose_photo')),
@@ -251,6 +254,23 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Ouvre le picker (caméra ou galerie), upload sur le serveur, puis refresh le profil.
+  Future<void> _pickAndUpload(BuildContext context, WidgetRef ref, AppLocalizations t, ImageSource source) async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: source, maxWidth: 800, maxHeight: 800, imageQuality: 85);
+    if (image == null || !context.mounted) return;
+
+    try {
+      await UserService().uploadAvatar(image.path);
+      if (!context.mounted) return;
+      ref.read(userProvider.notifier).refresh();
+      AppSnackbar.success(context, t.t('profile_screen.photo_updated'));
+    } catch (_) {
+      if (!context.mounted) return;
+      AppSnackbar.error(context, t.t('profile_screen.photo_error'));
+    }
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_password_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_email_dialog.dart';
@@ -73,7 +74,7 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 44.r,
-                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                backgroundImage: avatarUrl != null ? CachedNetworkImageProvider(avatarUrl) : null,
                 child: avatarUrl == null
                     ? Text(
                         '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}',

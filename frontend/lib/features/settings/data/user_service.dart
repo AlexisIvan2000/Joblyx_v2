@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:frontend/core/network/api_client.dart';
+import 'package:http_parser/http_parser.dart';
 
 class UserService {
   final Dio _dio = ApiClient().dio;
@@ -50,5 +51,26 @@ class UserService {
 
   Future<void> resendEmailVerification() async {
     await _dio.post('/users/me/resend-email-verification');
+  }
+
+  /// Upload une photo de profil (JPEG, PNG ou WebP, max 10 Mo).
+  Future<Map<String, dynamic>> uploadAvatar(String filePath) async {
+    final fileName = filePath.split('/').last;
+    final ext = fileName.split('.').last.toLowerCase();
+    final mimeType = switch (ext) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      _ => 'image/jpeg',
+    };
+
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        filePath,
+        filename: fileName,
+        contentType: MediaType.parse(mimeType),
+      ),
+    });
+    final response = await _dio.post('/users/me/avatar', data: formData);
+    return response.data as Map<String, dynamic>;
   }
 }
