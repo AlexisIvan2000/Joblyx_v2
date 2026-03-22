@@ -321,6 +321,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
           ],
         ),
         child: FloatingActionButton(
+          backgroundColor: cs.primary,
           onPressed: () => _showAdd(t),
           elevation: 0,
           shape: RoundedRectangleBorder(

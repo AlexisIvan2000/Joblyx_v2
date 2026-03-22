@@ -40,8 +40,10 @@ class RoadmapScreen extends ConsumerWidget {
         ],
       ),
       // FAB pour ajouter une phase custom
-      floatingActionButton: (state.hasRoadmap && state.generationStatus != 'generating')
+      floatingActionButton:
+          (state.hasRoadmap && state.generationStatus != 'generating')
           ? FloatingActionButton(
+              backgroundColor: cs.primary,
               onPressed: () => _addPhase(context, ref, t),
               child: const Icon(Icons.add),
             )
@@ -53,7 +55,11 @@ class RoadmapScreen extends ConsumerWidget {
   }
 
   /// Ouvrir le dialog d'ajout de phase custom.
-  Future<void> _addPhase(BuildContext context, WidgetRef ref, AppLocalizations t) async {
+  Future<void> _addPhase(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+  ) async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (_) => const AddPhaseDialog(),
@@ -72,7 +78,11 @@ class RoadmapScreen extends ConsumerWidget {
   }
 
   /// Régénérer la roadmap directement via l'API.
-  Future<void> _regenerate(BuildContext context, WidgetRef ref, AppLocalizations t) async {
+  Future<void> _regenerate(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -160,7 +170,9 @@ class RoadmapScreen extends ConsumerWidget {
     );
     if (result == null || !context.mounted) return;
     try {
-      await ref.read(roadmapProvider.notifier).updatePhaseNotes(phaseId, result);
+      await ref
+          .read(roadmapProvider.notifier)
+          .updatePhaseNotes(phaseId, result);
       if (context.mounted) {
         AppSnackbar.success(context, t.t('dashboard.notes_saved'));
       }
@@ -171,7 +183,14 @@ class RoadmapScreen extends ConsumerWidget {
     }
   }
 
-  Widget _buildBody(BuildContext context, WidgetRef ref, ThemeData theme, ColorScheme cs, AppLocalizations t, RoadmapState state) {
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations t,
+    RoadmapState state,
+  ) {
     if (state.generationStatus == 'generating') {
       return _buildGenerating(theme, cs, t, state);
     }
@@ -184,7 +203,12 @@ class RoadmapScreen extends ConsumerWidget {
     return _buildEmpty(context, ref, theme, cs, t);
   }
 
-  Widget _buildGenerating(ThemeData theme, ColorScheme cs, AppLocalizations t, RoadmapState state) {
+  Widget _buildGenerating(
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations t,
+    RoadmapState state,
+  ) {
     final phases = state.streamingPhases;
     final hasPhases = phases.isNotEmpty;
 
@@ -197,17 +221,27 @@ class RoadmapScreen extends ConsumerWidget {
           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
           child: Column(
             children: [
-              Text(t.t('dashboard.generating_title'),
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center),
+              Text(
+                t.t('dashboard.generating_title'),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
               SizedBox(height: 6.h),
-              Text(t.t('dashboard.generating_subtitle'),
-                  style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                  textAlign: TextAlign.center),
+              Text(
+                t.t('dashboard.generating_subtitle'),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
               SizedBox(height: 12.h),
               SizedBox(
                 width: 180.w,
-                child: LinearProgressIndicator(borderRadius: BorderRadius.circular(4.r)),
+                child: LinearProgressIndicator(
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
               ),
             ],
           ),
@@ -247,7 +281,8 @@ class RoadmapScreen extends ConsumerWidget {
               Column(
                 children: [
                   Container(
-                    width: 24.w, height: 24.w,
+                    width: 24.w,
+                    height: 24.w,
                     decoration: BoxDecoration(
                       color: cs.surfaceContainerHighest,
                       shape: BoxShape.circle,
@@ -255,7 +290,8 @@ class RoadmapScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: 4.h),
                   Container(
-                    width: 2.w, height: 80.h,
+                    width: 2.w,
+                    height: 80.h,
                     color: cs.surfaceContainerHighest,
                   ),
                 ],
@@ -278,7 +314,13 @@ class RoadmapScreen extends ConsumerWidget {
     });
   }
 
-  Widget _buildError(BuildContext context, WidgetRef ref, ThemeData theme, ColorScheme cs, AppLocalizations t) {
+  Widget _buildError(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations t,
+  ) {
     return Center(
       child: Padding(
         padding: EdgeInsets.all(32.w),
@@ -287,12 +329,20 @@ class RoadmapScreen extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline_rounded, size: 64.sp, color: cs.error),
             SizedBox(height: 16.h),
-            Text(t.t('dashboard.error_title'),
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              t.t('dashboard.error_title'),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             SizedBox(height: 8.h),
-            Text(t.t('dashboard.error_subtitle'),
-                style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                textAlign: TextAlign.center),
+            Text(
+              t.t('dashboard.error_subtitle'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
             SizedBox(height: 24.h),
             FilledButton.icon(
               onPressed: () => _regenerate(context, ref, t),
@@ -305,7 +355,13 @@ class RoadmapScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmpty(BuildContext context, WidgetRef ref, ThemeData theme, ColorScheme cs, AppLocalizations t) {
+  Widget _buildEmpty(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations t,
+  ) {
     return Center(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -314,12 +370,20 @@ class RoadmapScreen extends ConsumerWidget {
           children: [
             Icon(Icons.route_rounded, size: 64.sp, color: cs.primary),
             SizedBox(height: 16.h),
-            Text(t.t('dashboard.empty_title'),
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              t.t('dashboard.empty_title'),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             SizedBox(height: 8.h),
-            Text(t.t('dashboard.empty_subtitle'),
-                style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                textAlign: TextAlign.center),
+            Text(
+              t.t('dashboard.empty_subtitle'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
             SizedBox(height: 32.h),
             OptionCard(
               icon: Icons.auto_awesome_rounded,
@@ -344,7 +408,14 @@ class RoadmapScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRoadmap(BuildContext context, WidgetRef ref, ThemeData theme, ColorScheme cs, AppLocalizations t, RoadmapState state) {
+  Widget _buildRoadmap(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations t,
+    RoadmapState state,
+  ) {
     final roadmap = state.roadmap!;
     final phases = (roadmap['phases'] as List?) ?? [];
     final notifier = ref.read(roadmapProvider.notifier);
@@ -352,7 +423,9 @@ class RoadmapScreen extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () => notifier.loadRoadmap(),
       child: ListView(
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         children: [
           ...List.generate(phases.length, (i) {
@@ -423,7 +496,10 @@ class _StreamingPhaseCardState extends State<_StreamingPhaseCard>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.15),
       end: Offset.zero,
@@ -492,7 +568,9 @@ class _StreamingPhaseCardState extends State<_StreamingPhaseCard>
                   decoration: BoxDecoration(
                     color: cs.surface,
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
+                    border: Border.all(
+                      color: cs.outlineVariant.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,7 +589,10 @@ class _StreamingPhaseCardState extends State<_StreamingPhaseCard>
                           ),
                           if (durationWeeks != null)
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 3.h,
+                              ),
                               decoration: BoxDecoration(
                                 color: cs.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8.r),
@@ -562,4 +643,3 @@ class _StreamingPhaseCardState extends State<_StreamingPhaseCard>
     );
   }
 }
-

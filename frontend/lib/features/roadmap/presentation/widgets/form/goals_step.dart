@@ -116,6 +116,11 @@ class GoalsStep extends StatelessWidget {
                 .toList(),
             onChanged: (v) => onLanguageChanged(v!),
           ),
+          SizedBox(height: 6.h),
+          Text(
+            t.t('onboarding.language_hint'),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
         ],
       ),
     );

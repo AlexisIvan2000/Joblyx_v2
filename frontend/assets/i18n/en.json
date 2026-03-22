@@ -246,6 +246,7 @@
         "language_fr": "French",
         "language_en": "English",
         "language_bilingual": "Bilingual",
+        "language_hint": "Your roadmap will be generated in the selected language.",
         "skill": "Skill",
         "skill_name": "Skill name",
         "skill_category": "Category",
