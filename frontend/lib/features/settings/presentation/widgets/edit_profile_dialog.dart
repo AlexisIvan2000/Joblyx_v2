@@ -114,7 +114,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(false),
+                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(minimumSize: Size(0, 46.h)),
                       child: Text(t.t('settings.cancel')),
                     ),
