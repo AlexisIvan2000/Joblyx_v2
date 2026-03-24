@@ -3,6 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/features/authentication/presentation/providers/auth_state_provider.dart';
+import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
+import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
+import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
+import 'package:frontend/features/assistant/presentation/providers/coach_provider.dart';
+import 'package:frontend/features/assistant/presentation/providers/interview_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -44,6 +49,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       case AppAuthState.unauthenticated:
         context.go('/first-page');
       case AppAuthState.authenticated:
+        // Pré-charger tous les providers pour éviter les chargements sur les écrans
+        ref.read(userProvider);
+        ref.read(roadmapProvider);
+        ref.read(applicationsProvider);
+        ref.read(coachUsageProvider);
+        ref.read(coachHistoryProvider);
+        ref.read(interviewUsageProvider);
+        ref.read(interviewHistoryProvider);
         context.go('/dashboard');
       case AppAuthState.loading:
         break;
