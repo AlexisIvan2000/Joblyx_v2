@@ -103,6 +103,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
             // ── Titre de la phase ──
             TextFormField(
               controller: _titleCtrl,
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(
                 labelText: t.t('dashboard.phase_title_label'),
                 hintText: t.t('dashboard.phase_title_hint'),
@@ -118,6 +119,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
             // ── Durée ──
             TextFormField(
               controller: _weeksCtrl,
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(
                 labelText: t.t('dashboard.phase_duration_label'),
                 border: OutlineInputBorder(
@@ -138,6 +140,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
             // ── Objectif (le pourquoi) ──
             TextFormField(
               controller: _objectiveCtrl,
+              textInputAction: TextInputAction.done,
               decoration: InputDecoration(
                 labelText: t.t('dashboard.phase_objective_label'),
                 hintText: t.t('dashboard.phase_objective_hint'),

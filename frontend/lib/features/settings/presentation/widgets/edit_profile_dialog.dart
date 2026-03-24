@@ -91,6 +91,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               TextFormField(
                 controller: _firstNameController,
                 textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: t.t('settings.first_name'),
                   prefixIcon: Icon(Icons.person_outline, size: 20.sp),
@@ -101,6 +102,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               TextFormField(
                 controller: _lastNameController,
                 textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
                   labelText: t.t('settings.last_name'),
                   prefixIcon: Icon(Icons.person_outline, size: 20.sp),

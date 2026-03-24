@@ -63,6 +63,7 @@ class CareerStep extends StatelessWidget {
           TextFormField(
             controller: yearsController,
             keyboardType: TextInputType.number,
+            textInputAction: level == 'reconversion' ? TextInputAction.next : TextInputAction.done,
             decoration: inputDecoration(
               context,
               label: t.t('onboarding.years_experience'),
@@ -81,6 +82,7 @@ class CareerStep extends StatelessWidget {
             SizedBox(height: 16.h),
             TextFormField(
               controller: previousFieldController,
+              textInputAction: TextInputAction.done,
               decoration: inputDecoration(
                 context,
                 label: t.t('onboarding.previous_field'),

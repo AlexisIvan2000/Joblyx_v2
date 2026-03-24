@@ -197,6 +197,7 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
             TextFormField(
               controller: _descriptionController,
               maxLines: 6,
+              textInputAction: TextInputAction.next,
               decoration: _deco(t.t('assistant.job_desc_hint'), cs),
               validator: (v) => v == null || v.trim().isEmpty ? t.t('assistant.job_desc_required') : null,
             ),
@@ -207,6 +208,7 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
             SizedBox(height: 6.h),
             TextFormField(
               controller: _jobTitleController,
+              textInputAction: TextInputAction.next,
               decoration: _deco(t.t('assistant.job_title_hint'), cs),
             ),
             SizedBox(height: 16.h),
@@ -216,6 +218,7 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
             SizedBox(height: 6.h),
             TextFormField(
               controller: _companyController,
+              textInputAction: TextInputAction.done,
               decoration: _deco(t.t('assistant.company_hint'), cs),
             ),
             SizedBox(height: 16.h),

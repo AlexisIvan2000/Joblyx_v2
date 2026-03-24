@@ -63,6 +63,7 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
               children: [
                 TextFormField(
                   controller: _jobTitleController,
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: t.t('interview.job_title_label'),
                     hintText: t.t('interview.job_title_hint'),
@@ -74,6 +75,7 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
                 SizedBox(height: 12.h),
                 TextFormField(
                   controller: _companyController,
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: t.t('interview.company_label'),
                     hintText: t.t('interview.company_hint'),
@@ -83,6 +85,7 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
                 TextFormField(
                   controller: _descriptionController,
                   maxLines: 3,
+                  textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
                     labelText: t.t('interview.job_desc_label'),
                     hintText: t.t('interview.job_desc_hint'),

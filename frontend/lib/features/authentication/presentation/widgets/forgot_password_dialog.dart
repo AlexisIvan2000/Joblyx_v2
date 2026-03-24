@@ -131,6 +131,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
         TextFormField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.done,
           decoration: InputDecoration(
             labelText: t.t('login.email'),
             prefixIcon: Icon(Icons.email_outlined, size: 20.sp),
@@ -155,6 +156,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
           TextFormField(
             controller: _codeController,
             keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.next,
             maxLength: 6,
             decoration: InputDecoration(
               labelText: t.t('forgot_password.code_label'),
@@ -170,6 +172,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
           TextFormField(
             controller: _passwordController,
             obscureText: !_isPasswordVisible,
+            textInputAction: TextInputAction.done,
             decoration: InputDecoration(
               labelText: t.t('forgot_password.new_password'),
               prefixIcon: Icon(Icons.lock_outline, size: 20.sp),

@@ -80,6 +80,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
               TextFormField(
                 controller: _currentController,
                 obscureText: !_showCurrent,
+                textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: t.t('settings.current_password'),
                   prefixIcon: Icon(Icons.lock_rounded, size: 20.sp),
@@ -94,6 +95,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
               TextFormField(
                 controller: _newController,
                 obscureText: !_showNew,
+                textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: t.t('settings.new_password'),
                   prefixIcon: Icon(Icons.lock_open_rounded, size: 20.sp),
@@ -114,6 +116,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
               TextFormField(
                 controller: _confirmController,
                 obscureText: !_showNew,
+                textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
                   labelText: t.t('settings.confirm_password'),
                   prefixIcon: Icon(Icons.lock_open_rounded, size: 20.sp),

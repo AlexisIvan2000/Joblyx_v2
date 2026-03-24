@@ -328,6 +328,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     TextFormField(
       controller: _yearsController,
       keyboardType: TextInputType.number,
+      textInputAction: _level == 'reconversion' ? TextInputAction.next : TextInputAction.done,
       decoration: inputDecoration(context, label: t.t('onboarding.years_experience'), icon: Icons.work_history_outlined),
       validator: (v) {
         final n = int.tryParse(v ?? '');
@@ -338,6 +339,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
       SizedBox(height: 14.h),
       TextFormField(
         controller: _previousFieldController,
+        textInputAction: TextInputAction.done,
         decoration: inputDecoration(context, label: t.t('onboarding.previous_field'), icon: Icons.swap_horiz_rounded),
       ),
     ],

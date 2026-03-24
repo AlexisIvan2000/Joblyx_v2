@@ -12,6 +12,7 @@ import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 import 'package:frontend/features/settings/data/user_service.dart';
 import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
+import 'package:frontend/features/settings/presentation/utils/invalidate_providers.dart';
 import 'package:frontend/features/settings/presentation/widgets/edit_profile_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_password_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_email_dialog.dart';
@@ -221,6 +222,7 @@ class ProfileScreen extends ConsumerWidget {
                 onTap: () async {
                   await AuthService().logout();
                   if (!context.mounted) return;
+                  invalidateUserProviders(ref);
                   context.go('/first-page');
                 },
               ),

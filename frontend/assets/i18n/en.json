@@ -588,7 +588,7 @@
         "delete_account": "Delete my account",
         "delete_account_warning": "This will permanently delete your account, all your data, roadmaps, applications, and analyses. This action cannot be undone.",
         "delete_account_email_hint": "Enter your email to confirm",
-        "delete_account_confirm": "Delete permanently",
+        "delete_account_confirm": "Delete",
         "delete_account_success": "Account deleted successfully",
         "delete_account_error": "Could not delete account. Make sure the email matches.",
         "app_version": "Version",

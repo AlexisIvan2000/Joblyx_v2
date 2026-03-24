@@ -214,6 +214,7 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
                   TextFormField(
                     controller: _descriptionController,
                     maxLines: 5,
+                    textInputAction: TextInputAction.next,
                     decoration: _deco(t.t('applications_screen.description_hint'), cs),
                   ),
                   SizedBox(height: 16.h),
@@ -224,6 +225,7 @@ class _EditApplicationScreenState extends ConsumerState<EditApplicationScreen> {
                   TextFormField(
                     controller: _notesController,
                     maxLines: 3,
+                    textInputAction: TextInputAction.done,
                     decoration: _deco(t.t('applications_screen.notes_hint'), cs),
                   ),
                   SizedBox(height: 16.h),

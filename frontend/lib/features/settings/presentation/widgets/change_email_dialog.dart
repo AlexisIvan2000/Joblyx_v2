@@ -122,6 +122,7 @@ class _ChangeEmailDialogState extends State<ChangeEmailDialog> {
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: t.t('settings.new_email'),
                   prefixIcon: Icon(Icons.alternate_email_rounded, size: 20.sp),
@@ -131,6 +132,7 @@ class _ChangeEmailDialogState extends State<ChangeEmailDialog> {
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
+                textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
                   labelText: t.t('settings.password_confirm'),
                   prefixIcon: Icon(Icons.lock_rounded, size: 20.sp),
