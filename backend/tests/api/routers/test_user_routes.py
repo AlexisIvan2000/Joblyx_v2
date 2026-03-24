@@ -36,7 +36,7 @@ class TestChangePassword:
     def test_success(self, test_client, mock_auth_repo, fake_user_dict):
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
         with patch("services.users.users.Security") as MockSec:
-            MockSec.verify_password.return_value = True
+            MockSec.verify_password.side_effect = [True, False]  # current=OK, same_check=different
             MockSec.hash_password.return_value = "new-hash"
             resp = test_client.post("/users/me/change-password", json={
                 "current_password": "OldPass1!",

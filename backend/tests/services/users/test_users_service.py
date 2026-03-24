@@ -48,7 +48,8 @@ class TestChangePassword:
     async def test_success(self, user_service, mock_auth_repo, fake_user_dict):
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
         with patch("services.users.users.Security") as MockSec:
-            MockSec.verify_password.return_value = True
+            # Premier appel (current password) → True, deuxième (same check) → False
+            MockSec.verify_password.side_effect = [True, False]
             MockSec.hash_password.return_value = "new-hash"
             result = await user_service.change_password(FAKE_USER_ID, "OldPass1!", "NewPass1!")
         assert "changed" in result["message"].lower()
@@ -95,6 +96,7 @@ class TestResetPassword:
         mock_auth_repo.get_user_by_email.return_value = fake_user_with_reset_code
         with patch("services.users.users.Security") as MockSec:
             MockSec.hash_token.return_value = FAKE_OTP_HASH
+            MockSec.verify_password.return_value = False  # Nouveau password différent de l'ancien
             MockSec.hash_password.return_value = "new-hash"
             result = await user_service.reset_password("john@example.com", FAKE_OTP_CODE, "NewPass1!")
         assert "reset" in result["message"].lower()
