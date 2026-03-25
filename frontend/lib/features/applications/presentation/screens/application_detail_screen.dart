@@ -7,6 +7,8 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/core/constants/application_status.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
+import 'package:frontend/features/assistant/presentation/providers/interview_provider.dart';
+import 'package:frontend/features/assistant/presentation/screens/interview_form_dialog.dart';
 
 class ApplicationDetailScreen extends ConsumerStatefulWidget {
   final String applicationId;
@@ -72,6 +74,63 @@ class _ApplicationDetailScreenState
       if (mounted) Navigator.pop(context);
     } catch (_) {
       if (mounted) AppSnackbar.error(context, t.t('applications_screen.delete_error'));
+    }
+  }
+
+  Future<void> _startInterview(AppLocalizations t) async {
+    final app = _app!;
+
+    // Vérifier la limite
+    final usage = await ref.read(interviewUsageProvider.future);
+    if ((usage['remaining'] as int? ?? 0) <= 0) {
+      if (mounted) AppSnackbar.error(context, t.t('interview.limit_reached'));
+      return;
+    }
+
+    if (!mounted) return;
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => InterviewFormDialog(
+        initialJobTitle: app['job_title'] as String?,
+        initialCompanyName: app['company_name'] as String?,
+        initialJobDescription: app['job_description'] as String?,
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    try {
+      final svc = ref.read(interviewServiceProvider);
+      final response = await svc.startSession(
+        jobTitle: result['job_title'] as String,
+        companyName: result['company_name'] as String?,
+        jobDescription: result['job_description'] as String?,
+        cvPath: result['cv_path'] as String?,
+        language: result['language'] as String? ?? 'fr',
+      );
+
+      if (!mounted) return;
+
+      final sessionId = response['session_id'] as String;
+      final firstQ = response['first_question'] as Map<String, dynamic>;
+      ref.read(interviewChatProvider.notifier).initWithFirstQuestion(
+        sessionId: sessionId,
+        jobTitle: result['job_title'] as String,
+        firstMessage: firstQ['message'] as String,
+        questionNumber: firstQ['question_number'] as int? ?? 1,
+      );
+
+      ref.invalidate(interviewHistoryProvider);
+      ref.invalidate(interviewUsageProvider);
+
+      context.push('/assistant/interview/chat/$sessionId');
+    } catch (e) {
+      if (!mounted) return;
+      if (e.toString().contains('429')) {
+        AppSnackbar.error(context, t.t('interview.limit_reached'));
+      } else {
+        AppSnackbar.error(context, t.t('interview.start_error'));
+      }
     }
   }
 
@@ -233,15 +292,12 @@ class _ApplicationDetailScreenState
             // Prepare interview button
             if (isInterview) ...[
               SizedBox(height: 24.h),
-              FilledButton.icon(
-                onPressed: () {
-                  // TODO: navigate to interview simulator with pre-filled data
-                },
-                icon: Icon(Icons.mic_rounded, size: 20.sp),
-                label: Text(t.t('application_detail.prepare_interview')),
+              FilledButton(
+                onPressed: () => _startInterview(t),
                 style: FilledButton.styleFrom(
                   minimumSize: Size(double.infinity, 48.h),
                 ),
+                child: Text(t.t('application_detail.prepare_interview')),
               ),
             ],
 
