@@ -171,11 +171,16 @@ class InterviewService:
             yield ("error", "Entretien terminé")
             return
 
-        # Compter les messages assistant existants
-        assistant_count = await self.repo.count_assistant_messages(session_id)
-
         # Sauvegarder le message utilisateur
         messages = await self.repo.get_messages_by_session(session_id)
+
+        # Compter uniquement les vraies questions (counts_as_question=true)
+        real_question_count = 0
+        for m in messages:
+            if m.role == "assistant" and m.feedback:
+                fb = m.feedback if isinstance(m.feedback, dict) else {}
+                if fb.get("counts_as_question", True):
+                    real_question_count += 1
         user_position = len(messages) + 1
         await self.repo.create_message({
             "session_id": session_id,
@@ -195,10 +200,18 @@ class InterviewService:
         )
         gpt_messages = [{"role": "system", "content": system_prompt}]
         gpt_messages.extend(_build_windowed_history(messages))
-        gpt_messages.append({"role": "user", "content": user_message.strip()})
+
+        # Validation hors contexte : message court qui ressemble à une question factuelle
+        clean_msg = user_message.strip()
+        if len(clean_msg) < 60 and clean_msg.endswith("?") and not any(
+            kw in clean_msg.lower() for kw in ["entretien", "poste", "équipe", "projet", "expérience", "entreprise"]
+        ):
+            gpt_messages.append({"role": "system", "content": "[SYSTÈME : le candidat semble poser une question hors contexte. Redirige-le vers l'entretien sans répondre à sa question.]"})
+
+        gpt_messages.append({"role": "user", "content": clean_msg})
 
         # Forcer la clôture si on atteint la limite
-        if assistant_count >= MAX_QUESTIONS - 1:
+        if real_question_count >= MAX_QUESTIONS - 1:
             gpt_messages.append({
                 "role": "system",
                 "content": "C'est la dernière question. Remercie le candidat et clôture l'entretien. question_type=closing, question_number=15."
@@ -213,23 +226,25 @@ class InterviewService:
             stream=True,
         )
 
+        # full_text accumule le message COMPLET pour la sauvegarde en base
+        # accumulated est le buffer de streaming (trimé après chaque envoi)
+        full_text = ""
         accumulated = ""
         streaming_text = True
 
         async for chunk in stream:
             delta = chunk.choices[0].delta
             if delta.content:
+                full_text += delta.content
                 accumulated += delta.content
 
                 if streaming_text:
                     # Vérifier si le délimiteur est arrivé
-                    if FEEDBACK_DELIMITER in accumulated:
-                        parts = accumulated.split(FEEDBACK_DELIMITER, 1)
+                    if FEEDBACK_DELIMITER in full_text:
                         # Envoyer le texte restant avant le délimiteur
-                        text_part = parts[0].rstrip()
-                        if text_part:
-                            # Le texte a peut-être déjà été partiellement envoyé
-                            pass
+                        remaining = accumulated.split(FEEDBACK_DELIMITER, 1)[0]
+                        if remaining:
+                            yield ("stream", remaining)
                         streaming_text = False
                     else:
                         # Streamer le texte (mais garder un buffer pour ne pas couper le délimiteur)
@@ -240,13 +255,17 @@ class InterviewService:
                                 yield ("stream", to_send)
                                 accumulated = accumulated[safe_end:]
 
-        # Traitement final
-        if FEEDBACK_DELIMITER in accumulated:
-            parts = accumulated.split(FEEDBACK_DELIMITER, 1)
-            message_text = parts[0].rstrip()
-            # Envoyer le texte restant
-            if message_text:
-                yield ("stream", message_text)
+        # Traitement final — utiliser full_text pour extraire le message complet
+        if FEEDBACK_DELIMITER in full_text:
+            parts = full_text.split(FEEDBACK_DELIMITER, 1)
+            full_message = parts[0].rstrip()
+
+            # Envoyer le texte encore dans le buffer si nécessaire
+            if streaming_text and accumulated:
+                remaining = accumulated.split(FEEDBACK_DELIMITER, 1)[0]
+                if remaining:
+                    yield ("stream", remaining)
+
             yield ("stream_end", None)
 
             # Parser le feedback JSON
@@ -254,16 +273,16 @@ class InterviewService:
             try:
                 feedback_data = json.loads(feedback_raw)
             except json.JSONDecodeError:
-                feedback_data = {"feedback": None, "question_type": "unknown", "question_number": assistant_count + 1}
-
-            # Reconstruire le message complet pour la sauvegarde
-            full_message = parts[0].rstrip()
+                feedback_data = {"feedback": None, "question_type": "unknown", "question_number": real_question_count + 1, "counts_as_question": True}
         else:
-            # Pas de délimiteur trouvé — envoyer tout le texte
-            yield ("stream", accumulated)
+            # Pas de délimiteur trouvé — envoyer tout le texte restant
+            if accumulated:
+                yield ("stream", accumulated)
             yield ("stream_end", None)
-            full_message = accumulated
-            feedback_data = {"feedback": None, "question_type": "unknown", "question_number": assistant_count + 1}
+            full_message = full_text.rstrip()
+            feedback_data = {"feedback": None, "question_type": "unknown", "question_number": real_question_count + 1, "counts_as_question": True}
+
+        logger.info("Saving message: %d chars for session %s", len(full_message), session_id)
 
         # Sauvegarder le message assistant
         assistant_position = user_position + 1
@@ -276,8 +295,9 @@ class InterviewService:
         })
 
         question_type = feedback_data.get("question_type", "")
-        question_number = feedback_data.get("question_number", assistant_count + 1)
-        is_last = question_type == "closing" or question_number >= MAX_QUESTIONS
+        counts = feedback_data.get("counts_as_question", True)
+        question_number = feedback_data.get("question_number", real_question_count + 1)
+        is_last = question_type == "closing" or (counts and question_number >= MAX_QUESTIONS)
 
         yield ("feedback", {
             **feedback_data,

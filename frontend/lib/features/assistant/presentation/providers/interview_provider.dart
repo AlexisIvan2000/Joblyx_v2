@@ -226,8 +226,8 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
         _handleWebSocketMessage(data as String);
       },
       onDone: () {
-        debugPrint('[WS] Connection closed (intentional=$_intentionalDisconnect)');
-        if (!_canUpdate || _intentionalDisconnect) return;
+        debugPrint('[WS] Connection closed (intentional=$_intentionalDisconnect, status=${state.status})');
+        if (!_canUpdate || _intentionalDisconnect || state.status == 'completed') return;
 
         // UNE seule tentative de reconnexion
         if (_reconnectAttempts < 1 && _lastToken != null) {
@@ -360,10 +360,15 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
     final messages = List<ChatMessage>.from(state.messages);
 
     if (messages.isEmpty || messages.last.role != 'assistant' || !messages.last.isStreaming) {
+      // Nouveau message assistant — initialiser avec le premier chunk
       messages.add(ChatMessage(role: 'assistant', content: text, isStreaming: true));
+      debugPrint('[WS] Stream: new message, chunk=${text.length} chars');
     } else {
+      // Concaténer au message en cours
       final last = messages.removeLast();
-      messages.add(last.copyWith(content: last.content + text));
+      final newContent = last.content + text;
+      messages.add(last.copyWith(content: newContent));
+      debugPrint('[WS] Stream: chunk=${text.length} chars, total=${newContent.length} chars');
     }
 
     state = state.copyWith(messages: messages, isAiTyping: true);
@@ -389,7 +394,10 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
       messages.add(last.copyWith(feedback: feedbackData));
     }
 
-    final questionNumber = feedbackData['question_number'] as int? ?? state.questionNumber;
+    final countsAsQuestion = feedbackData['counts_as_question'] as bool? ?? true;
+    final questionNumber = countsAsQuestion
+        ? (feedbackData['question_number'] as int? ?? state.questionNumber)
+        : state.questionNumber;
     final isLast = feedbackData['is_last'] as bool? ?? false;
 
     state = state.copyWith(
