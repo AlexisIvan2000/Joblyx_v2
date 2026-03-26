@@ -64,6 +64,7 @@ class UserService:
             )
         new_hash = Security.hash_password(new_password)
         await self.repo.update_user(user_id, {"password_hash": new_hash})
+        logger.info("Password changed: user_id=%s", user_id)
         # Révoquer tous les refresh tokens (déconnexion de tous les appareils)
         if self.rt_repo:
             await self.rt_repo.revoke_all_for_user(user_id)
@@ -211,4 +212,5 @@ class UserService:
             )
 
         await self.repo.delete_user(user_id)
+        logger.info("Account deleted: user_id=%s email=%s", user_id, db_user.email)
         return {"message": "Account deleted successfully"}

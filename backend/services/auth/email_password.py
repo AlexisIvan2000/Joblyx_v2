@@ -46,6 +46,7 @@ class EmailPasswordAuth:
             user_data["avatar_url"] = user.avatar_url
 
         new_user = await self.repo.create_user(user_data)
+        logger.info("User registered: user_id=%s email=%s", new_user.id, user.email)
 
         await self.otp_svc.send_verification_otp(user.email, str(new_user.id))
 
@@ -54,17 +55,20 @@ class EmailPasswordAuth:
     async def login_user(self, user: UserLogin):
         db_user = await self.repo.get_user_by_email(user.email)
         if not db_user:
+            logger.warning("Login failed: email=%s reason=not_found", user.email)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
         # Compte créé via LinkedIn sans mot de passe
         if not db_user.password_hash:
+            logger.warning("Login failed: user_id=%s reason=linkedin_only", db_user.id)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This account uses LinkedIn sign-in"
             )
         if not Security.verify_password(db_user.password_hash, user.password):
+            logger.warning("Login failed: user_id=%s reason=wrong_password", db_user.id)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
@@ -75,6 +79,7 @@ class EmailPasswordAuth:
                 detail="Please verify your email before logging in"
             )
         user_id = str(db_user.id)
+        logger.info("Login success: user_id=%s email=%s", user_id, user.email)
         access_token = Security.create_access_token(user_id)
         refresh_token = Security.create_refresh_token(user_id)
 

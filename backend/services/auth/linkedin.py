@@ -48,11 +48,13 @@ class LinkedInAuth:
         # Cas 3 — Compte déjà lié par linkedin_id
         db_user = await self.repo.get_user_by_linkedin_id(linkedin_id)
         if db_user:
+            logger.info("LinkedIn login (reconnect): user_id=%s email=%s", db_user.id, email)
             return await self._issue_tokens(str(db_user.id))
 
         # Cas 2 — Compte existant avec le même email
         db_user = await self.repo.get_user_by_email(email)
         if db_user:
+            logger.info("LinkedIn login (link existing): user_id=%s email=%s", db_user.id, email)
             # Lier le linkedin_id au compte existant
             await self.repo.update_user(str(db_user.id), {
                 "linkedin_id": linkedin_id,
@@ -68,6 +70,7 @@ class LinkedInAuth:
             return await self._issue_tokens(str(db_user.id))
 
         # Cas 1 — Nouveau compte
+        logger.info("LinkedIn login (new account): email=%s linkedin_id=%s", email, linkedin_id)
         new_user = await self.repo.create_user({
             "first_name": first_name,
             "last_name": last_name,
@@ -91,6 +94,7 @@ class LinkedInAuth:
             })
 
         if response.status_code != 200:
+            logger.warning("LinkedIn token exchange failed: status=%s body=%s", response.status_code, response.text[:200])
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Failed to authenticate with LinkedIn",
