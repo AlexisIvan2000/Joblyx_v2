@@ -26,6 +26,9 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class LinkedInCallback(BaseModel):
+    code: str
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
@@ -297,6 +300,7 @@ class ApplicationStatus(str, Enum):
     offer = "offer"
     accepted = "accepted"
     rejected = "rejected"
+    ghosted = "ghosted"
     withdrawn = "withdrawn"
 
 class ApplicationCreate(BaseModel):

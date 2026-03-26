@@ -47,6 +47,7 @@
         "status_offer": "Offer received",
         "status_accepted": "Accepted",
         "status_rejected": "Rejected",
+        "status_ghosted": "Ghosted",
         "status_withdrawn": "Withdrawn",
         "empty_title": "No applications yet",
         "empty_subtitle": "Add your first application to start tracking.",

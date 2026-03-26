@@ -55,6 +55,12 @@ class EmailPasswordAuth:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
+        # Compte créé via LinkedIn sans mot de passe
+        if not db_user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This account uses LinkedIn sign-in"
+            )
         if not Security.verify_password(db_user.password_hash, user.password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

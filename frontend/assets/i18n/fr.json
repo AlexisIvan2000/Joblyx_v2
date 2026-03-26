@@ -47,6 +47,7 @@
         "status_offer": "Offre reçue",
         "status_accepted": "Acceptée",
         "status_rejected": "Rejetée",
+        "status_ghosted": "Sans réponse",
         "status_withdrawn": "Retirée",
         "empty_title": "Aucune candidature",
         "empty_subtitle": "Ajoutez votre première candidature pour commencer le suivi.",

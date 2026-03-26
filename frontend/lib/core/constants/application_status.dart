@@ -21,7 +21,7 @@ class AppStatusConfig {
 class ApplicationStatuses {
   static const all = [
     saved, applied, onlineAssessment, phoneScreen,
-    technical, finalInterview, offer, accepted, rejected, withdrawn,
+    technical, finalInterview, offer, accepted, rejected, ghosted, withdrawn,
   ];
 
   static const saved = AppStatusConfig(
@@ -103,6 +103,15 @@ class ApplicationStatuses {
     textColor: Color(0xFF791F1F),
     bgColor: Color(0xFFFCEBEB),
     borderColor: Color(0xFFF09595),
+  );
+
+  static const ghosted = AppStatusConfig(
+    key: 'ghosted',
+    labelFr: 'Sans réponse',
+    labelEn: 'Ghosted',
+    textColor: Color(0xFF5C5470),
+    bgColor: Color(0xFFF0EDF5),
+    borderColor: Color(0xFFB8B0C9),
   );
 
   static const withdrawn = AppStatusConfig(

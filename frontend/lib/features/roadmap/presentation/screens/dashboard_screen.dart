@@ -53,7 +53,7 @@ class DashboardScreen extends ConsumerWidget {
 
     final activeApps = applications
         .where(
-            (a) => !['rejected', 'withdrawn', 'accepted'].contains(a['status']))
+            (a) => !['rejected', 'ghosted', 'withdrawn', 'accepted'].contains(a['status']))
         .length;
     final interviews = applications
         .where((a) =>

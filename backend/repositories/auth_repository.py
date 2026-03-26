@@ -12,6 +12,10 @@ class AuthRepository:
         result = await self.session.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
+    async def get_user_by_linkedin_id(self, linkedin_id: str) -> User | None:
+        result = await self.session.execute(select(User).where(User.linkedin_id == linkedin_id))
+        return result.scalar_one_or_none()
+
     async def create_user(self, user_data: dict) -> User:
         user = User(**user_data)
         self.session.add(user)

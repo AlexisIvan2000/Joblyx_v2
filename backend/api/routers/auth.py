@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, Request
-from models.schemas import UserCreate, UserLogin, TokenResponse, RefreshToken, VerifyEmail, ForgotPassword, ResetPassword, ResendVerification, MessageResponse
+from models.schemas import UserCreate, UserLogin, LinkedInCallback, TokenResponse, RefreshToken, VerifyEmail, ForgotPassword, ResetPassword, ResendVerification, MessageResponse
 from services.auth.email_password import EmailPasswordAuth
+from services.auth.linkedin import LinkedInAuth
 from services.users.users import UserService
-from api.dependencies import get_auth_service, get_user_service
+from api.dependencies import get_auth_service, get_linkedin_auth, get_user_service
 from core.rate_limit import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -28,6 +29,11 @@ async def refresh(body: RefreshToken, auth: EmailPasswordAuth = Depends(get_auth
 @router.post("/logout")
 async def logout(body: RefreshToken, auth: EmailPasswordAuth = Depends(get_auth_service)):
     return await auth.logout_user(body.refresh_token)
+
+@router.post("/linkedin", response_model=TokenResponse)
+@limiter.limit("10/minute")
+async def linkedin_login(request: Request, body: LinkedInCallback, auth: LinkedInAuth = Depends(get_linkedin_auth)):
+    return await auth.authenticate(body.code)
 
 @router.post("/resend-verification")
 @limiter.limit("3/minute")

@@ -18,7 +18,8 @@ class User(Base):
     first_name: Mapped[str] = mapped_column(String(100))
     last_name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    password_hash: Mapped[str] = mapped_column(Text)
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    linkedin_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     verification_code_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     verification_code_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -147,7 +148,7 @@ class Application(Base):
     __tablename__ = "applications"
     __table_args__ = (
         CheckConstraint(
-            "status IN ('saved','applied','online_assessment','phone_screen','technical','final_interview','offer','accepted','rejected','withdrawn')",
+            "status IN ('saved','applied','online_assessment','phone_screen','technical','final_interview','offer','accepted','rejected','ghosted','withdrawn')",
             name="applications_status_check",
         ),
     )

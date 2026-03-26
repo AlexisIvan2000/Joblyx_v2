@@ -7,6 +7,7 @@ from repositories.auth_repository import AuthRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
 from services.emailing.otp_service import OtpService
 from services.auth.email_password import EmailPasswordAuth
+from services.auth.linkedin import LinkedInAuth
 from services.users.users import UserService
 from services.roadmap.roadmap_service import RoadmapService
 from repositories.application_repository import ApplicationRepository
@@ -20,6 +21,11 @@ async def get_auth_service(session: AsyncSession = Depends(get_db_session)) -> E
     rt_repo = RefreshTokenRepository(session)
     otp_svc = OtpService(auth_repo)
     return EmailPasswordAuth(auth_repo, rt_repo, otp_svc)
+
+async def get_linkedin_auth(session: AsyncSession = Depends(get_db_session)) -> LinkedInAuth:
+    auth_repo = AuthRepository(session)
+    rt_repo = RefreshTokenRepository(session)
+    return LinkedInAuth(auth_repo, rt_repo)
 
 async def get_user_service(session: AsyncSession = Depends(get_db_session)) -> UserService:
     repo = AuthRepository(session)

@@ -64,6 +64,12 @@ class UserService:
     async def forgot_password(self, email: str):
         db_user = await self.repo.get_user_by_email(email)
         if db_user:
+            # Compte créé via LinkedIn sans mot de passe
+            if not db_user.password_hash:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="This account uses LinkedIn sign-in",
+                )
             await self.otp_svc.send_reset_otp(email)
         return {"message": "If this email is registered, a reset code has been sent"}
 
