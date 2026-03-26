@@ -60,20 +60,59 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSkills();
+    _loadData();
   }
 
-  Future<void> _loadSkills() async {
+  Future<void> _loadData() async {
     final data = await SkillsLoader.load();
     if (!mounted) return;
     final allNames = <String>[];
     for (final skills in data.values) {
       allNames.addAll(skills);
     }
+
+    // Pré-remplir depuis le profil carrière existant
+    Map<String, dynamic>? career;
+    try {
+      career = await ref.read(roadmapServiceProvider).getCareerProfile();
+    } catch (_) {
+      // 404 = pas de profil, formulaire vide
+    }
+
+    if (!mounted) return;
     setState(() {
       _skillsData = data;
       _allSkillNames = allNames;
+      if (career != null) _populateFromCareer(career);
     });
+  }
+
+  void _populateFromCareer(Map<String, dynamic> career) {
+    _level = career['level'] as String? ?? 'junior';
+    _yearsController.text = '${career['years_experience'] ?? 0}';
+    _previousFieldController.text = career['previous_field'] as String? ?? '';
+    _language = career['language'] as String? ?? 'fr';
+    _city = career['city'] as String? ?? '';
+    _province = career['province'] as String? ?? '';
+    _locationController.text = _city.isNotEmpty ? '$_city, $_province' : '';
+
+    final jobs = (career['target_jobs'] as List?)?.cast<String>() ?? [];
+    for (final c in _jobControllers) {
+      c.dispose();
+    }
+    _jobControllers.clear();
+    for (final job in jobs.isEmpty ? [''] : jobs) {
+      _jobControllers.add(TextEditingController(text: job));
+    }
+
+    _selectedSkills.clear();
+    for (final s in (career['skills'] as List?) ?? []) {
+      _selectedSkills.add(SkillChipData(
+        skillName: s['skill_name'] as String,
+        category: s['category'] as String,
+        proficiency: s['proficiency'] as String? ?? 'intermediate',
+      ));
+    }
   }
 
   @override

@@ -29,7 +29,7 @@ class AssistantScreen extends ConsumerWidget {
             subtitle: t.t('assistant.coach_subtitle'),
             trailing: usageAsync.when(
               data: (usage) => Text(
-                '${usage['used']}/${usage['limit']}',
+                '${usage['used']}/${usage['limit']} ${t.t('assistant.coach_period')}',
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
@@ -52,7 +52,7 @@ class AssistantScreen extends ConsumerWidget {
             subtitle: t.t('assistant.simulator_subtitle'),
             trailing: ref.watch(interviewUsageProvider).when(
               data: (usage) => Text(
-                '${usage['used']}/${usage['limit']}',
+                '${usage['used']}/${usage['limit']} ${t.t('assistant.simulator_period')}',
                 style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: cs.tertiary),
               ),
               loading: () => SizedBox(width: 14.w, height: 14.w, child: const CircularProgressIndicator(strokeWidth: 2)),

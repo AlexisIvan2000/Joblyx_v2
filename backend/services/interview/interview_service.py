@@ -18,7 +18,7 @@ from services.interview.interview_prompt_builder import (
 
 logger = logging.getLogger(__name__)
 
-DAILY_LIMIT = 1
+DAILY_LIMIT = 2
 MAX_QUESTIONS = 15
 MAX_MESSAGE_LENGTH = 2000
 FEEDBACK_DELIMITER = "<<<FEEDBACK_JSON>>>"
