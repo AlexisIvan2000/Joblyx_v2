@@ -26,10 +26,15 @@ scheduler = AsyncIOScheduler()
 
 def _run_migrations():
     """Applique les migrations Alembic au démarrage (idempotent)."""
-    from alembic.config import Config
-    from alembic import command
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
+    import subprocess
+    result = subprocess.run(
+        ["python", "-m", "alembic", "upgrade", "head"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        logging.getLogger(__name__).error("Alembic migration failed: %s", result.stderr)
+    else:
+        logging.getLogger(__name__).info("Alembic migrations applied successfully")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
