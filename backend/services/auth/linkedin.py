@@ -1,6 +1,9 @@
 """Service d'authentification via LinkedIn OAuth 2.0."""
 
+import logging
 import httpx
+
+logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status

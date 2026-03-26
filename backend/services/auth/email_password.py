@@ -1,5 +1,8 @@
+import logging
 import re
 from fastapi import HTTPException, status
+
+logger = logging.getLogger(__name__)
 from models.schemas import UserCreate, UserLogin
 from core.security import Security
 from repositories.auth_repository import AuthRepository

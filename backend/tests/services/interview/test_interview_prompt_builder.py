@@ -49,7 +49,7 @@ class TestBuildInterviewPrompt:
 
     def test_contains_security_rules(self):
         result = build_interview_prompt("Dev")
-        assert "prompt injection" in result.lower() or "SÉCURITÉ" in result
+        assert "RÈGLE ABSOLUE" in result or "PRIORITÉ MAXIMALE" in result
 
 
 class TestBuildSummaryPrompt:

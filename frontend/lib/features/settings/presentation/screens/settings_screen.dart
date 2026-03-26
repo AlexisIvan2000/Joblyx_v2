@@ -4,9 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
-import 'package:frontend/core/widgets/app_snackbar.dart';
-import 'package:frontend/features/authentication/data/auth_storage.dart';
-import 'package:frontend/features/settings/data/user_service.dart';
+import 'package:frontend/features/authentication/data/auth_service.dart';
+import 'package:frontend/core/utils/haptic.dart';
 import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
 import 'package:frontend/features/settings/presentation/utils/invalidate_providers.dart';
 import 'package:frontend/core/widgets/staggered_list.dart';
@@ -110,8 +109,8 @@ class SettingsScreen extends ConsumerWidget {
 
           SizedBox(height: 20.h),
 
-          // ── Supprimer le compte ──────────────────────────────
-          _DeleteAccountButton(cs: cs, t: t),
+          // ── Déconnexion ──────────────────────────────────────
+          _LogoutButton(cs: cs, t: t),
 
           SizedBox(height: 24.h),
 
@@ -321,86 +320,10 @@ class _RadioOption extends StatelessWidget {
   }
 }
 
-class _DeleteAccountButton extends ConsumerWidget {
+class _LogoutButton extends ConsumerWidget {
   final ColorScheme cs;
   final AppLocalizations t;
-  const _DeleteAccountButton({required this.cs, required this.t});
-
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final emailController = TextEditingController();
-    final confirmed = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: cs.surface,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(height: 8.h),
-                Container(width: 40.w, height: 4.h,
-                    decoration: BoxDecoration(color: cs.outlineVariant, borderRadius: BorderRadius.circular(2.r))),
-                SizedBox(height: 16.h),
-                Text(t.t('settings.delete_account'),
-                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
-                SizedBox(height: 12.h),
-                Text(t.t('settings.delete_account_warning'),
-                    style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
-                    textAlign: TextAlign.center),
-                SizedBox(height: 14.h),
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: t.t('settings.delete_account_email_hint'),
-                    prefixIcon: Icon(Icons.email_outlined, size: 20.sp),
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: Text(t.t('settings.cancel')),
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => Navigator.pop(ctx, emailController.text.trim()),
-                        style: FilledButton.styleFrom(backgroundColor: cs.error),
-                        child: Text(t.t('settings.delete_account_confirm')),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    if (confirmed == null || confirmed.isEmpty || !context.mounted) return;
-
-    try {
-      await UserService().deleteAccount(confirmed);
-      if (!context.mounted) return;
-      await AuthStorage().clearTokens();
-      if (!context.mounted) return;
-      invalidateUserProviders(ref);
-      AppSnackbar.success(context, t.t('settings.delete_account_success'));
-      GoRouter.of(context).go('/first-page');
-    } catch (_) {
-      if (!context.mounted) return;
-      AppSnackbar.error(context, t.t('settings.delete_account_error'));
-    }
-  }
+  const _LogoutButton({required this.cs, required this.t});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -409,7 +332,13 @@ class _DeleteAccountButton extends ConsumerWidget {
       borderRadius: BorderRadius.circular(30.r),
       child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
-        onTap: () => _confirmDelete(context, ref),
+        onTap: () async {
+          Haptic.heavy();
+          await AuthService().logout();
+          if (!context.mounted) return;
+          invalidateUserProviders(ref);
+          GoRouter.of(context).go('/first-page');
+        },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
           decoration: BoxDecoration(
@@ -419,9 +348,9 @@ class _DeleteAccountButton extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.delete_forever_rounded, size: 20.sp, color: cs.error),
+              Icon(Icons.logout_rounded, size: 20.sp, color: cs.error),
               SizedBox(width: 8.w),
-              Text(t.t('settings.delete_account'),
+              Text(t.t('profile_screen.logout'),
                   style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.error)),
             ],
           ),

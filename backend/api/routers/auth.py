@@ -9,7 +9,8 @@ from core.rate_limit import limiter
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=MessageResponse)
-async def register(user: UserCreate, auth: EmailPasswordAuth = Depends(get_auth_service)):
+@limiter.limit("5/minute")
+async def register(request: Request, user: UserCreate, auth: EmailPasswordAuth = Depends(get_auth_service)):
     return await auth.register_user(user)
 
 @router.post("/login", response_model=TokenResponse)
@@ -23,7 +24,8 @@ async def verify_email(request: Request, body: VerifyEmail, auth: EmailPasswordA
     return await auth.verify_email(body.email, body.code)
 
 @router.post("/refresh")
-async def refresh(body: RefreshToken, auth: EmailPasswordAuth = Depends(get_auth_service)):
+@limiter.limit("10/minute")
+async def refresh(request: Request, body: RefreshToken, auth: EmailPasswordAuth = Depends(get_auth_service)):
     return await auth.refresh_access_token(body.refresh_token)
 
 @router.post("/logout")

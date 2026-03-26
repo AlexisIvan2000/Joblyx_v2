@@ -80,7 +80,7 @@ class InterviewService:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail={
-                    "error": "Limite de 1 session par jour atteinte",
+                    "error": f"Limite de {DAILY_LIMIT} sessions par jour atteinte",
                     "remaining": 0,
                     "resets_at": usage["resets_at"],
                 },

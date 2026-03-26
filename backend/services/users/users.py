@@ -1,6 +1,9 @@
+import logging
 import re
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
+
+logger = logging.getLogger(__name__)
 from core.security import Security
 from models.schemas import UpdateProfile
 from repositories.auth_repository import AuthRepository
@@ -44,6 +47,11 @@ class UserService:
     async def change_password(self, user_id: str, current_password: str, new_password: str):
         _validate_password(new_password)
         db_user = await self.repo.get_user_by_id(user_id)
+        if not db_user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This account uses LinkedIn sign-in",
+            )
         if not Security.verify_password(db_user.password_hash, current_password):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -118,6 +126,11 @@ class UserService:
 
     async def request_email_change(self, user_id: str, new_email: str, password: str):
         db_user = await self.repo.get_user_by_id(user_id)
+        if not db_user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This account uses LinkedIn sign-in",
+            )
         if not Security.verify_password(db_user.password_hash, password):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
