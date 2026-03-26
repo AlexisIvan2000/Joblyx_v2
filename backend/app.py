@@ -24,8 +24,16 @@ from api.routers.assistant import router as assistant_router
 scheduler = AsyncIOScheduler()
 
 
+def _run_migrations():
+    """Applique les migrations Alembic au démarrage (idempotent)."""
+    from alembic.config import Config
+    from alembic import command
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _run_migrations()
     from cron.refresh_market_cache import refresh_market_cache
 
     scheduler.add_job(
