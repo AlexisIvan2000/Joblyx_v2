@@ -6,6 +6,7 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
 import 'package:frontend/features/authentication/presentation/widgets/verify_email_dialog.dart';
+import 'package:frontend/core/utils/haptic.dart';
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
@@ -230,7 +231,7 @@ class _RegisterFormState extends State<RegisterForm> {
               width: double.infinity,
               height: 52.h,
               child: FilledButton(
-                onPressed: _isLoading ? null : _submit,
+                onPressed: _isLoading ? null : () { Haptic.heavy(); _submit(); },
                 style: FilledButton.styleFrom(
                   textStyle: TextStyle(
                     fontSize: 16.sp,

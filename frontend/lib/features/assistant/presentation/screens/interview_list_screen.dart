@@ -6,6 +6,7 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/assistant/presentation/providers/interview_provider.dart';
 import 'package:frontend/features/assistant/presentation/screens/interview_form_dialog.dart';
+import 'package:frontend/core/widgets/staggered_list.dart';
 
 /// Liste des sessions d'entretien (style WhatsApp).
 class InterviewListScreen extends ConsumerWidget {
@@ -62,22 +63,31 @@ class InterviewListScreen extends ConsumerWidget {
               padding: EdgeInsets.all(16.w),
               children: [
                 if (inProgress.isNotEmpty) ...[
-                  _sectionTitle(t.t('interview.in_progress'), cs),
+                  FadeSlideIn(child: _sectionTitle(t.t('interview.in_progress'), cs)),
                   SizedBox(height: 8.h),
-                  ...inProgress.map((s) => _SessionCard(
-                        session: s, cs: cs,
-                        onTap: () => context.push('/assistant/interview/chat/${s['id']}'),
-                        onDelete: () => _confirmDelete(context, ref, t, cs, s['id'] as String),
+                  ...inProgress.asMap().entries.map((e) => FadeSlideIn(
+                        delay: Duration(milliseconds: 60 * (e.key + 1)),
+                        child: _SessionCard(
+                          session: e.value, cs: cs,
+                          onTap: () => context.push('/assistant/interview/chat/${e.value['id']}'),
+                          onDelete: () => _confirmDelete(context, ref, t, cs, e.value['id'] as String),
+                        ),
                       )),
                   SizedBox(height: 16.h),
                 ],
                 if (completed.isNotEmpty) ...[
-                  _sectionTitle(t.t('interview.completed'), cs),
+                  FadeSlideIn(
+                    delay: Duration(milliseconds: 60 * (inProgress.length + 1)),
+                    child: _sectionTitle(t.t('interview.completed'), cs),
+                  ),
                   SizedBox(height: 8.h),
-                  ...completed.map((s) => _SessionCard(
-                        session: s, cs: cs,
-                        onTap: () => context.push('/assistant/interview/summary/${s['id']}'),
-                        onDelete: () => _confirmDelete(context, ref, t, cs, s['id'] as String),
+                  ...completed.asMap().entries.map((e) => FadeSlideIn(
+                        delay: Duration(milliseconds: 60 * (inProgress.length + e.key + 2)),
+                        child: _SessionCard(
+                          session: e.value, cs: cs,
+                          onTap: () => context.push('/assistant/interview/summary/${e.value['id']}'),
+                          onDelete: () => _confirmDelete(context, ref, t, cs, e.value['id'] as String),
+                        ),
                       )),
                 ],
               ],

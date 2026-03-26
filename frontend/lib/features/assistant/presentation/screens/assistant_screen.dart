@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/features/assistant/presentation/providers/coach_provider.dart';
 import 'package:frontend/features/assistant/presentation/providers/interview_provider.dart';
+import 'package:frontend/core/widgets/staggered_list.dart';
+import 'package:frontend/core/utils/haptic.dart';
 
 class AssistantScreen extends ConsumerWidget {
   const AssistantScreen({super.key});
@@ -18,9 +20,10 @@ class AssistantScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(t.t('assistant.title'))),
-      body: ListView(
+      body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        children: [
+        child: StaggeredList(
+          children: [
           // Carte Coach IA
           _AssistantCard(
             icon: Icons.description_outlined,
@@ -39,7 +42,7 @@ class AssistantScreen extends ConsumerWidget {
               loading: () => SizedBox(width: 14.w, height: 14.w, child: const CircularProgressIndicator(strokeWidth: 2)),
               error: (_, _) => const SizedBox.shrink(),
             ),
-            onTap: () => context.push('/assistant/coach'),
+            onTap: () { Haptic.medium(); context.push('/assistant/coach'); },
             cs: cs,
           ),
           SizedBox(height: 10.h),
@@ -58,7 +61,7 @@ class AssistantScreen extends ConsumerWidget {
               loading: () => SizedBox(width: 14.w, height: 14.w, child: const CircularProgressIndicator(strokeWidth: 2)),
               error: (_, _) => const SizedBox.shrink(),
             ),
-            onTap: () => context.push('/assistant/interview'),
+            onTap: () { Haptic.medium(); context.push('/assistant/interview'); },
             cs: cs,
           ),
           SizedBox(height: 24.h),
@@ -100,7 +103,7 @@ class AssistantScreen extends ConsumerWidget {
                   ),
                 );
               }
-              return Column(
+              return StaggeredList(
                 children: sessions.take(3).map((s) => _HistoryTile(session: s, cs: cs)).toList(),
               );
             },
@@ -108,6 +111,7 @@ class AssistantScreen extends ConsumerWidget {
             error: (_, _) => const SizedBox.shrink(),
           ),
         ],
+        ),
       ),
     );
   }

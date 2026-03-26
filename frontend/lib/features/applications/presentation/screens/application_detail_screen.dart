@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/core/constants/application_status.dart';
+import 'package:frontend/core/widgets/shimmer_loading.dart';
+import 'package:frontend/core/utils/haptic.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
 import 'package:frontend/features/assistant/presentation/providers/interview_provider.dart';
 import 'package:frontend/features/assistant/presentation/screens/interview_form_dialog.dart';
@@ -142,7 +144,7 @@ class _ApplicationDetailScreenState
     if (_app == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const ApplicationDetailSkeleton(),
       );
     }
 
@@ -191,20 +193,23 @@ class _ApplicationDetailScreenState
             // Header: avatar + company + badge
             Row(
               children: [
-                Container(
-                  width: 52.r,
-                  height: 52.r,
-                  decoration: BoxDecoration(
-                    color: cfg.bgColor,
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                  child: Center(
-                    child: Text(
-                      initial,
-                      style: TextStyle(
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.w800,
-                        color: cfg.textColor,
+                Hero(
+                  tag: 'app_avatar_${widget.applicationId}',
+                  child: Container(
+                    width: 52.r,
+                    height: 52.r,
+                    decoration: BoxDecoration(
+                      color: cfg.bgColor,
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                    child: Center(
+                      child: Text(
+                        initial,
+                        style: TextStyle(
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.w800,
+                          color: cfg.textColor,
+                        ),
                       ),
                     ),
                   ),
@@ -293,7 +298,7 @@ class _ApplicationDetailScreenState
             if (isInterview) ...[
               SizedBox(height: 24.h),
               FilledButton(
-                onPressed: () => _startInterview(t),
+                onPressed: () { Haptic.medium(); _startInterview(t); },
                 style: FilledButton.styleFrom(
                   minimumSize: Size(double.infinity, 48.h),
                 ),
@@ -315,7 +320,7 @@ class _ApplicationDetailScreenState
             // Delete button
             SizedBox(height: 24.h),
             OutlinedButton.icon(
-              onPressed: () => _delete(t),
+              onPressed: () { Haptic.heavy(); _delete(t); },
               icon: Icon(
                 Icons.delete_outline_rounded,
                 size: 18.sp,

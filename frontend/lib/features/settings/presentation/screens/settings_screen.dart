@@ -9,6 +9,7 @@ import 'package:frontend/features/authentication/data/auth_storage.dart';
 import 'package:frontend/features/settings/data/user_service.dart';
 import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
 import 'package:frontend/features/settings/presentation/utils/invalidate_providers.dart';
+import 'package:frontend/core/widgets/staggered_list.dart';
 
 const _termsUrl = 'https://joblyx.com/conditions-utilisation';
 const _privacyUrl = 'https://joblyx.com/politiques-confidentialit%C3%A9';
@@ -27,10 +28,11 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(t.t('settings.title'))),
-      body: ListView(
+      body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
-        children: [
+        child: StaggeredList(
+          children: [
           // ── Général ──────────────────────────────────────────
           _SectionTitle(label: t.t('settings.section_general')),
           SizedBox(height: 6.h),
@@ -121,6 +123,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }

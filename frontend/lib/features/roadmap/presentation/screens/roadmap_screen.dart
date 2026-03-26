@@ -9,6 +9,7 @@ import 'package:frontend/features/roadmap/presentation/providers/roadmap_provide
 import 'package:frontend/features/roadmap/presentation/widgets/phase/phase_card.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/phase/phase_dialogs.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/phase/option_card.dart';
+import 'package:frontend/core/widgets/staggered_list.dart';
 
 class RoadmapScreen extends ConsumerWidget {
   const RoadmapScreen({super.key});
@@ -543,48 +544,50 @@ class RoadmapScreen extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () => notifier.loadRoadmap(),
-      child: ListView(
+      child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
         ),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        children: [
-          // Carte de félicitations si tout est complété
-          if (allCompleted)
-            _buildCongratulations(context, ref, cs, t),
+        child: StaggeredList(
+          children: [
+            // Carte de félicitations si tout est complété
+            if (allCompleted)
+              _buildCongratulations(context, ref, cs, t),
 
-          ...List.generate(phases.length, (i) {
-            final phase = phases[i] as Map<String, dynamic>;
-            final phaseId = phase['id'] as String;
-            return PhaseCard(
-              index: i,
-              phase: phase,
-              isLast: i == phases.length - 1,
-              onTogglePhaseComplete: (_) async {
-                try {
-                  await notifier.togglePhaseComplete(phaseId);
-                } catch (_) {
-                  if (context.mounted) {
-                    AppSnackbar.error(context, t.t('dashboard.update_error'));
+            ...List.generate(phases.length, (i) {
+              final phase = phases[i] as Map<String, dynamic>;
+              final phaseId = phase['id'] as String;
+              return PhaseCard(
+                index: i,
+                phase: phase,
+                isLast: i == phases.length - 1,
+                onTogglePhaseComplete: (_) async {
+                  try {
+                    await notifier.togglePhaseComplete(phaseId);
+                  } catch (_) {
+                    if (context.mounted) {
+                      AppSnackbar.error(context, t.t('dashboard.update_error'));
+                    }
                   }
-                }
-              },
-              onToggleActionComplete: (_, actionIndex) async {
-                try {
-                  await notifier.toggleActionComplete(phaseId, actionIndex);
-                } catch (_) {
-                  if (context.mounted) {
-                    AppSnackbar.error(context, t.t('dashboard.update_error'));
+                },
+                onToggleActionComplete: (_, actionIndex) async {
+                  try {
+                    await notifier.toggleActionComplete(phaseId, actionIndex);
+                  } catch (_) {
+                    if (context.mounted) {
+                      AppSnackbar.error(context, t.t('dashboard.update_error'));
+                    }
                   }
-                }
-              },
-              onDeletePhase: (_) => _deletePhase(context, ref, t, phaseId),
-              onEditNotes: (_, currentNotes) =>
-                  _editNotes(context, ref, t, phaseId, currentNotes),
-            );
-          }),
-          SizedBox(height: 80.h),
-        ],
+                },
+                onDeletePhase: (_) => _deletePhase(context, ref, t, phaseId),
+                onEditNotes: (_, currentNotes) =>
+                    _editNotes(context, ref, t, phaseId, currentNotes),
+              );
+            }),
+            SizedBox(height: 80.h),
+          ],
+        ),
       ),
     );
   }

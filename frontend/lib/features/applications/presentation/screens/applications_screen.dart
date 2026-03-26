@@ -9,6 +9,7 @@ import 'package:frontend/features/applications/presentation/providers/applicatio
 import 'package:frontend/features/applications/presentation/widgets/add_application_dialog.dart';
 import 'package:frontend/features/applications/presentation/widgets/application_card.dart';
 import 'package:frontend/features/applications/presentation/widgets/dismissible_filter_chip.dart';
+import 'package:frontend/core/utils/haptic.dart';
 
 class ApplicationsScreen extends ConsumerStatefulWidget {
   const ApplicationsScreen({super.key});
@@ -322,7 +323,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
         ),
         child: FloatingActionButton(
           backgroundColor: cs.primary,
-          onPressed: () => _showAdd(t),
+          onPressed: () { Haptic.heavy(); _showAdd(t); },
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.r),

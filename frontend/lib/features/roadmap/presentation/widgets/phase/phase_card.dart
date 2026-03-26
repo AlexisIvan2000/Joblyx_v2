@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/phase/phase_sections.dart';
+import 'package:frontend/core/utils/haptic.dart';
 
 /// Carte d'une phase de la roadmap avec timeline et contenu extensible.
 class PhaseCard extends StatefulWidget {
@@ -28,7 +29,8 @@ class PhaseCard extends StatefulWidget {
   State<PhaseCard> createState() => _PhaseCardState();
 }
 
-class _PhaseCardState extends State<PhaseCard> {
+class _PhaseCardState extends State<PhaseCard>
+    with SingleTickerProviderStateMixin {
   bool _expanded = false;
 
   @override
@@ -60,7 +62,8 @@ class _PhaseCardState extends State<PhaseCard> {
     final certifications = _parseListOfMaps(phase['certifications']);
     final projects = _parseListOfMaps(phase['projects']);
 
-    return Padding(
+    return RepaintBoundary(
+      child: Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,42 +77,47 @@ class _PhaseCardState extends State<PhaseCard> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () => setState(() => _expanded = !_expanded),
+                onTap: () { Haptic.selection(); setState(() => _expanded = !_expanded); },
                 onLongPress: _hasContextMenu
                     ? () => _showContextMenu(context, cs, t, phaseNumber, userNotes)
                     : null,
                 child: Padding(
                   padding: EdgeInsets.all(14.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(theme, cs, t, title, weeks, completed, custom, phaseNumber),
-                      if (_expanded) ...[
-                        if (objective.isNotEmpty) _buildObjective(theme, cs, objective),
-                        if (userNotes.isNotEmpty) _buildNotes(theme, cs, userNotes),
-                        SizedBox(height: 12.h),
-                        // Compétences à apprendre
-                        if (skills.isNotEmpty) _buildSkills(t, cs, skills),
-                        // Actions
-                        if (actions.isNotEmpty) ...[
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.topCenter,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(theme, cs, t, title, weeks, completed, custom, phaseNumber),
+                        if (_expanded) ...[
+                          if (objective.isNotEmpty) _buildObjective(theme, cs, objective),
+                          if (userNotes.isNotEmpty) _buildNotes(theme, cs, userNotes),
                           SizedBox(height: 12.h),
-                          PhaseActionsList(
-                            actions: actions,
-                            onToggle: widget.onToggleActionComplete != null
-                                ? (i) => widget.onToggleActionComplete!(phaseNumber, i)
-                                : null,
-                          ),
+                          // Compétences à apprendre
+                          if (skills.isNotEmpty) _buildSkills(t, cs, skills),
+                          // Actions
+                          if (actions.isNotEmpty) ...[
+                            SizedBox(height: 12.h),
+                            PhaseActionsList(
+                              actions: actions,
+                              onToggle: widget.onToggleActionComplete != null
+                                  ? (i) => widget.onToggleActionComplete!(phaseNumber, i)
+                                  : null,
+                            ),
+                          ],
+                          // Ressources
+                          if (resources.isNotEmpty) ...[SizedBox(height: 12.h), PhaseResourcesList(resources: resources)],
+                          // Certifications
+                          if (certifications.isNotEmpty) ...[SizedBox(height: 12.h), PhaseCertificationsList(certifications: certifications)],
+                          // Projets
+                          if (projects.isNotEmpty) ...[SizedBox(height: 12.h), PhaseProjectsList(projects: projects)],
+                          // Jalon
+                          if (milestone.isNotEmpty) _buildMilestone(theme, cs, milestone),
                         ],
-                        // Ressources
-                        if (resources.isNotEmpty) ...[SizedBox(height: 12.h), PhaseResourcesList(resources: resources)],
-                        // Certifications
-                        if (certifications.isNotEmpty) ...[SizedBox(height: 12.h), PhaseCertificationsList(certifications: certifications)],
-                        // Projets
-                        if (projects.isNotEmpty) ...[SizedBox(height: 12.h), PhaseProjectsList(projects: projects)],
-                        // Jalon
-                        if (milestone.isNotEmpty) _buildMilestone(theme, cs, milestone),
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -117,6 +125,7 @@ class _PhaseCardState extends State<PhaseCard> {
           ),
         ],
       ),
+    ),
     );
   }
 

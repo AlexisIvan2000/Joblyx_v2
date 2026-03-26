@@ -34,7 +34,8 @@ class ApplicationCard extends StatelessWidget {
         ? t.t('applications_screen.time_today')
         : '$daysAgo${t.t('applications_screen.days_ago')}';
 
-    return GestureDetector(
+    return RepaintBoundary(
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
@@ -49,12 +50,15 @@ class ApplicationCard extends StatelessWidget {
               child: Row(
                 children: [
                   // Avatar avec initiale de l'entreprise
-                  Container(
-                    width: 44.r, height: 44.r,
-                    decoration: BoxDecoration(color: cfg.bgColor, shape: BoxShape.circle),
-                    child: Center(
-                      child: Text(initial,
-                          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: cfg.textColor)),
+                  Hero(
+                    tag: 'app_avatar_${app['id']}',
+                    child: Container(
+                      width: 44.r, height: 44.r,
+                      decoration: BoxDecoration(color: cfg.bgColor, shape: BoxShape.circle),
+                      child: Center(
+                        child: Text(initial,
+                            style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: cfg.textColor)),
+                      ),
                     ),
                   ),
                   SizedBox(width: 12.w),
@@ -112,6 +116,7 @@ class ApplicationCard extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -13,6 +13,7 @@ import 'package:frontend/features/roadmap/presentation/providers/roadmap_provide
 import 'package:frontend/features/settings/data/user_service.dart';
 import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
 import 'package:frontend/features/settings/presentation/utils/invalidate_providers.dart';
+import 'package:frontend/core/utils/haptic.dart';
 import 'package:frontend/features/settings/presentation/widgets/edit_profile_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_password_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_email_dialog.dart';
@@ -110,7 +111,7 @@ class ProfileScreen extends ConsumerWidget {
                         Positioned(
                           bottom: 0, right: 0,
                           child: GestureDetector(
-                            onTap: () => _showPhotoPickerDialog(context, ref, cs, t),
+                            onTap: () { Haptic.medium(); _showPhotoPickerDialog(context, ref, cs, t); },
                             child: Container(
                               width: 32.r, height: 32.r,
                               decoration: BoxDecoration(
@@ -220,6 +221,7 @@ class ProfileScreen extends ConsumerWidget {
                 label: t.t('profile_screen.logout'),
                 cs: cs,
                 onTap: () async {
+                  Haptic.heavy();
                   await AuthService().logout();
                   if (!context.mounted) return;
                   invalidateUserProviders(ref);

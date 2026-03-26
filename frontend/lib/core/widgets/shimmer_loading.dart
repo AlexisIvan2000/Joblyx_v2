@@ -204,6 +204,83 @@ class ProfileSkeleton extends StatelessWidget {
   }
 }
 
+/// Settings skeleton.
+class SettingsSkeleton extends StatelessWidget {
+  const SettingsSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerLoading(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
+        children: [
+          SkeletonBox(width: 80.w, height: 14.h),
+          SizedBox(height: 10.h),
+          SkeletonBox(width: double.infinity, height: 56.h, borderRadius: 14),
+          SizedBox(height: 6.h),
+          SkeletonBox(width: double.infinity, height: 56.h, borderRadius: 14),
+          SizedBox(height: 24.h),
+          SkeletonBox(width: 60.w, height: 14.h),
+          SizedBox(height: 10.h),
+          SkeletonBox(width: double.infinity, height: 56.h, borderRadius: 14),
+          SizedBox(height: 6.h),
+          SkeletonBox(width: double.infinity, height: 56.h, borderRadius: 14),
+          SizedBox(height: 24.h),
+          SkeletonBox(width: 100.w, height: 14.h),
+          SizedBox(height: 10.h),
+          SkeletonBox(width: double.infinity, height: 56.h, borderRadius: 14),
+          SizedBox(height: 6.h),
+          SkeletonBox(width: double.infinity, height: 56.h, borderRadius: 14),
+        ],
+      ),
+    );
+  }
+}
+
+/// Application detail skeleton.
+class ApplicationDetailSkeleton extends StatelessWidget {
+  const ApplicationDetailSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerLoading(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 32.h),
+        children: [
+          Row(
+            children: [
+              SkeletonBox(width: 52.w, height: 52.w, borderRadius: 14),
+              SizedBox(width: 14.w),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonBox(width: 140.w, height: 18.h),
+                  SizedBox(height: 8.h),
+                  SkeletonBox(width: 80.w, height: 24.h, borderRadius: 16),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: 24.h),
+          SkeletonBox(width: double.infinity, height: 16.h),
+          SizedBox(height: 10.h),
+          SkeletonBox(width: double.infinity, height: 16.h),
+          SizedBox(height: 10.h),
+          SkeletonBox(width: 200.w, height: 16.h),
+          SizedBox(height: 24.h),
+          SkeletonBox(width: 120.w, height: 16.h),
+          SizedBox(height: 8.h),
+          SkeletonBox(width: double.infinity, height: 120.h, borderRadius: 12),
+          SizedBox(height: 24.h),
+          SkeletonBox(width: double.infinity, height: 48.h, borderRadius: 24),
+        ],
+      ),
+    );
+  }
+}
+
 /// Roadmap skeleton.
 class RoadmapSkeleton extends StatelessWidget {
   const RoadmapSkeleton({super.key});

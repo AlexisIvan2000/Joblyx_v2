@@ -6,6 +6,7 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/assistant/presentation/providers/interview_provider.dart';
+import 'package:frontend/core/utils/haptic.dart';
 
 /// Écran chat d'entretien avec WebSocket streaming.
 class InterviewChatScreen extends ConsumerStatefulWidget {
@@ -90,6 +91,7 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
   void _send() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+    Haptic.medium();
     ref.read(interviewChatProvider.notifier).sendMessage(text);
     _messageController.clear();
     _scrollToBottom();
