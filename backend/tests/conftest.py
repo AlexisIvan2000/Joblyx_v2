@@ -49,6 +49,7 @@ def _make_user_obj(**overrides) -> User:
         "last_code_sent_at": None,
         "code_resend_count": 0,
         "avatar_url": None,
+        "linkedin_id": None,
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
     }
@@ -106,6 +107,7 @@ def mock_auth_repo():
     repo = AsyncMock()
     repo.get_user_by_email.return_value = None
     repo.get_user_by_id.return_value = None
+    repo.get_user_by_linkedin_id.return_value = None
     repo.create_user.return_value = _make_user_obj()
     repo.update_user.return_value = _make_user_obj()
     repo.update_verification_status.return_value = _make_user_obj()
