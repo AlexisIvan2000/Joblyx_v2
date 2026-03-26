@@ -81,7 +81,7 @@ class Career(Base):
     regeneration_count: Mapped[int] = mapped_column(Integer, server_default="0")
     regeneration_reset_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
     created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
-    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), onupdate=lambda: datetime.now(timezone.utc), nullable=True)
 
     user: Mapped["User"] = relationship()
 
@@ -139,7 +139,7 @@ class RoadmapPhase(Base):
     certifications: Mapped[list | None] = mapped_column(JSONB, server_default="[]", nullable=True)
     projects: Mapped[list | None] = mapped_column(JSONB, server_default="[]", nullable=True)
     created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
-    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), onupdate=lambda: datetime.now(timezone.utc), nullable=True)
 
     roadmap: Mapped["Roadmap"] = relationship(back_populates="phases")
 
@@ -163,7 +163,7 @@ class Application(Base):
     cv_file_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
-    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=sa.text("now()"), onupdate=lambda: datetime.now(timezone.utc), nullable=True)
 
     user: Mapped["User"] = relationship()
 

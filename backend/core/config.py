@@ -8,7 +8,12 @@ JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
 
-DATABASE_URL = os.getenv("DB_URL")
+_raw_db_url = os.getenv("DB_URL") or os.getenv("DATABASE_URL") or ""
+# Railway fournit postgresql://, SQLAlchemy async a besoin de postgresql+asyncpg://
+if _raw_db_url.startswith("postgresql://"):
+    DATABASE_URL = _raw_db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+else:
+    DATABASE_URL = _raw_db_url
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL_PRIMARY = "gpt-4o"        # Roadmap génération uniquement
