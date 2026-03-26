@@ -25,16 +25,39 @@ scheduler = AsyncIOScheduler()
 
 
 def _run_migrations():
-    """Applique les migrations Alembic au démarrage (idempotent)."""
+    """Crée les tables si elles n'existent pas, puis applique les migrations Alembic."""
     import subprocess
-    result = subprocess.run(
-        ["python", "-m", "alembic", "upgrade", "head"],
-        capture_output=True, text=True,
-    )
-    if result.returncode != 0:
-        logging.getLogger(__name__).error("Alembic migration failed: %s", result.stderr)
+    from sqlalchemy import inspect, create_engine
+    from core.config import DATABASE_URL
+
+    # Connexion synchrone pour inspecter la base
+    sync_url = DATABASE_URL.replace("+asyncpg", "")
+    sync_engine = create_engine(sync_url)
+    inspector = inspect(sync_engine)
+    tables = inspector.get_table_names()
+    sync_engine.dispose()
+
+    if "users" not in tables:
+        # Base vide — créer toutes les tables puis stamp à head
+        logging.getLogger(__name__).info("Empty database detected, creating tables...")
+        from models.db_models import Base
+        from sqlalchemy import create_engine as ce
+        eng = ce(sync_url)
+        Base.metadata.create_all(eng)
+        eng.dispose()
+        # Stamp pour qu'Alembic sache qu'on est à jour
+        subprocess.run(["python", "-m", "alembic", "stamp", "head"], capture_output=True)
+        logging.getLogger(__name__).info("Tables created and stamped at head")
     else:
-        logging.getLogger(__name__).info("Alembic migrations applied successfully")
+        # Base existante — appliquer les migrations
+        result = subprocess.run(
+            ["python", "-m", "alembic", "upgrade", "head"],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            logging.getLogger(__name__).error("Alembic migration failed: %s", result.stderr)
+        else:
+            logging.getLogger(__name__).info("Alembic migrations applied")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
