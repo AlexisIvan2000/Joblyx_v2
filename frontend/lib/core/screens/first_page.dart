@@ -12,7 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 const _linkedInClientId = String.fromEnvironment(
   'LINKEDIN_CLIENT_ID',
-  defaultValue: '78czcytnqmjkv3',
+  defaultValue: '78ph11ioe6bh13',
 );
 const _linkedInRedirectUri = 'https://api.joblyx.com/auth/linkedin/callback';
 final _linkedInAuthUrl =
@@ -38,7 +38,17 @@ class _FirstPageState extends State<FirstPage> {
   void initState() {
     super.initState();
     _appLinks = AppLinks();
+    // Écouter les liens entrants quand l'app est déjà ouverte
     _linkSub = _appLinks.uriLinkStream.listen(_handleDeepLink);
+    // Vérifier si l'app a été ouverte via un deep link (cold start ou resume)
+    _checkInitialLink();
+  }
+
+  Future<void> _checkInitialLink() async {
+    try {
+      final uri = await _appLinks.getInitialLink();
+      if (uri != null) _handleDeepLink(uri);
+    } catch (_) {}
   }
 
   @override
@@ -68,7 +78,7 @@ class _FirstPageState extends State<FirstPage> {
       refreshToken: refreshToken,
     );
 
-    if (mounted) context.go('/home');
+    if (mounted) context.go('/');
   }
 
   void _launchLinkedIn() {
