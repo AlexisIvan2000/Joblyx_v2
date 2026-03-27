@@ -70,6 +70,20 @@ class UserService:
             await self.rt_repo.revoke_all_for_user(user_id)
         return {"message": "Password changed successfully"}
 
+    async def set_password(self, user_id: str, new_password: str):
+        """Définir un mot de passe pour un compte LinkedIn-only."""
+        _validate_password(new_password)
+        db_user = await self.repo.get_user_by_id(user_id)
+        if db_user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Account already has a password"
+            )
+        new_hash = Security.hash_password(new_password)
+        await self.repo.update_user(user_id, {"password_hash": new_hash})
+        logger.info("Password set for LinkedIn account: user_id=%s", user_id)
+        return {"message": "Password set successfully"}
+
     async def forgot_password(self, email: str):
         db_user = await self.repo.get_user_by_email(email)
         if db_user:

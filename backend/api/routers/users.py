@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from models.schemas import UpdateProfile, ChangePassword, ChangeEmail, VerifyEmailChange
+from models.schemas import UpdateProfile, ChangePassword, SetPassword, ChangeEmail, VerifyEmailChange
 from models.db_models import User
 from services.auth.email_password import EmailPasswordAuth
 from services.users.users import UserService
@@ -33,6 +33,7 @@ async def get_me(
         "is_verified": current_user.is_verified,
         "avatar_url": avatar_url,
         "pending_email": current_user.pending_email,
+        "has_password": current_user.password_hash is not None,
     }
 
 @router.put("/me")
@@ -50,6 +51,14 @@ async def change_password(
     svc: UserService = Depends(get_user_service),
 ):
     return await svc.change_password(str(current_user.id), body.current_password, body.new_password)
+
+@router.post("/me/set-password")
+async def set_password(
+    body: SetPassword,
+    current_user: User = Depends(get_current_user),
+    svc: UserService = Depends(get_user_service),
+):
+    return await svc.set_password(str(current_user.id), body.new_password)
 
 @router.post("/me/change-email")
 async def change_email(

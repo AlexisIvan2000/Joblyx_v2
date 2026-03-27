@@ -16,6 +16,7 @@ import 'package:frontend/features/authentication/data/auth_storage.dart';
 import 'package:frontend/core/utils/haptic.dart';
 import 'package:frontend/features/settings/presentation/widgets/edit_profile_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_password_dialog.dart';
+import 'package:frontend/features/settings/presentation/widgets/set_password_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/change_email_dialog.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
 
@@ -77,6 +78,7 @@ class ProfileScreen extends ConsumerWidget {
     final lastName = user['last_name'] as String? ?? '';
     final email = user['email'] as String? ?? '';
     final avatarUrl = user['avatar_url'] as String?;
+    final hasPassword = user['has_password'] as bool? ?? true;
     final regenRemaining = (regenAsync.whenOrNull(data: (s) => s['remaining']) ?? 0) as int;
     final totalApps = appsAsync.whenOrNull(data: (apps) => apps.length) ?? 0;
     final initials = '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}';
@@ -181,38 +183,54 @@ class ProfileScreen extends ConsumerWidget {
               _MenuItem(
                 icon: Icons.lock_outline_rounded,
                 iconColor: const Color(0xFF7C3AED),
-                title: t.t('profile_screen.security'),
-                subtitle: t.t('profile_screen.security_sub'),
+                title: hasPassword
+                    ? t.t('profile_screen.security')
+                    : t.t('settings.set_password'),
+                subtitle: hasPassword
+                    ? t.t('profile_screen.security_sub')
+                    : t.t('settings.set_password_sub'),
                 cs: cs,
                 onTap: () async {
-                  final changed = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => const ChangePasswordDialog(),
-                  );
-                  if (changed == true && context.mounted) {
-                    AppSnackbar.success(context, t.t('settings.password_changed'));
+                  if (hasPassword) {
+                    final changed = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => const ChangePasswordDialog(),
+                    );
+                    if (changed == true && context.mounted) {
+                      AppSnackbar.success(context, t.t('settings.password_changed'));
+                    }
+                  } else {
+                    final set = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => const SetPasswordDialog(),
+                    );
+                    if (set == true && context.mounted) {
+                      ref.read(userProvider.notifier).refresh();
+                      AppSnackbar.success(context, t.t('settings.password_set_success'));
+                    }
                   }
                 },
               ),
 
-              // Changer email
-              _MenuItem(
-                icon: Icons.alternate_email_rounded,
-                iconColor: const Color(0xFFD97706),
-                title: t.t('settings.change_email'),
-                subtitle: email,
-                cs: cs,
-                onTap: () async {
-                  final newEmail = await showDialog<String>(
-                    context: context,
-                    builder: (_) => ChangeEmailDialog(currentEmail: email),
-                  );
-                  if (newEmail != null && context.mounted) {
-                    ref.read(userProvider.notifier).updateEmail(newEmail);
-                    AppSnackbar.success(context, t.t('settings.email_changed'));
-                  }
-                },
-              ),
+              // Changer email (uniquement si l'utilisateur a un mot de passe)
+              if (hasPassword)
+                _MenuItem(
+                  icon: Icons.alternate_email_rounded,
+                  iconColor: const Color(0xFFD97706),
+                  title: t.t('settings.change_email'),
+                  subtitle: email,
+                  cs: cs,
+                  onTap: () async {
+                    final newEmail = await showDialog<String>(
+                      context: context,
+                      builder: (_) => ChangeEmailDialog(currentEmail: email),
+                    );
+                    if (newEmail != null && context.mounted) {
+                      ref.read(userProvider.notifier).updateEmail(newEmail);
+                      AppSnackbar.success(context, t.t('settings.email_changed'));
+                    }
+                  },
+                ),
               SizedBox(height: 16.h),
 
               // Supprimer le compte

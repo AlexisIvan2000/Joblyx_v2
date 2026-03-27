@@ -36,6 +36,12 @@ class UserService {
     });
   }
 
+  Future<void> setPassword({required String newPassword}) async {
+    await _dio.post('/users/me/set-password', data: {
+      'new_password': newPassword,
+    });
+  }
+
   Future<void> changeEmail({
     required String newEmail,
     required String password,
