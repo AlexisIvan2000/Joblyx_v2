@@ -1,7 +1,7 @@
 import logging
 from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from models.schemas import UserCreate, UserLogin, LinkedInCallback, TokenResponse, RefreshToken, VerifyEmail, ForgotPassword, ResetPassword, ResendVerification, MessageResponse
 from services.auth.email_password import EmailPasswordAuth
 from services.auth.linkedin import LinkedInAuth
@@ -10,6 +10,26 @@ from api.dependencies import get_auth_service, get_linkedin_auth, get_user_servi
 from core.rate_limit import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _deep_link_page(deep_link_url: str) -> HTMLResponse:
+    """Retourne une page HTML qui redirige une seule fois vers le deep link,
+    puis affiche un message. Évite que le navigateur re-déclenche le redirect
+    à chaque retour au premier plan."""
+    html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Joblyx</title>
+<style>body{{font-family:system-ui,sans-serif;display:flex;justify-content:center;align-items:center;
+min-height:100vh;margin:0;background:#f5f5f5;color:#333;text-align:center}}
+.card{{padding:2rem;border-radius:1rem;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.1)}}
+</style></head><body><div class="card">
+<h2>Redirection vers Joblyx...</h2>
+<p id="msg">Ouverture de l'application...</p>
+</div><script>
+window.location.replace("{deep_link_url}");
+setTimeout(function(){{document.getElementById("msg").textContent="Vous pouvez fermer cet onglet.";}},2000);
+</script></body></html>"""
+    return HTMLResponse(content=html)
 
 @router.post("/register", response_model=MessageResponse)
 @limiter.limit("5/minute")
@@ -53,7 +73,7 @@ async def linkedin_callback(
     if error or not code:
         logger.warning("LinkedIn callback error: %s", error)
         params = urlencode({"error": error or "no_code"})
-        return RedirectResponse(f"joblyx://auth?{params}")
+        return _deep_link_page(f"joblyx://auth?{params}")
 
     try:
         tokens = await auth.authenticate(code)
@@ -61,11 +81,11 @@ async def linkedin_callback(
             "access_token": tokens["access_token"],
             "refresh_token": tokens["refresh_token"],
         })
-        return RedirectResponse(f"joblyx://auth?{params}")
+        return _deep_link_page(f"joblyx://auth?{params}")
     except Exception as e:
         logger.error("LinkedIn callback failed: %s", e)
         params = urlencode({"error": "auth_failed"})
-        return RedirectResponse(f"joblyx://auth?{params}")
+        return _deep_link_page(f"joblyx://auth?{params}")
 
 @router.post("/resend-verification")
 @limiter.limit("3/minute")

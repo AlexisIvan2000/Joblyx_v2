@@ -34,7 +34,8 @@ class _FirstPageState extends State<FirstPage> {
   late final AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSub;
   bool _isLoading = false;
-  bool _linkHandled = false;
+  /// Statique pour persister entre les instances (logout recrée le widget)
+  static bool _linkHandled = false;
 
   @override
   void initState() {
