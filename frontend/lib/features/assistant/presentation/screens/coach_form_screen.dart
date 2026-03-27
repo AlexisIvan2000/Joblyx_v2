@@ -230,6 +230,7 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
             SizedBox(height: 6.h),
             DropdownButtonFormField<String>(
               initialValue: _language,
+              onTap: () => FocusScope.of(context).unfocus(),
               decoration: _deco('', cs),
               items: [
                 DropdownMenuItem(value: 'fr', child: Text(t.t('onboarding.language_fr'))),

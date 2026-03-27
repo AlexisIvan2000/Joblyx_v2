@@ -128,6 +128,17 @@ class AuthService {
     }
     await _storage.clearTokens();
   }
+
+  /// Sauvegarde les tokens reçus via le deep link LinkedIn.
+  Future<void> saveLinkedInTokens({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    await _storage.saveTokens(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
+  }
 }
 
 class AuthException implements Exception {

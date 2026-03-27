@@ -220,7 +220,10 @@
         "server_error": "Server error. Please try again later",
         "connection_timeout": "Connection timeout. Please check your internet",
         "connection_error": "Cannot connect to server. Please try again",
-        "unknown": "An unexpected error occurred"
+        "unknown": "An unexpected error occurred",
+        "linkedin_account": "This account uses LinkedIn sign-in",
+        "linkedin_failed": "LinkedIn authentication failed",
+        "linkedin_no_email": "LinkedIn account has no email address"
     },
 
     "onboarding": {

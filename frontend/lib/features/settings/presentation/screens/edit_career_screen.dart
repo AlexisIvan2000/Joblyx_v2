@@ -318,6 +318,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     SizedBox(height: 12.h),
     DropdownButtonFormField<String>(
       initialValue: _level,
+      onTap: () => FocusScope.of(context).unfocus(),
       decoration: dropdownDecoration(context, label: t.t('onboarding.level'), icon: Icons.trending_up_rounded),
       items: ['junior', 'mid', 'senior', 'reconversion']
           .map((v) => DropdownMenuItem(value: v, child: Text(t.t('onboarding.level_$v'))))
@@ -380,6 +381,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     SizedBox(height: 14.h),
     DropdownButtonFormField<String>(
       initialValue: _language,
+      onTap: () => FocusScope.of(context).unfocus(),
       decoration: dropdownDecoration(context, label: t.t('onboarding.language'), icon: Icons.language_rounded),
       items: ['fr', 'en', 'bilingual']
           .map((v) => DropdownMenuItem(value: v, child: Text(t.t('onboarding.language_$v'))))

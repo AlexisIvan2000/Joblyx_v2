@@ -110,6 +110,7 @@ class GoalsStep extends StatelessWidget {
           // Sélection de la langue de recherche d'emploi
           DropdownButtonFormField<String>(
             initialValue: language,
+            onTap: () => FocusScope.of(context).unfocus(),
             decoration: dropdownDecoration(context, label: t.t('onboarding.language'), icon: Icons.language_rounded),
             items: ['fr', 'en', 'bilingual']
                 .map((v) => DropdownMenuItem(value: v, child: Text(t.t('onboarding.language_$v'))))

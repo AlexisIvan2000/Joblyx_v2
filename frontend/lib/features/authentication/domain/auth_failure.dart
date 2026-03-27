@@ -40,6 +40,11 @@ class AuthFailure {
     // Refresh token / session
     'Invalid or expired refresh token': 'auth_error.session_expired',
 
+    // LinkedIn
+    'This account uses LinkedIn sign-in': 'auth_error.linkedin_account',
+    'Failed to authenticate with LinkedIn': 'auth_error.linkedin_failed',
+    'LinkedIn account has no email address': 'auth_error.linkedin_no_email',
+
     // Other
     'User not found': 'auth_error.user_not_found',
     'No fields to update': 'auth_error.no_fields_to_update',

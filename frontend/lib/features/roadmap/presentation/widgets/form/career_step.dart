@@ -38,6 +38,7 @@ class CareerStep extends StatelessWidget {
           // Sélection du niveau d'expérience
           DropdownButtonFormField<String>(
             initialValue: level,
+            onTap: () => FocusScope.of(context).unfocus(),
             decoration: dropdownDecoration(
               context,
               label: t.t('onboarding.level'),

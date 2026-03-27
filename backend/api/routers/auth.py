@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, Request
+import logging
+from urllib.parse import urlencode
+from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import RedirectResponse
 from models.schemas import UserCreate, UserLogin, LinkedInCallback, TokenResponse, RefreshToken, VerifyEmail, ForgotPassword, ResetPassword, ResendVerification, MessageResponse
 from services.auth.email_password import EmailPasswordAuth
 from services.auth.linkedin import LinkedInAuth
@@ -36,6 +39,33 @@ async def logout(body: RefreshToken, auth: EmailPasswordAuth = Depends(get_auth_
 @limiter.limit("10/minute")
 async def linkedin_login(request: Request, body: LinkedInCallback, auth: LinkedInAuth = Depends(get_linkedin_auth)):
     return await auth.authenticate(body.code)
+
+@router.get("/linkedin/callback")
+async def linkedin_callback(
+    request: Request,
+    code: str = Query(None),
+    error: str = Query(None),
+    auth: LinkedInAuth = Depends(get_linkedin_auth),
+):
+    """Callback OAuth LinkedIn — échange le code et redirige vers l'app avec les tokens."""
+    logger = logging.getLogger(__name__)
+
+    if error or not code:
+        logger.warning("LinkedIn callback error: %s", error)
+        params = urlencode({"error": error or "no_code"})
+        return RedirectResponse(f"joblyx://auth?{params}")
+
+    try:
+        tokens = await auth.authenticate(code)
+        params = urlencode({
+            "access_token": tokens["access_token"],
+            "refresh_token": tokens["refresh_token"],
+        })
+        return RedirectResponse(f"joblyx://auth?{params}")
+    except Exception as e:
+        logger.error("LinkedIn callback failed: %s", e)
+        params = urlencode({"error": "auth_failed"})
+        return RedirectResponse(f"joblyx://auth?{params}")
 
 @router.post("/resend-verification")
 @limiter.limit("3/minute")

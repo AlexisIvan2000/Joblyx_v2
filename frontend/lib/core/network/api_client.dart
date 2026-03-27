@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
 
-const String _baseUrl = 'https://joblyxv2-production.up.railway.app'; 
+const String _baseUrl = 'https://api.joblyx.com'; 
 
 /// Callback appelé quand la session expire (refresh token invalide).
 /// Permet au niveau app de rediriger vers le login.

@@ -221,7 +221,10 @@
         "server_error": "Erreur serveur. Veuillez réessayer plus tard",
         "connection_timeout": "Connexion expirée. Vérifiez votre connexion internet",
         "connection_error": "Impossible de se connecter au serveur. Veuillez réessayer",
-        "unknown": "Une erreur inattendue s'est produite"
+        "unknown": "Une erreur inattendue s'est produite",
+        "linkedin_account": "Ce compte utilise la connexion LinkedIn",
+        "linkedin_failed": "Échec de l'authentification LinkedIn",
+        "linkedin_no_email": "Le compte LinkedIn n'a pas d'adresse email"
     },
 
     "onboarding": {

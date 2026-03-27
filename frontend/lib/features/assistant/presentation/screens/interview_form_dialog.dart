@@ -146,6 +146,7 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
                 SizedBox(height: 12.h),
                 DropdownButtonFormField<String>(
                   initialValue: _language,
+                  onTap: () => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(
                     labelText: t.t('interview.language_label'),
                   ),
