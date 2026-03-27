@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/features/authentication/presentation/providers/auth_state_provider.dart';
 import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
@@ -9,6 +11,8 @@ import 'package:frontend/features/assistant/presentation/providers/interview_pro
 /// A appeler au logout et suppression de compte pour éviter
 /// que les données de l'ancien compte restent en cache.
 void invalidateUserProviders(WidgetRef ref) {
+  debugPrint('[INVALIDATE] Invalidating all user providers...');
+  ref.invalidate(authStateProvider);
   ref.invalidate(userProvider);
   ref.invalidate(roadmapProvider);
   ref.invalidate(regenerationStatusProvider);

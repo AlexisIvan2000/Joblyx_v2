@@ -444,14 +444,20 @@ class _DeleteAccountButton extends ConsumerWidget {
     if (confirmed == null || confirmed.isEmpty || !context.mounted) return;
 
     try {
+      debugPrint('[DELETE] Starting account deletion...');
       await UserService().deleteAccount(confirmed);
-      if (!context.mounted) return;
+      debugPrint('[DELETE] Account deleted on server');
+      if (!context.mounted) { debugPrint('[DELETE] Context not mounted after delete!'); return; }
       await AuthStorage().clearTokens();
-      if (!context.mounted) return;
+      debugPrint('[DELETE] Tokens cleared');
+      if (!context.mounted) { debugPrint('[DELETE] Context not mounted after clearTokens!'); return; }
       invalidateUserProviders(ref);
+      debugPrint('[DELETE] Providers invalidated');
       AppSnackbar.success(context, t.t('settings.delete_account_success'));
       GoRouter.of(context).go('/first-page');
-    } catch (_) {
+      debugPrint('[DELETE] Navigated to /first-page');
+    } catch (e) {
+      debugPrint('[DELETE] Error: $e');
       if (!context.mounted) return;
       AppSnackbar.error(context, t.t('settings.delete_account_error'));
     }

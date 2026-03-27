@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
+import 'package:frontend/features/authentication/data/auth_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const _linkedInClientId = String.fromEnvironment(
@@ -33,6 +34,7 @@ class _FirstPageState extends State<FirstPage> {
   late final AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSub;
   bool _isLoading = false;
+  bool _linkHandled = false;
 
   @override
   void initState() {
@@ -47,7 +49,12 @@ class _FirstPageState extends State<FirstPage> {
   Future<void> _checkInitialLink() async {
     try {
       final uri = await _appLinks.getInitialLink();
-      if (uri != null) _handleDeepLink(uri);
+      // Ne traiter que si c'est un vrai callback LinkedIn frais
+      // (pas un intent recyclé après logout)
+      if (uri != null && !_linkHandled) {
+        final hasTokens = await AuthStorage().hasTokens();
+        if (!hasTokens) _handleDeepLink(uri);
+      }
     } catch (_) {}
   }
 
@@ -59,6 +66,8 @@ class _FirstPageState extends State<FirstPage> {
 
   Future<void> _handleDeepLink(Uri uri) async {
     if (uri.scheme != 'joblyx' || uri.host != 'auth') return;
+    if (_linkHandled) return;
+    _linkHandled = true;
 
     final error = uri.queryParameters['error'];
     if (error != null) {
@@ -82,6 +91,7 @@ class _FirstPageState extends State<FirstPage> {
   }
 
   void _launchLinkedIn() {
+    _linkHandled = false;
     setState(() => _isLoading = true);
     launchUrl(
       Uri.parse(_linkedInAuthUrl),

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
@@ -119,14 +120,21 @@ class AuthService {
   /// Logout the current user.
   Future<void> logout() async {
     final refreshToken = await _storage.getRefreshToken();
+    debugPrint('[AUTH] logout: refreshToken=${refreshToken != null ? "exists" : "null"}');
     if (refreshToken != null) {
       try {
         await _dio.post('/auth/logout', data: {
           'refresh_token': refreshToken,
         });
-      } catch (_) {}
+        debugPrint('[AUTH] logout: backend call success');
+      } catch (e) {
+        debugPrint('[AUTH] logout: backend call failed: $e');
+      }
     }
     await _storage.clearTokens();
+    // Vérifier que les tokens sont bien effacés
+    final check = await _storage.getAccessToken();
+    debugPrint('[AUTH] logout: tokens cleared, accessToken=${check != null ? "STILL EXISTS" : "null"}');
   }
 
   /// Sauvegarde les tokens reçus via le deep link LinkedIn.

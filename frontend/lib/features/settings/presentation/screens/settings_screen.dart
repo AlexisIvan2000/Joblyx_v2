@@ -333,11 +333,15 @@ class _LogoutButton extends ConsumerWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
         onTap: () async {
+          debugPrint('[LOGOUT] Starting logout...');
           Haptic.heavy();
           await AuthService().logout();
-          if (!context.mounted) return;
+          debugPrint('[LOGOUT] Tokens cleared');
+          if (!context.mounted) { debugPrint('[LOGOUT] Context not mounted!'); return; }
           invalidateUserProviders(ref);
+          debugPrint('[LOGOUT] Providers invalidated');
           GoRouter.of(context).go('/first-page');
+          debugPrint('[LOGOUT] Navigated to /first-page');
         },
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
