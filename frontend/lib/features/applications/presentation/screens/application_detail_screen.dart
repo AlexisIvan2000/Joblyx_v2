@@ -11,6 +11,7 @@ import 'package:frontend/core/utils/haptic.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
 import 'package:frontend/features/assistant/presentation/providers/interview_provider.dart';
 import 'package:frontend/features/assistant/presentation/screens/interview_form_dialog.dart';
+import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
 
 class ApplicationDetailScreen extends ConsumerStatefulWidget {
   final String applicationId;
@@ -97,6 +98,8 @@ class _ApplicationDetailScreenState
         initialJobTitle: app['job_title'] as String?,
         initialCompanyName: app['company_name'] as String?,
         initialJobDescription: app['job_description'] as String?,
+        initialLanguage: ref.read(preferencesProvider).resolveAiLanguage('fr'),
+        onLanguageChanged: (v) => ref.read(preferencesProvider.notifier).setAiLanguage(v),
       ),
     );
     if (result == null || !mounted) return;

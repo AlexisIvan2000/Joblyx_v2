@@ -11,6 +11,7 @@ import 'package:frontend/features/roadmap/presentation/providers/roadmap_provide
 import 'package:frontend/features/roadmap/presentation/widgets/form/career_step.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/form/goals_step.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/form/skills_step.dart';
+import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
 
 class AIRoadmapFormScreen extends ConsumerStatefulWidget {
   const AIRoadmapFormScreen({super.key});
@@ -38,7 +39,7 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
   final _locationController = TextEditingController();
   String _city = '';
   String _province = '';
-  String _language = 'fr';
+  late String _language;
   List<MapboxPlace> _locationSuggestions = [];
   bool _showLocationSuggestions = false;
   final _locationFieldKey = GlobalKey();
@@ -60,6 +61,8 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
   @override
   void initState() {
     super.initState();
+    final prefs = ref.read(preferencesProvider);
+    _language = prefs.resolveAiLanguage('fr');
     _loadData();
   }
 
@@ -426,8 +429,10 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
                       _locationSuggestions = [];
                       _showLocationSuggestions = false;
                     }),
-                    onLanguageChanged: (v) =>
-                        setState(() => _language = v),
+                    onLanguageChanged: (v) {
+                      setState(() => _language = v);
+                      ref.read(preferencesProvider.notifier).setAiLanguage(v);
+                    },
                   ),
                   SkillsStep(
                     formKey: _formKeys[2],

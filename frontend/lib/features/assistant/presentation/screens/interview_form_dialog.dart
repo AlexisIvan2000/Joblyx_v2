@@ -9,12 +9,16 @@ class InterviewFormDialog extends StatefulWidget {
   final String? initialJobTitle;
   final String? initialCompanyName;
   final String? initialJobDescription;
+  final String initialLanguage;
+  final ValueChanged<String>? onLanguageChanged;
 
   const InterviewFormDialog({
     super.key,
     this.initialJobTitle,
     this.initialCompanyName,
     this.initialJobDescription,
+    this.initialLanguage = 'fr',
+    this.onLanguageChanged,
   });
 
   @override
@@ -27,11 +31,12 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
   late final TextEditingController _companyController;
   late final TextEditingController _descriptionController;
   PlatformFile? _cvFile;
-  String _language = 'fr';
+  late String _language;
 
   @override
   void initState() {
     super.initState();
+    _language = widget.initialLanguage;
     _jobTitleController = TextEditingController(text: widget.initialJobTitle);
     _companyController = TextEditingController(text: widget.initialCompanyName);
     _descriptionController = TextEditingController(text: widget.initialJobDescription);
@@ -148,7 +153,10 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
                     DropdownMenuItem(value: 'fr', child: Text(t.t('onboarding.language_fr'))),
                     DropdownMenuItem(value: 'en', child: Text(t.t('onboarding.language_en'))),
                   ],
-                  onChanged: (v) => setState(() => _language = v!),
+                  onChanged: (v) {
+                    setState(() => _language = v!);
+                    widget.onLanguageChanged?.call(v!);
+                  },
                 ),
               ],
             ),

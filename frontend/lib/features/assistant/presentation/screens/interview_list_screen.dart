@@ -7,6 +7,7 @@ import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/assistant/presentation/providers/interview_provider.dart';
 import 'package:frontend/features/assistant/presentation/screens/interview_form_dialog.dart';
 import 'package:frontend/core/widgets/staggered_list.dart';
+import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
 
 /// Liste des sessions d'entretien (style WhatsApp).
 class InterviewListScreen extends ConsumerWidget {
@@ -122,7 +123,10 @@ class InterviewListScreen extends ConsumerWidget {
 
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (_) => const InterviewFormDialog(),
+      builder: (_) => InterviewFormDialog(
+        initialLanguage: ref.read(preferencesProvider).resolveAiLanguage('fr'),
+        onLanguageChanged: (v) => ref.read(preferencesProvider.notifier).setAiLanguage(v),
+      ),
     );
     if (result == null || !context.mounted) return;
 

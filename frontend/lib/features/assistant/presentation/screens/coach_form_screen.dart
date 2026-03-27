@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/assistant/presentation/providers/coach_provider.dart';
+import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
 
 class CoachFormScreen extends ConsumerStatefulWidget {
   const CoachFormScreen({super.key});
@@ -20,12 +21,13 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
   final _jobTitleController = TextEditingController();
   final _companyController = TextEditingController();
   PlatformFile? _cvFile;
-  String _language = 'fr';
+  late String _language;
   bool _isAnalyzing = false;
 
   @override
   void initState() {
     super.initState();
+    _language = ref.read(preferencesProvider).resolveAiLanguage('fr');
     // Reset le state d'analyse quand on arrive sur le formulaire
     Future.microtask(() => ref.read(coachAnalysisProvider.notifier).reset());
   }
@@ -44,7 +46,7 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
     _companyController.clear();
     setState(() {
       _cvFile = null;
-      _language = 'fr';
+      _language = ref.read(preferencesProvider).resolveAiLanguage('fr');
     });
   }
 
@@ -233,7 +235,10 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
                 DropdownMenuItem(value: 'fr', child: Text(t.t('onboarding.language_fr'))),
                 DropdownMenuItem(value: 'en', child: Text(t.t('onboarding.language_en'))),
               ],
-              onChanged: (v) => setState(() => _language = v!),
+              onChanged: (v) {
+                setState(() => _language = v!);
+                ref.read(preferencesProvider.notifier).setAiLanguage(v!);
+              },
             ),
             SizedBox(height: 24.h),
 
