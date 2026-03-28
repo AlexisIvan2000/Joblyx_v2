@@ -297,6 +297,14 @@ class InterviewService:
         question_type = feedback_data.get("question_type", "")
         counts = feedback_data.get("counts_as_question", True)
         question_number = feedback_data.get("question_number", real_question_count + 1)
+
+        # Protéger contre une clôture prématurée par l'IA
+        if question_type == "closing" and real_question_count < 12:
+            question_type = feedback_data["question_type"] = "behavioral"
+            feedback_data["counts_as_question"] = True
+            counts = True
+            logger.warning("Blocked premature closing at question %d for session %s", real_question_count, session_id)
+
         is_last = question_type == "closing" or (counts and question_number >= MAX_QUESTIONS)
 
         yield ("feedback", {

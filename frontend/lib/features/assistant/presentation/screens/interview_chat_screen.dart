@@ -142,8 +142,10 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
     final cs = Theme.of(context).colorScheme;
     final chatState = ref.watch(interviewChatProvider);
 
-    // Naviguer vers le bilan quand le summary arrive
-    if (chatState.summary != null) {
+    final isCompleted = chatState.status == 'completed';
+
+    // Naviguer vers le bilan quand le summary arrive (uniquement en session active, pas en lecture)
+    if (chatState.summary != null && !isCompleted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) context.go('/assistant/interview/summary/${widget.sessionId}');
       });
@@ -153,8 +155,6 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _scrollToBottom();
     });
-
-    final isCompleted = chatState.status == 'completed';
     final isError = chatState.status == 'error';
     final isTimeout = chatState.errorMessage == 'timeout';
     final canSend = !chatState.isAiTyping && !isCompleted && !isError;

@@ -69,6 +69,16 @@ class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen>
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/assistant/interview');
+            }
+          },
+        ),
         title: Text(_session!['job_title'] as String? ?? t.t('interview.summary_title')),
       ),
       body: SingleChildScrollView(

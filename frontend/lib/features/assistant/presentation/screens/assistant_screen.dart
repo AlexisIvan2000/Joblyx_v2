@@ -75,16 +75,10 @@ class AssistantScreen extends ConsumerWidget {
                   style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700, color: cs.onSurface),
                 ),
               ),
-              historyAsync.when(
-                data: (sessions) => sessions.length > 3
-                    ? TextButton(
-                        onPressed: () => context.push('/assistant/coach/history'),
-                        child: Text(t.t('assistant.view_all'),
-                            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600)),
-                      )
-                    : const SizedBox.shrink(),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
+              TextButton(
+                onPressed: () => context.push('/assistant/coach/history'),
+                child: Text(t.t('assistant.view_all'),
+                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
