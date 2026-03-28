@@ -401,59 +401,57 @@ class _DeleteAccountButton extends ConsumerWidget {
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final emailController = TextEditingController();
-    final confirmed = await showModalBottomSheet<String>(
+    final confirmed = await showDialog<String>(
       context: context,
-      backgroundColor: cs.surface,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(height: 8.h),
-                Container(width: 40.w, height: 4.h,
-                    decoration: BoxDecoration(color: cs.outlineVariant, borderRadius: BorderRadius.circular(2.r))),
-                SizedBox(height: 16.h),
-                Text(t.t('settings.delete_account'),
-                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
-                SizedBox(height: 12.h),
-                Text(t.t('settings.delete_account_warning'),
-                    style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
-                    textAlign: TextAlign.center),
-                SizedBox(height: 14.h),
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: t.t('settings.delete_account_email_hint'),
-                    prefixIcon: Icon(Icons.email_outlined, size: 20.sp),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.delete_forever_rounded, size: 40.sp, color: cs.error),
+              SizedBox(height: 12.h),
+              Text(t.t('settings.delete_account'),
+                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+              SizedBox(height: 12.h),
+              Text(t.t('settings.delete_account_warning'),
+                  style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
+                  textAlign: TextAlign.center),
+              SizedBox(height: 14.h),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: t.t('settings.delete_account_email_hint'),
+                  prefixIcon: Icon(Icons.email_outlined, size: 20.sp),
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(minimumSize: Size(0, 46.h)),
+                      child: Text(t.t('settings.cancel')),
+                    ),
                   ),
-                ),
-                SizedBox(height: 20.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: Text(t.t('settings.cancel')),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(ctx, emailController.text.trim()),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: cs.error,
+                        minimumSize: Size(0, 46.h),
                       ),
+                      child: Text(t.t('settings.delete_account_confirm')),
                     ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => Navigator.pop(ctx, emailController.text.trim()),
-                        style: FilledButton.styleFrom(backgroundColor: cs.error),
-                        child: Text(t.t('settings.delete_account_confirm')),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

@@ -13,6 +13,11 @@ os.environ.setdefault("RESEND_API_KEY", "fake")
 os.environ.setdefault("RESEND_FROM_EMAIL", "test@joblyx.com")
 os.environ.setdefault("RESEND_FROM_NAME", "Joblyx")
 os.environ.setdefault("FRONTEND_URL", "http://localhost:3000")
+os.environ.setdefault("R2_ACCESS_KEY_ID", "fake-r2-key")
+os.environ.setdefault("R2_SECRET_ACCESS_KEY", "fake-r2-secret")
+os.environ.setdefault("R2_ENDPOINT_URL", "https://fake.r2.cloudflarestorage.com")
+os.environ.setdefault("R2_BUCKET_NAME_RESUMES", "test-cvs")
+os.environ.setdefault("R2_BUCKET_NAME_IMAGES", "test-avatars")
 
 import pytest
 from datetime import datetime, timedelta, timezone

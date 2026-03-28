@@ -94,3 +94,40 @@ class TestResendEmailVerification:
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
         resp = test_client.post("/users/me/resend-email-verification")
         assert resp.status_code == 400
+
+
+class TestSetPassword:
+    def test_success_for_linkedin_account(self, test_client, mock_auth_repo):
+        """Un compte LinkedIn sans mot de passe peut en définir un."""
+        from app import app
+        from api.dependencies import get_current_user
+
+        linkedin_user = _make_user_obj(password_hash=None, linkedin_id="linkedin123")
+        mock_auth_repo.get_user_by_id.return_value = linkedin_user
+
+        async def override():
+            return linkedin_user
+
+        app.dependency_overrides[get_current_user] = override
+
+        with patch("services.users.users.Security") as MockSec:
+            MockSec.hash_password.return_value = "newhash"
+            resp = test_client.post("/users/me/set-password", json={"new_password": "Test@123!"})
+
+        assert resp.status_code == 200
+
+    def test_fails_if_already_has_password(self, test_client, mock_auth_repo, fake_user_dict):
+        """Un compte qui a déjà un mot de passe ne peut pas utiliser set-password."""
+        mock_auth_repo.get_user_by_id.return_value = fake_user_dict
+        resp = test_client.post("/users/me/set-password", json={"new_password": "Test@123!"})
+        assert resp.status_code == 400
+
+
+class TestGetMeHasPassword:
+    def test_returns_has_password_field(self, test_client):
+        """Vérifie que GET /users/me retourne le champ has_password."""
+        resp = test_client.get("/users/me")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "has_password" in data
+        assert data["has_password"] is True

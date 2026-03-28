@@ -99,3 +99,25 @@ class TestResetPasswordRoute:
             "new_password": "NewPass1!",
         })
         assert resp.status_code == 400
+
+
+class TestLogoutRoute:
+    def test_success(self, test_client):
+        with patch("services.auth.email_password.Security") as MockSec:
+            MockSec.hash_token.return_value = "hashed-token"
+            resp = test_client.post("/auth/logout", json={"refresh_token": "some-token"})
+        assert resp.status_code == 200
+
+    def test_invalid_token(self, test_client):
+        """Un token invalide doit quand même retourner 200 (logout gracieux)."""
+        with patch("services.auth.email_password.Security") as MockSec:
+            MockSec.hash_token.return_value = "hashed-invalid"
+            resp = test_client.post("/auth/logout", json={"refresh_token": "invalid-token"})
+        assert resp.status_code == 200
+
+
+class TestResendVerificationRoute:
+    def test_success(self, test_client, mock_auth_repo):
+        mock_auth_repo.get_user_by_email.return_value = None
+        resp = test_client.post("/auth/resend-verification", json={"email": "john@example.com"})
+        assert resp.status_code == 200

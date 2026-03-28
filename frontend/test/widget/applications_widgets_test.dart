@@ -47,7 +47,7 @@ Widget _testApp(Widget child) {
 void main() {
   group('ApplicationStatuses', () {
     test('contient 10 statuts', () {
-      expect(ApplicationStatuses.all.length, 10);
+      expect(ApplicationStatuses.all.length, 11);
     });
 
     test('fromKey retourne le bon statut', () {
@@ -62,7 +62,7 @@ void main() {
     test('chaque statut a des couleurs distinctes', () {
       final keys = ApplicationStatuses.all.map((s) => s.key).toSet();
       // Tous les keys sont uniques
-      expect(keys.length, 10);
+      expect(keys.length, 11);
       // Chaque statut a des couleurs non-nulles
       for (final s in ApplicationStatuses.all) {
         expect(s.textColor, isNotNull);
