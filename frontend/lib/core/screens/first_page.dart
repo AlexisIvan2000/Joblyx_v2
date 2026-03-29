@@ -122,13 +122,14 @@ class _FirstPageState extends State<FirstPage> {
           ),
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
               SvgPicture.asset(
                 'assets/images/first_page_icon.svg',
                 width: 280.w,
@@ -218,8 +219,8 @@ class _FirstPageState extends State<FirstPage> {
             ],
           ),
         ),
+        ),
       ),
-      
     );
   }
 }

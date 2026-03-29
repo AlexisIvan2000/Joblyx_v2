@@ -27,6 +27,7 @@ dependencies:
   cached_network_image: ^3.4.1
   web_socket_channel: ^3.0.2
   app_links: ^7.0.0
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -37,6 +38,20 @@ dev_dependencies:
   http_mock_adapter: ^0.6.1
   integration_test:
     sdk: flutter
+  flutter_native_splash: ^2.4.7
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: "assets/images/joblyx_logo.png"
+  android: true
+  ios: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/joblyx_logo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/joblyx_logo.png"
 
 flutter:
   uses-material-design: true

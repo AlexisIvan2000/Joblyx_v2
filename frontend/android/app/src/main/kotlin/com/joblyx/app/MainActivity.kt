@@ -1,4 +1,4 @@
-package com.example.frontend
+package com.joblyx.app
 
 import io.flutter.embedding.android.FlutterActivity
 
