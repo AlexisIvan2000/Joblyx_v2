@@ -14,7 +14,7 @@ const _termsUrl = 'https://joblyx.com/conditions-utilisation';
 const _privacyUrl = 'https://joblyx.com/politiques-confidentialit%C3%A9';
 const _linkedinUrl = 'https://www.linkedin.com/company/joblyx/';
 const _supportEmail = 'support@joblyx.com';
-const _appVersion = '0.1.0';
+const _appVersion = '2.0.0';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
