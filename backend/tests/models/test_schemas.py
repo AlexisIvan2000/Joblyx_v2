@@ -199,8 +199,8 @@ class TestRoadmapGenerateRequest:
             _valid_generate_request(level="expert")
 
     def test_strip_target_jobs(self):
-        req = _valid_generate_request(target_jobs=["  Dev  ", " PM "])
-        assert req.target_jobs == ["Dev", "PM"]
+        req = _valid_generate_request(target_jobs=["  Developer  ", " DevOps "])
+        assert req.target_jobs == ["Developer", "DevOps"]
 
     def test_whitespace_only_target_jobs_removed(self):
         with pytest.raises(ValidationError, match="At least one target job"):
@@ -211,5 +211,13 @@ class TestRoadmapGenerateRequest:
             _valid_generate_request(years_experience=51)
 
     def test_three_target_jobs_valid(self):
-        req = _valid_generate_request(target_jobs=["Dev", "PM", "QA"])
+        req = _valid_generate_request(target_jobs=["Developer", "Data Engineer", "QA Engineer"])
         assert len(req.target_jobs) == 3
+
+    def test_non_it_job_rejected(self):
+        with pytest.raises(ValidationError, match="must be related to IT"):
+            _valid_generate_request(target_jobs=["Boulanger"])
+
+    def test_special_chars_rejected(self):
+        with pytest.raises(ValidationError, match="invalid characters"):
+            _valid_generate_request(target_jobs=["Developer; DROP TABLE"])

@@ -4,6 +4,7 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/features/onboarding/data/mapbox_service.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/form/form_decorations.dart';
 import 'package:frontend/features/roadmap/presentation/widgets/form/form_fields.dart';
+import 'package:frontend/core/utils/job_title_validator.dart';
 
 /// Nombre maximum de postes cibles autorisés.
 const _maxTargetJobs = 3;
@@ -71,6 +72,10 @@ class GoalsStep extends StatelessWidget {
                       label: '${t.t('onboarding.target_job')} ${i + 1}',
                       icon: Icons.work_outline_rounded,
                     ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return null;
+                      return validateJobTitleField(v.trim(), t);
+                    },
                   ),
                 ),
                 // Bouton de suppression affiché uniquement s'il y a plusieurs postes

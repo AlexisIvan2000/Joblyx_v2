@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/core/utils/job_title_validator.dart';
 
 /// Dialog rapide pour démarrer un nouvel entretien.
 /// Peut être pré-rempli avec les données d'une candidature.
@@ -73,9 +74,10 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
                     labelText: t.t('interview.job_title_label'),
                     hintText: t.t('interview.job_title_hint'),
                   ),
-                  validator: (v) => v == null || v.trim().isEmpty
-                      ? t.t('interview.job_title_required')
-                      : null,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return t.t('interview.job_title_required');
+                    return validateJobTitleField(v.trim(), t);
+                  },
                 ),
                 SizedBox(height: 12.h),
                 TextFormField(
@@ -85,6 +87,9 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
                     labelText: t.t('interview.company_label'),
                     hintText: t.t('interview.company_hint'),
                   ),
+                  validator: (v) => v == null || v.trim().isEmpty
+                      ? t.t('interview.company_required')
+                      : null,
                 ),
                 SizedBox(height: 12.h),
                 TextFormField(
@@ -95,9 +100,12 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
                     labelText: t.t('interview.job_desc_label'),
                     hintText: t.t('interview.job_desc_hint'),
                   ),
+                  validator: (v) => v == null || v.trim().isEmpty
+                      ? t.t('interview.job_desc_required')
+                      : null,
                 ),
                 SizedBox(height: 12.h),
-                // Upload CV optionnel
+                // Upload CV
                 GestureDetector(
                   onTap: () async {
                     final result = await FilePicker.platform.pickFiles(
@@ -172,6 +180,12 @@ class _InterviewFormDialogState extends State<InterviewFormDialog> {
         FilledButton(
           onPressed: () {
             if (!_formKey.currentState!.validate()) return;
+            if (_cvFile == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(t.t('interview.cv_required'))),
+              );
+              return;
+            }
             Navigator.pop(context, {
               'job_title': _jobTitleController.text.trim(),
               'company_name': _companyController.text.trim().isEmpty

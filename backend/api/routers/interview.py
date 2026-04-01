@@ -15,6 +15,7 @@ from core.security import Security
 from models.db_models import User
 from repositories.auth_repository import AuthRepository
 from services.interview.interview_service import InterviewService
+from services.utils.job_title_validator import validate_job_title
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,9 @@ async def start_interview(
     current_user: User = Depends(get_current_user),
     svc: InterviewService = Depends(get_interview_service),
 ):
+    # Valider que le titre de poste est lié à l'IT
+    job_title = validate_job_title(job_title)
+
     # Extraire le texte du CV si fourni
     cv_text = None
     if cv_file:

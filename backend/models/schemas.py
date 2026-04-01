@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List
 from pydantic import BaseModel, EmailStr, field_validator
+from services.utils.job_title_validator import _IT_KEYWORDS, _ALLOWED_PATTERN, _MAX_LENGTH
 
 class UserCreate(BaseModel):
     first_name: str
@@ -159,6 +160,13 @@ class RoadmapGenerateRequest(BaseModel):
             raise ValueError("At least one target job is required")
         if len(v) > 3:
             raise ValueError("Maximum 3 target jobs allowed")
+        for job in v:
+            if len(job) > _MAX_LENGTH:
+                raise ValueError(f"Job title too long (max {_MAX_LENGTH} characters)")
+            if not _ALLOWED_PATTERN.match(job):
+                raise ValueError("Job title contains invalid characters")
+            if not any(kw in job.lower() for kw in _IT_KEYWORDS):
+                raise ValueError(f"'{job}' must be related to IT/tech")
         return v
 
     @field_validator("skills")
@@ -188,6 +196,21 @@ class CareerProfileUpdate(BaseModel):
     language: Language | None = None
     previous_field: str | None = None
     skills: List[SkillItem] | None = None
+
+    @field_validator("target_jobs")
+    @classmethod
+    def validate_target_jobs(cls, v: List[str] | None) -> List[str] | None:
+        if v is None:
+            return v
+        for job in v:
+            job = job.strip()
+            if len(job) > _MAX_LENGTH:
+                raise ValueError(f"Job title too long (max {_MAX_LENGTH} characters)")
+            if not _ALLOWED_PATTERN.match(job):
+                raise ValueError("Job title contains invalid characters")
+            if not any(kw in job.lower() for kw in _IT_KEYWORDS):
+                raise ValueError(f"'{job}' must be related to IT/tech")
+        return v
 
 
 # Roadmap schemas

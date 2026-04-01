@@ -10,6 +10,7 @@ from core.database import get_db_session
 from core.rate_limit import limiter, get_user_id_from_jwt
 from models.db_models import User
 from services.coach.coach_service import CoachService
+from services.utils.job_title_validator import validate_job_title
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/coach", tags=["coach"])
@@ -33,6 +34,10 @@ async def analyze(
     current_user: User = Depends(get_current_user),
     svc: CoachService = Depends(get_coach_service),
 ):
+    # Valider que le titre de poste est lié à l'IT
+    if job_title:
+        job_title = validate_job_title(job_title)
+
     if not cv_file.content_type or "pdf" not in cv_file.content_type:
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 

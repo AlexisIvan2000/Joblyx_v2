@@ -7,6 +7,7 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/assistant/presentation/providers/coach_provider.dart';
 import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
+import 'package:frontend/core/utils/job_title_validator.dart';
 
 class CoachFormScreen extends ConsumerStatefulWidget {
   const CoachFormScreen({super.key});
@@ -205,13 +206,17 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
             ),
             SizedBox(height: 16.h),
 
-            // Titre du poste (optionnel)
+            // Titre du poste
             _label(t.t('assistant.job_title_label'), cs),
             SizedBox(height: 6.h),
             TextFormField(
               controller: _jobTitleController,
               textInputAction: TextInputAction.next,
               decoration: _deco(t.t('assistant.job_title_hint'), cs),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return t.t('assistant.job_title_required');
+                return validateJobTitleField(v.trim(), t);
+              },
             ),
             SizedBox(height: 16.h),
 

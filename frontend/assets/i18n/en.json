@@ -312,7 +312,10 @@
         "at_least_one_job": "Add at least one job title",
         "at_least_one_skill": "Add at least one skill",
         "required_field": "This field is required",
-        "error": "An error occurred. Please try again."
+        "error": "An error occurred. Please try again.",
+        "job_too_long": "Job title is too long (max 100 characters)",
+        "job_invalid_chars": "Job title contains invalid characters",
+        "job_not_it": "Job title must be related to IT/tech"
     },
 
     "dashboard": {
@@ -442,9 +445,10 @@
         "job_desc_label": "Job description",
         "job_desc_hint": "Paste the full job posting here...",
         "job_desc_required": "Job description is required",
-        "job_title_label": "Job title (optional)",
+        "job_title_label": "Job title",
         "job_title_hint": "e.g. Full Stack Developer",
-        "company_label": "Company name (optional)",
+        "job_title_required": "Job title is required",
+        "company_label": "Company name",
         "company_hint": "e.g. Google",
         "language_label": "Analysis language",
         "analyze_button": "Analyze my CV",
@@ -479,8 +483,11 @@
         "job_title_label": "Job title",
         "job_title_hint": "e.g. Backend Developer",
         "job_title_required": "Job title is required",
-        "company_label": "Company (optional)",
+        "company_label": "Company",
         "company_hint": "e.g. Google",
+        "company_required": "Company name is required",
+        "job_desc_required": "Job description is required",
+        "cv_required": "CV is required for the simulation",
         "job_desc_label": "Job description (optional)",
         "job_desc_hint": "Paste the job description here...",
         "cv_pick": "Attach your CV (optional, PDF)",

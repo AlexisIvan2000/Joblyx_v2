@@ -313,7 +313,10 @@
         "at_least_one_job": "Ajoutez au moins un emploi ciblé",
         "at_least_one_skill": "Ajoutez au moins une compétence",
         "required_field": "Ce champ est requis",
-        "error": "Une erreur est survenue. Veuillez réessayer."
+        "error": "Une erreur est survenue. Veuillez réessayer.",
+        "job_too_long": "Le titre du poste est trop long (max 100 caractères)",
+        "job_invalid_chars": "Le titre contient des caractères non autorisés",
+        "job_not_it": "Le poste doit être lié au domaine IT/tech"
     },
 
     "dashboard": {
@@ -443,9 +446,10 @@
         "job_desc_label": "Description de l'offre",
         "job_desc_hint": "Collez l'offre d'emploi complète ici...",
         "job_desc_required": "La description de l'offre est requise",
-        "job_title_label": "Titre du poste (optionnel)",
+        "job_title_label": "Titre du poste",
         "job_title_hint": "ex. Développeur Full Stack",
-        "company_label": "Nom de l'entreprise (optionnel)",
+        "job_title_required": "Le titre du poste est requis",
+        "company_label": "Nom de l'entreprise",
         "company_hint": "ex. Google",
         "language_label": "Langue de l'analyse",
         "analyze_button": "Analyser mon CV",
@@ -480,8 +484,11 @@
         "job_title_label": "Titre du poste",
         "job_title_hint": "ex. Développeur Backend",
         "job_title_required": "Le titre du poste est requis",
-        "company_label": "Entreprise (optionnel)",
+        "company_label": "Entreprise",
         "company_hint": "ex. Google",
+        "company_required": "Le nom de l'entreprise est requis",
+        "job_desc_required": "La description de l'offre est requise",
+        "cv_required": "Le CV est requis pour la simulation",
         "job_desc_label": "Description du poste (optionnel)",
         "job_desc_hint": "Collez la description ici...",
         "cv_pick": "Joindre votre CV (optionnel, PDF)",
