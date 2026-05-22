@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DataTable from '../components/DataTable';
 import Pagination from '../components/Pagination';
 import SearchInput from '../components/SearchInput';
 import Badge from '../components/Badge';
 import LoadingSpinner from '../components/LoadingSpinner';
+import LiveIndicator from '../components/LiveIndicator';
 import { listUsers } from '../api/admin';
 import { getErrorMessage } from '../api/errors';
 import { formatDateTime } from '../utils/format';
+import { usePoll } from '../hooks/usePoll';
 import '../styles/components/form.css';
+import '../styles/components/live-indicator.css';
 
 const PAGE_SIZE = 20;
 
@@ -84,10 +87,6 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState('all');
   const [page, setPage] = useState(1);
 
-  const [data, setData] = useState({ users: [], total: 0 });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
   // Debounce de la recherche (350ms)
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(search.trim()), 350);
@@ -99,30 +98,34 @@ export default function UsersPage() {
     setPage(1);
   }, [debouncedSearch, statusFilter, verifiedFilter, roleFilter]);
 
-  // Fetch des users
-  useEffect(() => {
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
+  // Fetch des users avec polling auto (10s)
+  const fetchUsers = useCallback(() => listUsers({
+    page, limit: PAGE_SIZE,
+    search: debouncedSearch || undefined,
+    isActive: statusFilter === 'all' ? undefined : statusFilter === 'active',
+    verified: verifiedFilter === 'all' ? undefined : verifiedFilter === 'yes',
+    role: roleFilter === 'all' ? undefined : roleFilter,
+  }), [page, debouncedSearch, statusFilter, verifiedFilter, roleFilter]);
 
-    const params = {
-      page, limit: PAGE_SIZE,
-      search: debouncedSearch || undefined,
-      isActive: statusFilter === 'all' ? undefined : statusFilter === 'active',
-      verified: verifiedFilter === 'all' ? undefined : verifiedFilter === 'yes',
-      role: roleFilter === 'all' ? undefined : roleFilter,
-    };
+  const { data: result, isLoading, error, lastUpdate, isRefreshing, refetch } = usePoll(
+    fetchUsers,
+    [page, debouncedSearch, statusFilter, verifiedFilter, roleFilter],
+    { interval: 10000 },
+  );
 
-    listUsers(params)
-      .then((result) => { if (!cancelled) setData({ users: result.users, total: result.total }); })
-      .catch((err) => { if (!cancelled) setError(getErrorMessage(err)); })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [debouncedSearch, statusFilter, verifiedFilter, roleFilter, page]);
+  const data = result || { users: [], total: 0 };
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   return (
     <div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-md)' }}>
+        <LiveIndicator
+          lastUpdate={lastUpdate}
+          isRefreshing={isRefreshing}
+          onRefresh={refetch}
+        />
+      </div>
+
       <div className="toolbar">
         <SearchInput
           value={search}
@@ -147,7 +150,7 @@ export default function UsersPage() {
         </select>
       </div>
 
-      {error && (
+      {errorMessage && (
         <div style={{
           padding: 'var(--space-md)',
           backgroundColor: 'var(--color-danger-bg)',
@@ -156,7 +159,7 @@ export default function UsersPage() {
           borderLeft: '3px solid var(--color-danger)',
           marginBottom: 'var(--space-md)',
         }}>
-          {error}
+          {errorMessage}
         </div>
       )}
 

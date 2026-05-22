@@ -1,71 +1,67 @@
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useState } from 'react';
 import StatCard from '../components/StatCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import LiveIndicator from '../components/LiveIndicator';
 import RegistrationsChart from '../components/RegistrationsChart';
 import { getStats, getRegistrations } from '../api/admin';
 import { getErrorMessage } from '../api/errors';
 import { formatNumber, formatUSD, formatDayLabel } from '../utils/format';
+import { usePoll } from '../hooks/usePoll';
 import '../styles/pages/dashboard.css';
+import '../styles/components/live-indicator.css';
+
+// Intervalles de polling : stats globales rafraîchies toutes les 15s, le graph toutes les 30s
+const STATS_INTERVAL = 15000;
+const REGISTRATIONS_INTERVAL = 30000;
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState(null);
-  const [registrations, setRegistrations] = useState([]);
   const [period, setPeriod] = useState('week');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Chargement initial des stats globales
-  useEffect(() => {
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-    getStats()
-      .then((data) => { if (!cancelled) setStats(data); })
-      .catch((err) => { if (!cancelled) setError(getErrorMessage(err)); })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  // Rechargement du graph quand la période change
-  useEffect(() => {
-    let cancelled = false;
-    getRegistrations(period)
-      .then((data) => {
-        if (cancelled) return;
-        const formatted = data.map((point) => ({
-          ...point,
-          label: formatDayLabel(point.date),
-        }));
-        setRegistrations(formatted);
-      })
-      .catch(() => { /* l'erreur globale est gérée par le useEffect précédent */ });
-    return () => { cancelled = true; };
+  const fetchStats = useCallback(() => getStats(), []);
+  const fetchRegistrations = useCallback(async () => {
+    const data = await getRegistrations(period);
+    return data.map((point) => ({ ...point, label: formatDayLabel(point.date) }));
   }, [period]);
 
-  if (isLoading) return <LoadingSpinner label="Chargement des statistiques…" />;
-  if (error) return <div className="dashboard-error">{error}</div>;
-  if (!stats) return null;
+  const stats = usePoll(fetchStats, [], { interval: STATS_INTERVAL });
+  const registrations = usePoll(fetchRegistrations, [period], { interval: REGISTRATIONS_INTERVAL });
+
+  if (stats.isLoading) return <LoadingSpinner label="Chargement des statistiques…" />;
+  if (stats.error) return <div className="dashboard-error">{getErrorMessage(stats.error)}</div>;
+  if (!stats.data) return null;
+
+  const s = stats.data;
 
   return (
     <div>
+      {/* Live indicator + dernière update */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-md)' }}>
+        <LiveIndicator
+          lastUpdate={stats.lastUpdate}
+          isRefreshing={stats.isRefreshing || registrations.isRefreshing}
+          onRefresh={() => { stats.refetch(); registrations.refetch(); }}
+        />
+      </div>
+
       {/* Section 1 — Utilisateurs */}
       <section className="dashboard-section">
         <h2 className="dashboard-section-title">Utilisateurs</h2>
         <div className="dashboard-grid">
           <StatCard
             title="Total"
-            value={formatNumber(stats.total_users)}
+            value={formatNumber(s.total_users)}
             variant="accent"
           />
           <StatCard
             title="Vérifiés"
-            value={formatNumber(stats.verified_users)}
-            subtitle={stats.total_users > 0 ? `${Math.round((stats.verified_users / stats.total_users) * 100)}% du total` : null}
+            value={formatNumber(s.verified_users)}
+            subtitle={s.total_users > 0 ? `${Math.round((s.verified_users / s.total_users) * 100)}% du total` : null}
             variant="success"
           />
           <StatCard
             title="Actifs (7j)"
-            value={formatNumber(stats.active_users_week)}
+            value={formatNumber(s.active_users_week)}
             subtitle="Connectés cette semaine"
           />
         </div>
@@ -77,21 +73,21 @@ export default function DashboardPage() {
         <div className="dashboard-grid">
           <StatCard
             title="Roadmaps totales"
-            value={formatNumber(stats.total_roadmaps)}
-            subtitle={`${stats.ai_roadmaps} IA · ${stats.manual_roadmaps} manuelles`}
+            value={formatNumber(s.total_roadmaps)}
+            subtitle={`${s.ai_roadmaps} IA · ${s.manual_roadmaps} manuelles`}
           />
           <StatCard
             title="Candidatures"
-            value={formatNumber(stats.total_applications)}
+            value={formatNumber(s.total_applications)}
           />
           <StatCard
             title="Coach (mois)"
-            value={formatNumber(stats.coach_sessions_month)}
+            value={formatNumber(s.coach_sessions_month)}
             subtitle="Analyses CV ce mois"
           />
           <StatCard
             title="Interview (mois)"
-            value={formatNumber(stats.interview_sessions_month)}
+            value={formatNumber(s.interview_sessions_month)}
             subtitle="Simulations ce mois"
           />
         </div>
@@ -103,7 +99,7 @@ export default function DashboardPage() {
         <div className="dashboard-grid">
           <StatCard
             title="OpenAI cumulé"
-            value={formatUSD(stats.openai_usage_estimate_usd)}
+            value={formatUSD(s.openai_usage_estimate_usd)}
             subtitle="Estimation à la louche, pas un tracking précis"
             variant="warning"
           />
@@ -125,7 +121,7 @@ export default function DashboardPage() {
             </select>
           </div>
 
-          <RegistrationsChart data={registrations} />
+          <RegistrationsChart data={registrations.data || []} />
         </div>
       </section>
     </div>

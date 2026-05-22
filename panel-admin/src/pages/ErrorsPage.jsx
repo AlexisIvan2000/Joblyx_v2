@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, ExternalLink } from 'lucide-react';
 import { listSentryIssues } from '../api/admin';
 import { getErrorMessage } from '../api/errors';
 import LoadingSpinner from '../components/LoadingSpinner';
+import LiveIndicator from '../components/LiveIndicator';
 import Badge from '../components/Badge';
 import { formatDateTime } from '../utils/format';
+import { usePoll } from '../hooks/usePoll';
 import '../styles/pages/errors.css';
 import '../styles/components/form.css';
+import '../styles/components/live-indicator.css';
 
 const FILTERS = [
   { label: 'Non résolues', value: 'is:unresolved' },
@@ -27,40 +30,33 @@ export default function ErrorsPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('is:unresolved');
   const [environment, setEnvironment] = useState('');
-  const [issues, setIssues] = useState([]);
-  const [nextCursor, setNextCursor] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isConfigured, setIsConfigured] = useState(true);
 
+  const fetchIssues = useCallback(() => listSentryIssues({
+    query: query || undefined,
+    environment: environment || undefined,
+    limit: 25,
+  }), [query, environment]);
+
+  const { data, isLoading, error: rawError, lastUpdate, isRefreshing, refetch } = usePoll(
+    fetchIssues,
+    [query, environment],
+    { interval: 20000 },
+  );
+
+  // Détecte le cas "Sentry non configuré côté backend"
   useEffect(() => {
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
+    if (rawError?.response?.data?.error === 'sentry_not_configured') {
+      setIsConfigured(false);
+    } else {
+      setIsConfigured(true);
+    }
+  }, [rawError]);
 
-    listSentryIssues({
-      query: query || undefined,
-      environment: environment || undefined,
-      limit: 25,
-    })
-      .then((data) => {
-        if (cancelled) return;
-        setIssues(data.issues || []);
-        setNextCursor(data.next_cursor);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        // Backend renvoie 503 sentry_not_configured si SENTRY_API_TOKEN absent
-        if (err?.response?.data?.error === 'sentry_not_configured') {
-          setIsConfigured(false);
-        } else {
-          setError(getErrorMessage(err));
-        }
-      })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [query, environment]);
+  const issues = data?.issues || [];
+  const error = rawError && rawError?.response?.data?.error !== 'sentry_not_configured'
+    ? getErrorMessage(rawError)
+    : null;
 
   if (!isConfigured) {
     return (
@@ -85,6 +81,14 @@ export default function ErrorsPage() {
 
   return (
     <div className="errors-page">
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <LiveIndicator
+          lastUpdate={lastUpdate}
+          isRefreshing={isRefreshing}
+          onRefresh={refetch}
+        />
+      </div>
+
       <div className="toolbar">
         <select className="filter-select" value={query} onChange={(e) => setQuery(e.target.value)}>
           {FILTERS.map((f) => (
