@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ShieldCheck, NotebookPen, Check, Mail, Lock } from 'lucide-react';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { UserDetailSkeleton } from '../components/Skeleton';
 import Badge from '../components/Badge';
 import ConfirmDialog from '../components/ConfirmDialog';
 import RoleDialog from '../components/RoleDialog';
@@ -161,7 +161,7 @@ export default function UserDetailPage() {
     }
   }
 
-  if (isLoading) return <LoadingSpinner label="Chargement du profil…" />;
+  if (isLoading) return <UserDetailSkeleton />;
   if (error) {
     return (
       <div>

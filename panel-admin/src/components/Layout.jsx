@@ -21,7 +21,8 @@ export default function Layout() {
       />
       <Header onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)} />
       <main className="app-main">
-        <div className="app-main-inner">
+        {/* La key force le remount du conteneur à chaque route, déclenche l'animation page-enter */}
+        <div className="app-main-inner page-enter" key={location.pathname}>
           <Outlet />
         </div>
       </main>

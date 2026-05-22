@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import DataTable from '../components/DataTable';
 import Pagination from '../components/Pagination';
 import Badge from '../components/Badge';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { TableSkeleton } from '../components/Skeleton';
 import SearchInput from '../components/SearchInput';
 import { getAuditLog } from '../api/admin';
 import { getErrorMessage } from '../api/errors';
@@ -167,7 +167,7 @@ export default function AuditLogPage() {
       )}
 
       {isLoading ? (
-        <LoadingSpinner label="Chargement de l'historique…" />
+        <TableSkeleton rows={12} cols={4} />
       ) : (
         <>
           <DataTable

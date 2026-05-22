@@ -58,12 +58,22 @@ export default function RegistrationsChart({ data }) {
       </div>
 
       <ResponsiveContainer width="100%" height={240}>
-        <AreaChart data={data} margin={{ top: 12, right: 12, left: -12, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 16, right: 12, left: -12, bottom: 0 }}>
           <defs>
             <linearGradient id="registrations-gradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.32} />
               <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
             </linearGradient>
+            {/* Glow filter sous la ligne, effet "halo lumineux" */}
+            <filter id="registrations-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feFlood floodColor="var(--color-primary)" floodOpacity="0.5" />
+              <feComposite in2="blur" operator="in" />
+              <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
 
           <CartesianGrid
@@ -100,12 +110,17 @@ export default function RegistrationsChart({ data }) {
             stroke="var(--color-primary)"
             strokeWidth={2.5}
             fill="url(#registrations-gradient)"
+            filter="url(#registrations-glow)"
+            isAnimationActive={true}
+            animationDuration={1200}
+            animationEasing="ease-out"
             activeDot={{
               r: 5,
               fill: 'var(--color-primary)',
               stroke: 'var(--color-surface)',
               strokeWidth: 3,
             }}
+            dot={false}
           />
         </AreaChart>
       </ResponsiveContainer>

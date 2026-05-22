@@ -1,9 +1,12 @@
 import { useCallback } from 'react';
 import { useState } from 'react';
+import {
+  Users, ShieldCheck, Activity, Map, Briefcase, MessageSquare, Mic, DollarSign,
+} from 'lucide-react';
 import StatCard from '../components/StatCard';
-import LoadingSpinner from '../components/LoadingSpinner';
 import LiveIndicator from '../components/LiveIndicator';
 import RegistrationsChart from '../components/RegistrationsChart';
+import { DashboardSkeleton } from '../components/Skeleton';
 import { getStats, getRegistrations } from '../api/admin';
 import { getErrorMessage } from '../api/errors';
 import { formatNumber, formatUSD, formatDayLabel } from '../utils/format';
@@ -27,7 +30,7 @@ export default function DashboardPage() {
   const stats = usePoll(fetchStats, [], { interval: STATS_INTERVAL });
   const registrations = usePoll(fetchRegistrations, [period], { interval: REGISTRATIONS_INTERVAL });
 
-  if (stats.isLoading) return <LoadingSpinner label="Chargement des statistiques…" />;
+  if (stats.isLoading) return <DashboardSkeleton />;
   if (stats.error) return <div className="dashboard-error">{getErrorMessage(stats.error)}</div>;
   if (!stats.data) return null;
 
@@ -50,19 +53,25 @@ export default function DashboardPage() {
         <div className="dashboard-grid">
           <StatCard
             title="Total"
-            value={formatNumber(s.total_users)}
+            value={s.total_users}
+            formatter={formatNumber}
+            icon={Users}
             variant="accent"
           />
           <StatCard
             title="Vérifiés"
-            value={formatNumber(s.verified_users)}
+            value={s.verified_users}
+            formatter={formatNumber}
             subtitle={s.total_users > 0 ? `${Math.round((s.verified_users / s.total_users) * 100)}% du total` : null}
+            icon={ShieldCheck}
             variant="success"
           />
           <StatCard
             title="Actifs (7j)"
-            value={formatNumber(s.active_users_week)}
+            value={s.active_users_week}
+            formatter={formatNumber}
             subtitle="Connectés cette semaine"
+            icon={Activity}
           />
         </div>
       </section>
@@ -73,22 +82,30 @@ export default function DashboardPage() {
         <div className="dashboard-grid">
           <StatCard
             title="Roadmaps totales"
-            value={formatNumber(s.total_roadmaps)}
+            value={s.total_roadmaps}
+            formatter={formatNumber}
             subtitle={`${s.ai_roadmaps} IA · ${s.manual_roadmaps} manuelles`}
+            icon={Map}
           />
           <StatCard
             title="Candidatures"
-            value={formatNumber(s.total_applications)}
+            value={s.total_applications}
+            formatter={formatNumber}
+            icon={Briefcase}
           />
           <StatCard
             title="Coach (mois)"
-            value={formatNumber(s.coach_sessions_month)}
+            value={s.coach_sessions_month}
+            formatter={formatNumber}
             subtitle="Analyses CV ce mois"
+            icon={MessageSquare}
           />
           <StatCard
             title="Interview (mois)"
-            value={formatNumber(s.interview_sessions_month)}
+            value={s.interview_sessions_month}
+            formatter={formatNumber}
             subtitle="Simulations ce mois"
+            icon={Mic}
           />
         </div>
       </section>
@@ -99,8 +116,10 @@ export default function DashboardPage() {
         <div className="dashboard-grid">
           <StatCard
             title="OpenAI cumulé"
-            value={formatUSD(s.openai_usage_estimate_usd)}
+            value={s.openai_usage_estimate_usd}
+            formatter={formatUSD}
             subtitle="Estimation à la louche, pas un tracking précis"
+            icon={DollarSign}
             variant="warning"
           />
         </div>

@@ -32,17 +32,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-xl);
+  padding: 0 2rem;
   position: sticky;
   top: 0;
   z-index: 10;
+  backdrop-filter: saturate(180%) blur(8px);
   transition: background-color var(--transition), border-color var(--transition);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: 0.875rem;
+  min-width: 0;
 }
 
 .header-burger {
@@ -66,7 +68,7 @@
 
 .app-main {
   grid-area: main;
-  padding: var(--space-xl);
+  padding: 2rem 2.25rem;
   overflow-x: auto;
 }
 

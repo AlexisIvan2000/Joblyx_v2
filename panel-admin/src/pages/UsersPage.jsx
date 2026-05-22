@@ -4,7 +4,7 @@ import DataTable from '../components/DataTable';
 import Pagination from '../components/Pagination';
 import SearchInput from '../components/SearchInput';
 import Badge from '../components/Badge';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { TableSkeleton } from '../components/Skeleton';
 import LiveIndicator from '../components/LiveIndicator';
 import { listUsers } from '../api/admin';
 import { getErrorMessage } from '../api/errors';
@@ -164,7 +164,7 @@ export default function UsersPage() {
       )}
 
       {isLoading ? (
-        <LoadingSpinner label="Chargement des utilisateurs…" />
+        <TableSkeleton rows={10} cols={6} />
       ) : (
         <>
           <DataTable

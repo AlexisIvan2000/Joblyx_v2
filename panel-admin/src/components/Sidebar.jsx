@@ -3,11 +3,21 @@ import { LayoutDashboard, Users, ScrollText, AlertTriangle, LogOut, X } from 'lu
 import { useAuth } from '../auth/AuthContext';
 import '../styles/components/sidebar.css';
 
-const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/users', label: 'Utilisateurs', icon: Users },
-  { to: '/errors', label: 'Erreurs', icon: AlertTriangle },
-  { to: '/audit', label: 'Audit log', icon: ScrollText },
+const NAV_GROUPS = [
+  {
+    label: 'Pilotage',
+    items: [
+      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { to: '/users', label: 'Utilisateurs', icon: Users },
+    ],
+  },
+  {
+    label: 'Observabilité',
+    items: [
+      { to: '/errors', label: 'Erreurs', icon: AlertTriangle },
+      { to: '/audit', label: 'Audit log', icon: ScrollText },
+    ],
+  },
 ];
 
 export default function Sidebar({ isMobileOpen = false, onCloseMobile }) {
@@ -43,22 +53,27 @@ export default function Sidebar({ isMobileOpen = false, onCloseMobile }) {
         </div>
 
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={onCloseMobile}
-                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-              >
-                <span className="sidebar-link-icon">
-                  <Icon size={20} strokeWidth={2} />
-                </span>
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          })}
+          {NAV_GROUPS.map((group) => (
+            <div className="sidebar-group" key={group.label}>
+              <span className="sidebar-group-label">{group.label}</span>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={onCloseMobile}
+                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  >
+                    <span className="sidebar-link-icon">
+                      <Icon size={18} strokeWidth={2} />
+                    </span>
+                    <span>{item.label}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="sidebar-footer">
