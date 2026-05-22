@@ -1,9 +1,3 @@
-"""Client OpenAI wrappé pour tracker l'usage réel (tokens + coût) par feature.
-
-Les fonctions historiques generate_roadmap / generate_roadmap_stream restent disponibles
-mais doivent recevoir user_id et feature pour que l'usage soit persisté.
-"""
-
 import json
 import logging
 from typing import Any
