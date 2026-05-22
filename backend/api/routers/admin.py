@@ -1,10 +1,21 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.dependencies import get_admin_service, get_r2_service, get_sentry_service, require_admin
+from api.dependencies import (
+    get_admin_audit_service,
+    get_admin_stats_service,
+    get_admin_users_service,
+    get_r2_service,
+    get_sentry_service,
+    require_admin,
+    require_super_admin,
+)
 from core.database import get_db_session
 from models.db_models import User
+from services.admin.audit_service import AdminAuditService
 from services.admin.sentry_service import SentryService
+from services.admin.stats_service import AdminStatsService
+from services.admin.users_service import AdminUsersService
 from models.api_schemas import (
     AdminApplicationSummary,
     AdminAuditLogResponse,
@@ -22,9 +33,9 @@ from models.api_schemas import (
     AdminUserSummary,
     AdminUserUsage,
 )
+from models.api_schemas.admin import AdminNotesRequest
 from repositories.application_repository import ApplicationRepository
 from repositories.coach_repository import CoachRepository
-from services.admin.admin_service import AdminService
 from services.storage.r2_service import R2Service
 
 
@@ -120,14 +131,14 @@ def _interview_session_summary(s) -> dict:
 # Dashboard stats
 
 @router.get("/stats", response_model=AdminStatsResponse)
-async def get_stats(svc: AdminService = Depends(get_admin_service)):
+async def get_stats(svc: AdminStatsService = Depends(get_admin_stats_service)):
     return await svc.get_dashboard_stats()
 
 
 @router.get("/stats/registrations", response_model=list[AdminRegistrationPoint])
 async def get_registrations(
     period: str = Query("week", pattern="^(week|month)$"),
-    svc: AdminService = Depends(get_admin_service),
+    svc: AdminStatsService = Depends(get_admin_stats_service),
 ):
     return await svc.get_registrations(period)
 
@@ -142,7 +153,7 @@ async def list_users(
     is_active: bool | None = None,
     verified: bool | None = None,
     role: str | None = None,
-    svc: AdminService = Depends(get_admin_service),
+    svc: AdminUsersService = Depends(get_admin_users_service),
 ):
     result = await svc.list_users(
         page=page, page_size=limit,
@@ -157,7 +168,7 @@ async def list_users(
 
 
 @router.get("/users/{user_id}", response_model=AdminUserDetailResponse)
-async def get_user_detail(user_id: str, svc: AdminService = Depends(get_admin_service)):
+async def get_user_detail(user_id: str, svc: AdminUsersService = Depends(get_admin_users_service)):
     detail = await svc.get_user_detail(user_id)
     user = detail["user"]
     return {
@@ -172,6 +183,7 @@ async def get_user_detail(user_id: str, svc: AdminService = Depends(get_admin_se
         "role": user.role,
         "deactivated_at": user.deactivated_at.isoformat() if user.deactivated_at else None,
         "deactivation_reason": user.deactivation_reason,
+        "admin_notes": user.admin_notes,
         "created_at": user.created_at.isoformat() if user.created_at else "",
         "last_active": user.updated_at.isoformat() if user.updated_at else None,
         "career": _career_summary(detail["career"]),
@@ -196,7 +208,7 @@ async def update_user_status(
     user_id: str,
     body: AdminStatusRequest,
     admin: User = Depends(require_admin),
-    svc: AdminService = Depends(get_admin_service),
+    svc: AdminUsersService = Depends(get_admin_users_service),
 ):
     user = await svc.set_user_status(user_id, body.is_active, body.reason, admin_id=str(admin.id))
     return {
@@ -212,17 +224,50 @@ async def update_user_status(
 async def reset_user_limits(
     user_id: str,
     admin: User = Depends(require_admin),
-    svc: AdminService = Depends(get_admin_service),
+    svc: AdminUsersService = Depends(get_admin_users_service),
 ):
     await svc.reset_user_limits(user_id, admin_id=str(admin.id))
     return {"message": "Usage limits reset successfully"}
+
+
+@router.patch("/users/{user_id}/notes")
+async def update_user_notes(
+    user_id: str,
+    body: AdminNotesRequest,
+    admin: User = Depends(require_admin),
+    svc: AdminUsersService = Depends(get_admin_users_service),
+):
+    """Met à jour les notes admin (texte libre) sur la fiche d'un user."""
+    user = await svc.update_admin_notes(user_id, body.notes, admin_id=str(admin.id))
+    return {
+        "id": str(user.id),
+        "admin_notes": user.admin_notes,
+        "message": "Notes updated",
+    }
+
+
+@router.patch("/users/{user_id}/role")
+async def update_user_role(
+    user_id: str,
+    body: dict,
+    admin: User = Depends(require_super_admin),
+    svc: AdminUsersService = Depends(get_admin_users_service),
+):
+    """Promote ou demote un user, réservé au super_admin (hiérarchie standard)."""
+    new_role = body.get("role")
+    user = await svc.update_user_role(user_id, new_role, admin_id=str(admin.id))
+    return {
+        "id": str(user.id),
+        "role": user.role,
+        "message": f"Role updated to {user.role}",
+    }
 
 
 @router.delete("/users/{user_id}")
 async def delete_user(
     user_id: str,
     admin: User = Depends(require_admin),
-    svc: AdminService = Depends(get_admin_service),
+    svc: AdminUsersService = Depends(get_admin_users_service),
     r2: R2Service = Depends(get_r2_service),
     session: AsyncSession = Depends(get_db_session),
 ):
@@ -244,12 +289,12 @@ async def get_audit_log(
     limit: int = Query(100, ge=1, le=500),
     action: str | None = None,
     target_id: str | None = None,
-    svc: AdminService = Depends(get_admin_service),
+    search: str | None = None,
+    svc: AdminAuditService = Depends(get_admin_audit_service),
 ):
-    
     result = await svc.get_audit_log(
         page=page, page_size=limit,
-        action=action, target_id=target_id,
+        action=action, target_id=target_id, search=search,
     )
     return {
         "entries": [
@@ -270,7 +315,7 @@ async def get_audit_log(
     }
 
 
-# Sentry — proxy vers l'API Sentry pour la page Erreurs du panel admin
+# Sentry, proxy vers l'API Sentry pour la page Erreurs du panel admin
 
 @router.get("/sentry/issues")
 async def sentry_list_issues(

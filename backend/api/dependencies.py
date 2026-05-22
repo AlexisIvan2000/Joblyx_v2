@@ -12,7 +12,9 @@ from services.auth.linkedin import LinkedInAuth
 from services.users.users import UserService
 from services.roadmap.roadmap_service import RoadmapService
 from repositories.application_repository import ApplicationRepository
-from services.admin.admin_service import AdminService
+from services.admin.users_service import AdminUsersService
+from services.admin.stats_service import AdminStatsService
+from services.admin.audit_service import AdminAuditService
 from services.admin.sentry_service import SentryService
 from services.applications.application_service import ApplicationService
 from services.storage.r2_service import R2Service
@@ -48,8 +50,16 @@ def get_r2_service() -> R2Service:
     return R2Service()
 
 
-async def get_admin_service(session: AsyncSession = Depends(get_db_session)) -> AdminService:
-    return AdminService(session)
+async def get_admin_users_service(session: AsyncSession = Depends(get_db_session)) -> AdminUsersService:
+    return AdminUsersService(session)
+
+
+async def get_admin_stats_service(session: AsyncSession = Depends(get_db_session)) -> AdminStatsService:
+    return AdminStatsService(session)
+
+
+async def get_admin_audit_service(session: AsyncSession = Depends(get_db_session)) -> AdminAuditService:
+    return AdminAuditService(session)
 
 
 def get_sentry_service() -> SentryService:

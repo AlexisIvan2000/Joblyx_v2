@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ShieldCheck, NotebookPen, Check } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Badge from '../components/Badge';
 import ConfirmDialog from '../components/ConfirmDialog';
+import RoleDialog from '../components/RoleDialog';
+import { useAuth } from '../auth/AuthContext';
 import {
-  getUserDetail, setUserStatus, resetUserLimits, deleteUser,
+  getUserDetail, setUserStatus, resetUserLimits, deleteUser, updateUserRole, updateUserNotes,
 } from '../api/admin';
 import { getErrorMessage } from '../api/errors';
 import { formatDateTime } from '../utils/format';
@@ -46,6 +49,7 @@ function Row({ label, value }) {
 export default function UserDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
 
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,9 +59,15 @@ export default function UserDetailPage() {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
 
   // Toast d'action
   const [actionError, setActionError] = useState(null);
+
+  // Notes admin (édition inline)
+  const [notesDraft, setNotesDraft] = useState('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [notesSavedAt, setNotesSavedAt] = useState(null);
 
   async function load() {
     setIsLoading(true);
@@ -65,6 +75,7 @@ export default function UserDetailPage() {
     try {
       const data = await getUserDetail(id);
       setUser(data);
+      setNotesDraft(data.admin_notes || '');
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -104,6 +115,33 @@ export default function UserDetailPage() {
       navigate('/users', { replace: true });
     } catch (err) {
       setActionError(getErrorMessage(err));
+    }
+  }
+
+  async function handleUpdateRole(newRole) {
+    setActionError(null);
+    try {
+      await updateUserRole(id, newRole);
+      setShowRoleDialog(false);
+      await load();
+    } catch (err) {
+      setActionError(getErrorMessage(err));
+    }
+  }
+
+  async function handleSaveNotes() {
+    setActionError(null);
+    setIsSavingNotes(true);
+    try {
+      const result = await updateUserNotes(id, notesDraft);
+      setUser((prev) => prev ? { ...prev, admin_notes: result.admin_notes } : prev);
+      setNotesSavedAt(Date.now());
+      // Le badge "Enregistré" s'efface après 2.5s
+      setTimeout(() => setNotesSavedAt(null), 2500);
+    } catch (err) {
+      setActionError(getErrorMessage(err));
+    } finally {
+      setIsSavingNotes(false);
     }
   }
 
@@ -158,6 +196,16 @@ export default function UserDetailPage() {
         </div>
 
         <div className="user-detail-actions">
+          {currentUser?.role === 'super_admin' && currentUser?.id !== user.id && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowRoleDialog(true)}
+            >
+              <ShieldCheck size={16} strokeWidth={2.25} />
+              Modifier le rôle
+            </button>
+          )}
           <button
             type="button"
             className={`btn ${user.is_active ? 'btn-danger' : 'btn-success'}`}
@@ -188,6 +236,42 @@ export default function UserDetailPage() {
       )}
 
       <div className="user-detail-sections">
+        {/* Notes admin (texte libre, jamais exposé au user) */}
+        <section className="user-detail-section">
+          <div className="admin-notes-header">
+            <h3>
+              <NotebookPen size={16} strokeWidth={2.25} style={{ verticalAlign: '-2px', marginRight: 6 }} />
+              Notes admin
+            </h3>
+            {notesSavedAt && (
+              <span className="admin-notes-saved">
+                <Check size={13} strokeWidth={2.5} /> Enregistré
+              </span>
+            )}
+          </div>
+          <textarea
+            className="admin-notes-textarea"
+            value={notesDraft}
+            onChange={(e) => setNotesDraft(e.target.value)}
+            placeholder="Ajouter une note interne sur ce user (visible uniquement par les admins)…"
+            rows={4}
+            maxLength={5000}
+          />
+          <div className="admin-notes-footer">
+            <span className="muted text-xs">
+              {notesDraft.length} / 5000 · jamais affiché au user
+            </span>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleSaveNotes}
+              disabled={isSavingNotes || (notesDraft || '') === (user.admin_notes || '')}
+            >
+              {isSavingNotes ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+          </div>
+        </section>
+
         {/* Profil */}
         <section className="user-detail-section">
           <h3>Profil</h3>
@@ -370,6 +454,14 @@ export default function UserDetailPage() {
         confirmVariant="danger"
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteDialog(false)}
+      />
+
+      <RoleDialog
+        isOpen={showRoleDialog}
+        currentRole={user.role}
+        userName={`${user.first_name} ${user.last_name}`}
+        onConfirm={handleUpdateRole}
+        onCancel={() => setShowRoleDialog(false)}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import DataTable from '../components/DataTable';
 import Pagination from '../components/Pagination';
 import Badge from '../components/Badge';
 import LoadingSpinner from '../components/LoadingSpinner';
+import SearchInput from '../components/SearchInput';
 import { getAuditLog } from '../api/admin';
 import { getErrorMessage } from '../api/errors';
 import { formatDateTime } from '../utils/format';
@@ -16,6 +17,7 @@ const ACTION_LABELS = {
   'user.reset_limits': 'Reset limites',
   'user.delete': 'Suppression',
   'user.role.change': 'Changement de rôle',
+  'user.notes.update': 'Notes admin',
   'user.ban': 'Bannissement',
   'user.unban': 'Débannissement',
 };
@@ -26,6 +28,7 @@ const ACTION_VARIANTS = {
   'user.reset_limits': 'warning',
   'user.delete': 'danger',
   'user.role.change': 'primary',
+  'user.notes.update': 'default',
   'user.ban': 'danger',
   'user.unban': 'success',
 };
@@ -82,15 +85,23 @@ const COLUMNS = [
 
 export default function AuditLogPage() {
   const [actionFilter, setActionFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [data, setData] = useState({ entries: [], total: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Reset page sur changement de filtre
+  // Debounce recherche (350ms)
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  // Reset page sur changement de filtre ou de recherche
   useEffect(() => {
     setPage(1);
-  }, [actionFilter]);
+  }, [actionFilter, debouncedSearch]);
 
   // Fetch des logs
   useEffect(() => {
@@ -101,6 +112,7 @@ export default function AuditLogPage() {
     const params = {
       page, limit: PAGE_SIZE,
       action: actionFilter === 'all' ? undefined : actionFilter,
+      search: debouncedSearch || undefined,
     };
 
     getAuditLog(params)
@@ -109,11 +121,16 @@ export default function AuditLogPage() {
       .finally(() => { if (!cancelled) setIsLoading(false); });
 
     return () => { cancelled = true; };
-  }, [actionFilter, page]);
+  }, [actionFilter, debouncedSearch, page]);
 
   return (
     <div>
       <div className="toolbar">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Rechercher par email cible…"
+        />
         <select
           className="filter-select"
           value={actionFilter}
@@ -125,6 +142,7 @@ export default function AuditLogPage() {
           <option value="user.reset_limits">Reset limites</option>
           <option value="user.delete">Suppressions</option>
           <option value="user.role.change">Changements de rôle</option>
+          <option value="user.notes.update">Notes admin</option>
         </select>
       </div>
 

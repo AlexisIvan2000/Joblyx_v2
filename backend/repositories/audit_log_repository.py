@@ -37,6 +37,7 @@ class AuditLogRepository:
         action: str | None = None,
         admin_id: str | None = None,
         target_id: str | None = None,
+        search: str | None = None,
     ) -> tuple[list[AuditLog], int]:
         query = select(AuditLog)
         count_query = select(func.count()).select_from(AuditLog)
@@ -48,6 +49,10 @@ class AuditLogRepository:
             conditions.append(AuditLog.admin_user_id == admin_id)
         if target_id is not None:
             conditions.append(AuditLog.target_id == target_id)
+        if search:
+            # Recherche ILIKE sur l'email cible stocké dans payload JSONB
+            pattern = f"%{search}%"
+            conditions.append(AuditLog.payload["target_email"].astext.ilike(pattern))
 
         for cond in conditions:
             query = query.where(cond)

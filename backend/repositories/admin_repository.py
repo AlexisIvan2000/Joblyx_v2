@@ -91,6 +91,15 @@ class AdminRepository:
         await self.session.flush()
         return await self.get_user(user_id)
 
+    async def update_admin_notes(self, user_id: str, notes: str | None) -> User | None:
+        # Trim string vide en NULL pour rester cohérent en base
+        value = notes if notes else None
+        await self.session.execute(
+            update(User).where(User.id == user_id).values(admin_notes=value)
+        )
+        await self.session.flush()
+        return await self.get_user(user_id)
+
     async def reset_user_limits(self, user_id: str) -> None:
         # Reset les compteurs d'usage IA — utile en support si un user a un problème
         await self.session.execute(

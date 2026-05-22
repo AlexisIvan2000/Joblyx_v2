@@ -56,28 +56,20 @@ CORS_ORIGINS = [
     if origin.strip()
 ]
 
-# Optionnel utilisé pour les liens dans les emails (reset password, etc.)
 FRONTEND_URL = os.getenv("FRONTEND_URL")
-
 
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
 
-# Optionnel OAuth LinkedIn (désactivé si non configuré)
 LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 LINKEDIN_REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI")
 
-# Admin
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
-# Sentry observabilité des erreurs (optionnel : si SENTRY_DSN absent, désactivé)
 SENTRY_DSN = os.getenv("SENTRY_DSN")
 SENTRY_ENVIRONMENT = os.getenv("SENTRY_ENVIRONMENT", "development")
 SENTRY_TRACES_SAMPLE_RATE = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
-
-# Sentry API pour la page Erreurs du panel admin (optionnel)
-# SENTRY_API_TOKEN doit avoir le scope "project:read" / "event:read" / "issue:read"
 SENTRY_API_TOKEN = os.getenv("SENTRY_API_TOKEN")
 SENTRY_API_URL = os.getenv("SENTRY_API_URL", "https://sentry.io/api/0")
 SENTRY_ORG_SLUG = os.getenv("SENTRY_ORG_SLUG")

@@ -47,6 +47,16 @@ export async function resetUserLimits(userId) {
   return data;
 }
 
+export async function updateUserRole(userId, role) {
+  const { data } = await apiClient.patch(`/admin/users/${userId}/role`, { role });
+  return data;
+}
+
+export async function updateUserNotes(userId, notes) {
+  const { data } = await apiClient.patch(`/admin/users/${userId}/notes`, { notes });
+  return data;
+}
+
 export async function deleteUser(userId) {
   const { data } = await apiClient.delete(`/admin/users/${userId}`);
   return data;
@@ -54,10 +64,11 @@ export async function deleteUser(userId) {
 
 // Audit log
 
-export async function getAuditLog({ page = 1, limit = 50, action, targetId } = {}) {
+export async function getAuditLog({ page = 1, limit = 50, action, targetId, search } = {}) {
   const params = { page, limit };
   if (action) params.action = action;
   if (targetId) params.target_id = targetId;
+  if (search) params.search = search;
 
   const { data } = await apiClient.get('/admin/audit-log', { params });
   return data;

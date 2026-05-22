@@ -49,6 +49,9 @@ class User(Base):
     deactivated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deactivation_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Notes internes admin, jamais exposées au user, visibles uniquement dans /v1/admin/users/{id}
+    admin_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 

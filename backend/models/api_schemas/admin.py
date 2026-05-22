@@ -100,6 +100,7 @@ class AdminUserDetailResponse(BaseModel):
     role: str
     deactivated_at: str | None
     deactivation_reason: str | None
+    admin_notes: str | None
     created_at: str
     last_active: str | None
     career: AdminCareerSummary | None
@@ -117,6 +118,10 @@ class AdminUserDetailResponse(BaseModel):
 class AdminStatusRequest(BaseModel):
     is_active: bool
     reason: str | None = None
+
+
+class AdminNotesRequest(BaseModel):
+    notes: str | None = None
 
 
 class AdminUserActionResponse(BaseModel):
