@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from core.exceptions import ApplicationNotFound, NoCvAttached, NoFieldsToUpdate
 from repositories.application_repository import ApplicationRepository
 from services.storage.r2_service import R2Service
 from models.db_models import Application
@@ -26,10 +26,7 @@ class ApplicationService:
     async def get_by_id(self, app_id: str, user_id: str) -> Application:
         app = await self.repo.get_by_id(app_id, user_id)
         if not app:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Application not found",
-            )
+            raise ApplicationNotFound()
         return app
 
     async def get_all(
@@ -58,26 +55,17 @@ class ApplicationService:
             data["cv_file_key"] = file_key
 
         if not data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No fields to update",
-            )
+            raise NoFieldsToUpdate()
 
         app = await self.repo.update(app_id, user_id, data)
         if not app:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Application not found",
-            )
+            raise ApplicationNotFound()
         return app
 
     async def delete(self, app_id: str, user_id: str) -> None:
         app = await self.repo.delete(app_id, user_id)
         if not app:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Application not found",
-            )
+            raise ApplicationNotFound()
         # Supprimer le CV de R2 si existant
         if app.cv_file_key:
             await self.r2.delete_cv(app.cv_file_key)
@@ -85,8 +73,5 @@ class ApplicationService:
     async def get_cv_url(self, app_id: str, user_id: str) -> str:
         app = await self.get_by_id(app_id, user_id)
         if not app.cv_file_key:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No CV attached to this application",
-            )
+            raise NoCvAttached()
         return await self.r2.get_cv_url(app.cv_file_key)

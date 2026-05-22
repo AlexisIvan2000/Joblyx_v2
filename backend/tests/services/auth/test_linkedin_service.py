@@ -3,8 +3,12 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from fastapi import HTTPException
 
+from core.exceptions import (
+    LinkedInAuthFailed,
+    LinkedInMissingEmail,
+    LinkedInOnlyAccount,
+)
 from services.auth.linkedin import LinkedInAuth
 from tests.conftest import FAKE_USER_ID, _make_user_obj
 
@@ -179,10 +183,9 @@ class TestLinkedInErrors:
             "family_name": "Doe",
         }
         with _patch_linkedin_api(profile=profile_no_email):
-            with pytest.raises(HTTPException) as exc_info:
+            with pytest.raises(LinkedInMissingEmail) as exc_info:
                 await linkedin_auth.authenticate("fake_code")
-            assert exc_info.value.status_code == 400
-            assert "no email" in exc_info.value.detail.lower()
+            assert "no email" in exc_info.value.message.lower()
 
     @pytest.mark.asyncio
     async def test_invalid_code_raises_401(
@@ -190,11 +193,10 @@ class TestLinkedInErrors:
     ):
         with patch.object(
             LinkedInAuth, "_exchange_code",
-            side_effect=HTTPException(status_code=401, detail="Failed to authenticate with LinkedIn"),
+            side_effect=LinkedInAuthFailed(),
         ):
-            with pytest.raises(HTTPException) as exc_info:
+            with pytest.raises(LinkedInAuthFailed):
                 await linkedin_auth.authenticate("bad_code")
-            assert exc_info.value.status_code == 401
 
 
 # ─── Protection login email/password pour compte LinkedIn ────────────
@@ -209,10 +211,9 @@ class TestLinkedInOnlyAccountBlocked:
         mock_auth_repo.get_user_by_email.return_value = linkedin_user
 
         from models.schemas import UserLogin
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(LinkedInOnlyAccount) as exc_info:
             await auth_service.login_user(UserLogin(email="john@example.com", password="Secure1!x"))
-        assert exc_info.value.status_code == 400
-        assert "linkedin" in exc_info.value.detail.lower()
+        assert "linkedin" in exc_info.value.message.lower()
 
     @pytest.mark.asyncio
     async def test_forgot_password_blocked_for_linkedin_account(
@@ -224,7 +225,6 @@ class TestLinkedInOnlyAccountBlocked:
         mock_auth_repo.get_user_by_email.return_value = linkedin_user
 
         user_svc = UserService(mock_auth_repo, mock_otp_service, mock_refresh_token_repo)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(LinkedInOnlyAccount) as exc_info:
             await user_svc.forgot_password("john@example.com")
-        assert exc_info.value.status_code == 400
-        assert "linkedin" in exc_info.value.detail.lower()
+        assert "linkedin" in exc_info.value.message.lower()

@@ -14,5 +14,5 @@ def get_user_id_from_jwt(request: Request) -> str:
     return get_remote_address(request)
 
 
-# Instance globale du rate limiter — clé par défaut = IP du client
+# Instance globale du rate limiter  clé par défaut = IP du client
 limiter = Limiter(key_func=get_remote_address)

@@ -55,6 +55,10 @@ def _make_user_obj(**overrides) -> User:
         "code_resend_count": 0,
         "avatar_url": None,
         "linkedin_id": None,
+        "role": "user",
+        "is_active": True,
+        "deactivated_at": None,
+        "deactivation_reason": None,
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
     }

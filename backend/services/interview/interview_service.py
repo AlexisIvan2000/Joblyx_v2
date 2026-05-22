@@ -4,10 +4,14 @@ import json
 import logging
 from datetime import datetime, timezone, timedelta
 
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import OPENAI_MODEL_FAST
+from core.exceptions import (
+    InterviewDailyLimitReached,
+    SessionAlreadyCompleted,
+    SessionNotFound,
+)
 from repositories.interview_repository import InterviewRepository
 from services.ai.openai_client import client
 from services.utils.text_cleaner import clean_cv_text
@@ -63,7 +67,7 @@ class InterviewService:
             "resets_at": tomorrow.isoformat(),
         }
 
-    # ─── Démarrer une session ────────────────────────────────────
+    #  Démarrer une session
 
     async def start_session(
         self,
@@ -77,13 +81,9 @@ class InterviewService:
         # Vérifier la limite
         usage = await self.check_usage(user_id)
         if usage["remaining"] <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail={
-                    "error": f"Limite de {DAILY_LIMIT} sessions par jour atteinte",
-                    "remaining": 0,
-                    "resets_at": usage["resets_at"],
-                },
+            raise InterviewDailyLimitReached(
+                f"Daily interview session limit reached ({DAILY_LIMIT} per day)",
+                details={"remaining": 0, "resets_at": usage["resets_at"]},
             )
 
         # Nettoyer le CV
@@ -138,7 +138,7 @@ class InterviewService:
             },
         }
 
-    # ─── Envoyer un message (streaming via WebSocket) ────────────
+    # Envoyer un message (streaming via WebSocket)
 
     async def send_message_stream(
         self,
@@ -320,15 +320,15 @@ class InterviewService:
 
         await self.session.commit()
 
-    # ─── Terminer en avance ──────────────────────────────────────
+    # Terminer en avance 
 
     async def end_session_early(self, session_id: str, user_id: str) -> dict:
         """Force la fin de l'entretien. Envoie 'Avez-vous des questions ?' puis clôture."""
         interview = await self.repo.get_session_by_id(session_id, user_id)
         if not interview:
-            raise HTTPException(status_code=404, detail="Session not found")
+            raise SessionNotFound()
         if interview.status != "in_progress":
-            raise HTTPException(status_code=400, detail="Session already completed")
+            raise SessionAlreadyCompleted()
 
         messages = await self.repo.get_messages_by_session(session_id)
         system_prompt = build_interview_prompt(
@@ -371,7 +371,7 @@ class InterviewService:
             "is_last": False,  # L'utilisateur doit encore répondre à "avez-vous des questions"
         }
 
-    # ─── Bilan ───────────────────────────────────────────────────
+    #  Bilan
 
     async def _generate_summary(self, session_id: str, user_id: str, language: str) -> dict:
         messages = await self.repo.get_messages_by_session(session_id)
@@ -413,12 +413,12 @@ class InterviewService:
 
         return summary
 
-    # ─── CRUD ────────────────────────────────────────────────────
+    # CRUD 
 
     async def get_session(self, session_id: str, user_id: str):
         session = await self.repo.get_session_by_id(session_id, user_id)
         if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
+            raise SessionNotFound()
         return session
 
     async def get_history(self, user_id: str):
@@ -427,7 +427,7 @@ class InterviewService:
     async def delete_session(self, session_id: str, user_id: str):
         deleted = await self.repo.delete_session(session_id, user_id)
         if not deleted:
-            raise HTTPException(status_code=404, detail="Session not found")
+            raise SessionNotFound()
         await self.session.commit()
 
     async def delete_all(self, user_id: str) -> int:
@@ -471,9 +471,8 @@ def _build_windowed_history(messages: list) -> list[dict]:
     result.extend({"role": m.role, "content": m.content} for m in recent)
     return result
 
-
+# Parse la réponse GPT en séparant le texte et le feedback JSON.
 def _parse_response(raw: str) -> tuple[str, dict | None]:
-    """Parse la réponse GPT en séparant le texte et le feedback JSON."""
     if FEEDBACK_DELIMITER in raw:
         parts = raw.split(FEEDBACK_DELIMITER, 1)
         message_text = parts[0].rstrip()

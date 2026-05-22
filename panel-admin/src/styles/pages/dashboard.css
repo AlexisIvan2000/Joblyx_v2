@@ -1,0 +1,188 @@
+.dashboard-section {
+  margin-bottom: var(--space-xl);
+}
+
+.dashboard-section-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-md);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+
+.dashboard-chart-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.dashboard-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.dashboard-chart-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-period-select {
+  padding: 0.5rem 2.25rem 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  font-family: inherit;
+  transition: all var(--transition);
+}
+
+.dashboard-period-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.dashboard-empty {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.dashboard-error {
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-left: 3px solid var(--color-danger);
+}
+
+/* Résumé KPI au-dessus du graph inscriptions */
+.chart-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0 var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-md);
+}
+
+.chart-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chart-summary-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.chart-summary-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.025em;
+  font-feature-settings: 'tnum';
+}
+
+.chart-summary-divider {
+  width: 1px;
+  height: 32px;
+  background-color: var(--color-border);
+}
+
+/* Tooltip custom du graph */
+.chart-tooltip {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 0.75rem 0.875rem;
+  font-size: var(--text-xs);
+  min-width: 160px;
+}
+
+.chart-tooltip-date {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin-bottom: 0.375rem;
+  font-size: var(--text-xs);
+}
+
+.chart-tooltip-value {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--text-sm);
+}
+
+.chart-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.chart-tooltip-count {
+  font-weight: 700;
+  color: var(--color-text);
+  font-size: var(--text-base);
+}
+
+.chart-tooltip-label {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-sm);
+  }
+  .dashboard-chart-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+  .stat-card-value {
+    font-size: var(--text-2xl);
+  }
+  .chart-summary {
+    gap: var(--space-md);
+  }
+  .chart-summary-value {
+    font-size: var(--text-xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

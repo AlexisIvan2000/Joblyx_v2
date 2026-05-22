@@ -1,4 +1,4 @@
-# Tests for repositories/career_repository.py — async stub.
+# Tests for repositories/career_repository.py.
 
 from unittest.mock import AsyncMock
 
@@ -17,33 +17,25 @@ def repo(mock_session):
     return CareerRepository(mock_session)
 
 
-class TestCareerRepositoryStubs:
-    @pytest.mark.asyncio
-    async def test_get_career_profile_raises(self, repo):
-        with pytest.raises(NotImplementedError):
-            await repo.get_career_profile_by_user_id("u-1")
+class TestCareerRepository:
+    def test_instantiates(self, repo, mock_session):
+        assert repo.session is mock_session
 
-    @pytest.mark.asyncio
-    async def test_create_career_profile_raises(self, repo):
-        with pytest.raises(NotImplementedError):
-            await repo.create_career_profile({})
-
-    @pytest.mark.asyncio
-    async def test_create_user_skills_raises(self, repo):
-        with pytest.raises(NotImplementedError):
-            await repo.create_user_skills([])
-
-    @pytest.mark.asyncio
-    async def test_create_roadmap_raises(self, repo):
-        with pytest.raises(NotImplementedError):
-            await repo.create_roadmap({})
-
-    @pytest.mark.asyncio
-    async def test_get_roadmap_raises(self, repo):
-        with pytest.raises(NotImplementedError):
-            await repo.get_roadmap_by_user_id("u-1")
-
-    @pytest.mark.asyncio
-    async def test_get_user_skills_raises(self, repo):
-        with pytest.raises(NotImplementedError):
-            await repo.get_user_skills_by_user_id("u-1")
+    def test_exposes_expected_methods(self, repo):
+        # Le repo doit exposer toutes les méthodes Career + UserSkill + market cache lecture
+        expected_methods = {
+            "get_by_user_id",
+            "create",
+            "update_fields",
+            "upsert",
+            "set_generation_status",
+            "increment_regeneration_count",
+            "reset_regeneration_counter",
+            "get_skills",
+            "delete_skills",
+            "replace_skills",
+            "get_market_skills",
+        }
+        actual = {name for name in dir(repo) if not name.startswith("_")}
+        missing = expected_methods - actual
+        assert not missing, f"Méthodes manquantes : {missing}"

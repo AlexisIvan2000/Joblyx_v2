@@ -6,9 +6,13 @@ import httpx
 logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta, timezone
 
-from fastapi import HTTPException, status
-
 from core.config import LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, LINKEDIN_REDIRECT_URI
+from core.exceptions import (
+    LinkedInMissingEmail,
+    LinkedInAuthFailed,
+    LinkedInProfileFetchFailed,
+    UserBanned,
+)
 from core.security import Security
 from repositories.auth_repository import AuthRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
@@ -40,10 +44,7 @@ class LinkedInAuth:
         avatar_url = profile.get("picture")
 
         if not email:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="LinkedIn account has no email address",
-            )
+            raise LinkedInMissingEmail()
 
         # Cas 3 — Compte déjà lié par linkedin_id
         db_user = await self.repo.get_user_by_linkedin_id(linkedin_id)
@@ -95,10 +96,7 @@ class LinkedInAuth:
 
         if response.status_code != 200:
             logger.warning("LinkedIn token exchange failed: status=%s body=%s", response.status_code, response.text[:200])
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Failed to authenticate with LinkedIn",
-            )
+            raise LinkedInAuthFailed()
 
         data = response.json()
         return data["access_token"]
@@ -112,16 +110,19 @@ class LinkedInAuth:
             )
 
         if response.status_code != 200:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Failed to fetch LinkedIn profile",
-            )
+            raise LinkedInProfileFetchFailed()
 
         return response.json()
 
     async def _issue_tokens(self, user_id: str) -> dict:
         """Génère les tokens JWT (access + refresh)."""
-        access_token = Security.create_access_token(user_id)
+        # Re-fetch pour récupérer le role et vérifier que le compte est actif
+        db_user = await self.repo.get_user_by_id(user_id)
+        if db_user and not db_user.is_active:
+            logger.warning("LinkedIn login blocked: user_id=%s reason=deactivated", user_id)
+            raise UserBanned()
+        role = db_user.role if db_user else "user"
+        access_token = Security.create_access_token(user_id, role=role)
         refresh_token = Security.create_refresh_token(user_id)
 
         token_hash = Security.hash_token(refresh_token)

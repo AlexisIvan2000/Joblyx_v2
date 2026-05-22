@@ -43,9 +43,9 @@ _SYSTEM_PROMPT = (
     f"Reference (category:skill1,skill2|...):\n{_CATEGORIES_COMPACT}"
 )
 
-
+# Extrait le texte d'un PDF via PyMuPDF.
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    """Extrait le texte d'un PDF via PyMuPDF."""
+    
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     text = ""
     for page in doc:
@@ -53,9 +53,9 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     doc.close()
     return text.strip()
 
-
+# Normalise et valide les skills contre le référentiel.
 def _validate_skills(raw_skills: list[dict]) -> list[dict]:
-    """Normalise et valide les skills contre le référentiel."""
+    
     validated = []
     seen = set()
     for s in raw_skills:
@@ -85,9 +85,8 @@ def _validate_skills(raw_skills: list[dict]) -> list[dict]:
 
     return validated
 
-
+# Parse le CV, extrait les skills via GPT, et les normalise.
 async def extract_skills_from_cv(pdf_bytes: bytes) -> list[dict]:
-    """Parse le CV, extrait les skills via GPT, et les normalise."""
     cv_text = clean_cv_text(extract_text_from_pdf(pdf_bytes))
     if not cv_text:
         return []
@@ -109,13 +108,7 @@ async def extract_skills_from_cv(pdf_bytes: bytes) -> list[dict]:
 
 
 async def extract_skills_from_cv_stream(pdf_bytes: bytes):
-    """Version streaming — yield (event_type, data) tuples.
-
-    Events:
-      ("chunk", partial_text)  — token brut du stream GPT
-      ("done", validated_skills)  — liste finale de skills validées
-      ("error", error_msg)  — en cas d'erreur
-    """
+   
     cv_text = clean_cv_text(extract_text_from_pdf(pdf_bytes))
     if not cv_text:
         yield ("done", [])

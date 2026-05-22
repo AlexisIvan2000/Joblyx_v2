@@ -27,9 +27,9 @@ async def get_interview_service(session: AsyncSession = Depends(get_db_session))
     return InterviewService(session)
 
 
-# ─── Schemas ─────────────────────────────────────────────────────
+# Schemas 
 
-# ─── Démarrer un entretien ───────────────────────────────────────
+# Démarrer un entretien 
 
 @router.post("/start")
 @limiter.limit("3/minute", key_func=get_user_id_from_jwt)
@@ -72,7 +72,7 @@ async def start_interview(
     )
 
 
-# ─── Terminer en avance ─────────────────────────────────────────
+#  Terminer en avance
 
 @router.post("/{session_id}/end")
 async def end_interview(
@@ -83,8 +83,7 @@ async def end_interview(
     return await svc.end_session_early(session_id, str(current_user.id))
 
 
-# ─── Usage ───────────────────────────────────────────────────────
-
+#  Usage
 @router.get("/usage")
 async def get_usage(
     current_user: User = Depends(get_current_user),
@@ -93,7 +92,7 @@ async def get_usage(
     return await svc.check_usage(str(current_user.id))
 
 
-# ─── Historique ──────────────────────────────────────────────────
+#  Historique 
 
 @router.get("/history")
 async def get_history(
@@ -119,7 +118,7 @@ async def get_history(
     return result
 
 
-# ─── Détail (session_id APRÈS les routes nommées) ────────────────
+# Détail (session_id APRÈS les routes nommées)
 
 @router.get("/{session_id}")
 async def get_session(
@@ -153,7 +152,7 @@ async def get_session(
     }
 
 
-# ─── Bilan seul ──────────────────────────────────────────────────
+# Bilan seul 
 
 @router.get("/{session_id}/summary")
 async def get_summary(
@@ -171,7 +170,7 @@ async def get_summary(
     }
 
 
-# ─── Suppression ────────────────────────────────────────────────
+#  Suppression 
 
 @router.delete("/{session_id}")
 async def delete_session(
@@ -192,7 +191,7 @@ async def delete_all_sessions(
     return {"message": f"{count} session(s) deleted", "count": count}
 
 
-# ─── WebSocket ───────────────────────────────────────────────────
+#  WebSocket 
 
 @router.websocket("/ws/{session_id}")
 async def interview_ws(
@@ -270,10 +269,10 @@ async def interview_ws(
                         })
 
         except WebSocketDisconnect:
-            logger.info("WebSocket déconnecté pour session %s", session_id)
-            # La session reste in_progress — reprise possible
+            logger.info("WebSocket disconnected: session_id=%s", session_id)
+            # La session reste in_progress, reprise possible
         except Exception as e:
-            logger.exception("Erreur WebSocket session %s", session_id)
+            logger.exception("WebSocket error: session_id=%s", session_id)
             try:
                 await websocket.send_json({"type": "error", "message": str(e)})
             except Exception:

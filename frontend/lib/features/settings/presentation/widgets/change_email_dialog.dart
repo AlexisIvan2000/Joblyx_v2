@@ -63,7 +63,8 @@ class _ChangeEmailDialogState extends State<ChangeEmailDialog> {
       _otpFocusNodes[0].requestFocus();
     } on DioException catch (e) {
       if (!mounted) return;
-      final detail = e.response?.data is Map ? e.response?.data['detail'] : null;
+      final data = e.response?.data;
+      final detail = data is Map ? (data['message'] ?? data['detail']) : null;
       final key = UserFailure.resolve(detail as String?, statusCode: e.response?.statusCode);
       AppSnackbar.error(context, t.t(key));
     } finally {
@@ -83,7 +84,8 @@ class _ChangeEmailDialogState extends State<ChangeEmailDialog> {
       Navigator.of(context).pop(_emailController.text.trim());
     } on DioException catch (e) {
       if (!mounted) return;
-      final detail = e.response?.data is Map ? e.response?.data['detail'] : null;
+      final data = e.response?.data;
+      final detail = data is Map ? (data['message'] ?? data['detail']) : null;
       final key = UserFailure.resolve(detail as String?, statusCode: e.response?.statusCode);
       AppSnackbar.error(context, t.t(key));
       for (final c in _otpControllers) {

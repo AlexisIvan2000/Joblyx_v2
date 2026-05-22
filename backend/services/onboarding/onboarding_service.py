@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from core.exceptions import OnboardingAlreadyCompleted, ProfileNotFound
 from models.schemas import OnboardingRequest
 from repositories.onboarding_repository import OnboardingRepository
 
@@ -9,10 +9,7 @@ class OnboardingService:
 
     async def complete_onboarding(self, user_id: str, data: OnboardingRequest) -> dict:
         if await self.repo.has_profile(user_id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Onboarding already completed",
-            )
+            raise OnboardingAlreadyCompleted()
 
         career_data = {
             "level": data.level.value,
@@ -40,19 +37,13 @@ class OnboardingService:
     async def get_profile(self, user_id: str) -> dict:
         career = await self.repo.get_career_by_user_id(user_id)
         if not career:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Profile not found",
-            )
+            raise ProfileNotFound()
         return await self._build_profile(user_id)
 
     async def update_profile(self, user_id: str, data: OnboardingRequest) -> dict:
         career = await self.repo.get_career_by_user_id(user_id)
         if not career:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Profile not found",
-            )
+            raise ProfileNotFound()
 
         career_data = {
             "level": data.level.value,

@@ -5,6 +5,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from core.exceptions import (
+    CareerProfileRequired,
+    NoActiveRoadmap,
+    RoadmapNotFound,
+    RoadmapRegenerationLimitReached,
+)
 from tests.conftest import FAKE_USER_ID
 
 
@@ -69,14 +75,14 @@ class TestPostGenerate:
         svc.save_career_and_skills.return_value = True
         resp = test_client.post("/roadmap/generate", json=VALID_GENERATE_BODY)
         assert resp.status_code == 200
-        svc.check_regeneration_limit.assert_not_called()
+        svc.ensure_regeneration_allowed.assert_not_called()
 
     def test_returns_429_when_limit_reached(self, test_client):
         svc = test_client._mock_roadmap_svc
         svc.save_career_and_skills.return_value = False
-        svc.check_regeneration_limit.return_value = {
-            "allowed": False, "used": 5, "remaining": 0, "resets_at": "2026-04-01T00:00:00+00:00",
-        }
+        svc.ensure_regeneration_allowed.side_effect = RoadmapRegenerationLimitReached(
+            details={"remaining": 0, "resets_at": "2026-04-01T00:00:00+00:00"},
+        )
         resp = test_client.post("/roadmap/generate", json=VALID_GENERATE_BODY)
         assert resp.status_code == 429
 
@@ -84,8 +90,10 @@ class TestPostGenerate:
 class TestGetStatus:
     def test_returns_status_with_roadmap(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc._get_career.return_value = MagicMock(generation_status="ready")
-        svc.repo.get_active_roadmap.return_value = _mock_roadmap()
+        svc.get_roadmap_status.return_value = {
+            "generation_status": "ready",
+            "has_roadmap": True,
+        }
 
         resp = test_client.get("/roadmap/status")
         assert resp.status_code == 200
@@ -95,8 +103,10 @@ class TestGetStatus:
 
     def test_returns_status_without_roadmap(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc._get_career.return_value = MagicMock(generation_status="idle")
-        svc.repo.get_active_roadmap.return_value = None
+        svc.get_roadmap_status.return_value = {
+            "generation_status": "idle",
+            "has_roadmap": False,
+        }
 
         resp = test_client.get("/roadmap/status")
         assert resp.status_code == 200
@@ -106,8 +116,10 @@ class TestGetStatus:
 
     def test_returns_idle_when_no_career(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc._get_career.return_value = None
-        svc.repo.get_active_roadmap.return_value = None
+        svc.get_roadmap_status.return_value = {
+            "generation_status": "idle",
+            "has_roadmap": False,
+        }
 
         resp = test_client.get("/roadmap/status")
         assert resp.status_code == 200
@@ -120,7 +132,7 @@ class TestGetRoadmap:
     def test_returns_active_roadmap(self, test_client):
         svc = test_client._mock_roadmap_svc
         phase = _mock_phase()
-        svc.repo.get_active_roadmap.return_value = _mock_roadmap(phases=[phase])
+        svc.get_active.return_value = _mock_roadmap(phases=[phase])
 
         resp = test_client.get("/roadmap")
         assert resp.status_code == 200
@@ -131,7 +143,7 @@ class TestGetRoadmap:
 
     def test_returns_404_when_no_active(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.get_active_roadmap.return_value = None
+        svc.get_active.side_effect = NoActiveRoadmap()
 
         resp = test_client.get("/roadmap")
         assert resp.status_code == 404
@@ -140,7 +152,7 @@ class TestGetRoadmap:
 class TestGetHistory:
     def test_returns_archived_list(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.get_history.return_value = [
+        svc.get_history.return_value = [
             _mock_roadmap(status="archived"),
         ]
 
@@ -152,7 +164,7 @@ class TestGetHistory:
 
     def test_returns_empty_list(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.get_history.return_value = []
+        svc.get_history.return_value = []
 
         resp = test_client.get("/roadmap/history")
         assert resp.status_code == 200
@@ -162,11 +174,8 @@ class TestGetHistory:
 class TestPostRegenerate:
     def test_returns_sse_stream(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc._get_career.return_value = MagicMock(generation_status="ready")
-        svc.check_regeneration_limit.return_value = {
-            "allowed": True, "used": 1, "remaining": 4,
-            "resets_at": "2026-04-01T00:00:00+00:00",
-        }
+        svc.ensure_career_exists.return_value = None
+        svc.ensure_regeneration_allowed.return_value = None
 
         resp = test_client.post("/roadmap/regenerate")
         assert resp.status_code == 200
@@ -174,18 +183,17 @@ class TestPostRegenerate:
 
     def test_returns_404_when_no_career(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc._get_career.return_value = None
+        svc.ensure_career_exists.side_effect = CareerProfileRequired()
 
         resp = test_client.post("/roadmap/regenerate")
         assert resp.status_code == 404
 
     def test_returns_429_when_limit_reached(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc._get_career.return_value = MagicMock(generation_status="ready")
-        svc.check_regeneration_limit.return_value = {
-            "allowed": False, "used": 5, "remaining": 0,
-            "resets_at": "2026-04-01T00:00:00+00:00",
-        }
+        svc.ensure_career_exists.return_value = None
+        svc.ensure_regeneration_allowed.side_effect = RoadmapRegenerationLimitReached(
+            details={"remaining": 0, "resets_at": "2026-04-01T00:00:00+00:00"},
+        )
 
         resp = test_client.post("/roadmap/regenerate")
         assert resp.status_code == 429
@@ -194,15 +202,15 @@ class TestPostRegenerate:
 class TestPostArchive:
     def test_archives_active_roadmap(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.get_active_roadmap.return_value = _mock_roadmap()
+        svc.archive_active_roadmap.return_value = None
 
         resp = test_client.post("/roadmap/archive")
         assert resp.status_code == 200
-        svc.repo.archive_active.assert_called_once()
+        svc.archive_active_roadmap.assert_called_once()
 
     def test_returns_404_when_no_active(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.get_active_roadmap.return_value = None
+        svc.archive_active_roadmap.side_effect = NoActiveRoadmap()
 
         resp = test_client.post("/roadmap/archive")
         assert resp.status_code == 404
@@ -211,7 +219,7 @@ class TestPostArchive:
 class TestDeleteRoadmap:
     def test_deletes_roadmap(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.delete_roadmap = AsyncMock(return_value=True)
+        svc.delete_roadmap.return_value = None
 
         resp = test_client.delete("/roadmap/aaaa-bbbb")
         assert resp.status_code == 200
@@ -219,7 +227,7 @@ class TestDeleteRoadmap:
 
     def test_returns_404_when_not_found(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.delete_roadmap = AsyncMock(return_value=False)
+        svc.delete_roadmap.side_effect = RoadmapNotFound()
 
         resp = test_client.delete("/roadmap/nonexistent")
         assert resp.status_code == 404
@@ -228,7 +236,7 @@ class TestDeleteRoadmap:
 class TestDeleteAllRoadmaps:
     def test_deletes_all_archived(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.delete_all_archived = AsyncMock(return_value=3)
+        svc.delete_all_archived.return_value = 3
 
         resp = test_client.delete("/roadmap")
         assert resp.status_code == 200
@@ -237,7 +245,7 @@ class TestDeleteAllRoadmaps:
 
     def test_returns_zero_when_none(self, test_client):
         svc = test_client._mock_roadmap_svc
-        svc.repo.delete_all_archived = AsyncMock(return_value=0)
+        svc.delete_all_archived.return_value = 0
 
         resp = test_client.delete("/roadmap")
         assert resp.status_code == 200

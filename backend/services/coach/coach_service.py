@@ -5,10 +5,14 @@ import json
 from datetime import datetime, timezone, timedelta
 
 import fitz  # PyMuPDF
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import OPENAI_MODEL_FAST
+from core.exceptions import (
+    CoachWeeklyLimitReached,
+    CvTextExtractionFailed,
+    SessionNotFound,
+)
 from repositories.coach_repository import CoachRepository
 from services.ai.openai_client import client
 from services.coach.coach_prompt_builder import build_coach_prompt
@@ -87,19 +91,14 @@ class CoachService:
         # Vérifier la limite
         usage = await self.check_usage(user_id)
         if usage["remaining"] <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail={
-                    "error": "Limite de 3 analyses par semaine atteinte",
-                    "remaining": 0,
-                    "resets_at": usage["resets_at"],
-                },
+            raise CoachWeeklyLimitReached(
+                details={"remaining": 0, "resets_at": usage["resets_at"]},
             )
 
         # Extraire et nettoyer le texte du CV
         cv_text = clean_cv_text(_extract_text_from_pdf(cv_bytes))
         if not cv_text:
-            raise HTTPException(status_code=400, detail="Impossible d'extraire le texte du CV")
+            raise CvTextExtractionFailed()
 
         # Vérifier le cache avant d'appeler GPT
         cv_hash = hashlib.sha256(cv_text.encode()).hexdigest()
@@ -168,7 +167,7 @@ class CoachService:
     async def get_session(self, session_id: str, user_id: str):
         session = await self.repo.get_by_id(session_id, user_id)
         if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
+            raise SessionNotFound()
         return session
 
     async def get_history(self, user_id: str):
@@ -177,7 +176,7 @@ class CoachService:
     async def delete_session(self, session_id: str, user_id: str):
         session = await self.repo.delete_session(session_id, user_id)
         if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
+            raise SessionNotFound()
         if session.cv_file_key:
             try:
                 await self.r2.delete_cv(session.cv_file_key)

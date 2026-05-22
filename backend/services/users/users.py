@@ -1,9 +1,29 @@
 import logging
 import re
-from datetime import datetime, timedelta, timezone
-from fastapi import HTTPException, status
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
+from core.exceptions import (
+    PasswordTooShort,
+    PasswordMissingSpecial,
+    LinkedInOnlyAccount,
+    IncorrectCurrentPassword,
+    IncorrectPassword,
+    SamePasswordAsBefore,
+    PasswordAlreadySet,
+    InvalidOrExpiredResetCode,
+    InvalidResetCode,
+    ResetCodeExpired,
+    TooManyVerificationAttempts,
+    InvalidVerificationCode,
+    VerificationCodeExpired,
+    NoPendingEmailChange,
+    NoEmailChangeCode,
+    EmailMismatch,
+    EmailAlreadyInUse,
+    UserNotFound,
+    NoFieldsToUpdate,
+)
 from core.security import Security
 from models.schemas import UpdateProfile
 from repositories.auth_repository import AuthRepository
@@ -15,17 +35,11 @@ _PASSWORD_SPECIAL = re.compile(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''')
 
 
 def _validate_password(password: str) -> None:
-    """Valide la force du mot de passe. Raise HTTPException si trop faible."""
+    # Valide la force du mot de passe — raise une exception métier si trop faible
     if len(password) < 8:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters"
-        )
+        raise PasswordTooShort()
     if not _PASSWORD_SPECIAL.search(password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must contain at least one special character"
-        )
+        raise PasswordMissingSpecial()
 
 
 class UserService:
@@ -37,10 +51,7 @@ class UserService:
     async def update_profile(self, user_id: str, data: UpdateProfile):
         data_dict = data.model_dump(exclude_none=True)
         if not data_dict:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No fields to update"
-            )
+            raise NoFieldsToUpdate()
         await self.repo.update_user(user_id, data_dict)
         return {"message": "Profile updated successfully"}
 
@@ -48,20 +59,11 @@ class UserService:
         _validate_password(new_password)
         db_user = await self.repo.get_user_by_id(user_id)
         if not db_user.password_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This account uses LinkedIn sign-in",
-            )
+            raise LinkedInOnlyAccount()
         if not Security.verify_password(db_user.password_hash, current_password):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Current password is incorrect"
-            )
+            raise IncorrectCurrentPassword()
         if Security.verify_password(db_user.password_hash, new_password):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="New password must be different from current password"
-            )
+            raise SamePasswordAsBefore()
         new_hash = Security.hash_password(new_password)
         await self.repo.update_user(user_id, {"password_hash": new_hash})
         logger.info("Password changed: user_id=%s", user_id)
@@ -75,10 +77,7 @@ class UserService:
         _validate_password(new_password)
         db_user = await self.repo.get_user_by_id(user_id)
         if db_user.password_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Account already has a password"
-            )
+            raise PasswordAlreadySet()
         new_hash = Security.hash_password(new_password)
         await self.repo.update_user(user_id, {"password_hash": new_hash})
         logger.info("Password set for LinkedIn account: user_id=%s", user_id)
@@ -89,10 +88,7 @@ class UserService:
         if db_user:
             # Compte créé via LinkedIn sans mot de passe
             if not db_user.password_hash:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="This account uses LinkedIn sign-in",
-                )
+                raise LinkedInOnlyAccount()
             await self.otp_svc.send_reset_otp(email)
         return {"message": "If this email is registered, a reset code has been sent"}
 
@@ -100,38 +96,23 @@ class UserService:
         _validate_password(new_password)
         db_user = await self.repo.get_user_by_email(email)
         if not db_user or not db_user.reset_code_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired reset code"
-            )
+            raise InvalidOrExpiredResetCode()
 
         if db_user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Too many attempts, request a new code"
-            )
+            raise TooManyVerificationAttempts()
 
         await self.repo.increment_verification_attempts(str(db_user.id))
 
         code_hash = Security.hash_token(code)
         if code_hash != db_user.reset_code_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid reset code"
-            )
+            raise InvalidResetCode()
 
         expires_at = db_user.reset_code_expires_at
         if expires_at and expires_at < datetime.now(timezone.utc):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Reset code has expired"
-            )
+            raise ResetCodeExpired()
 
         if Security.verify_password(db_user.password_hash, new_password):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="New password must be different from current password"
-            )
+            raise SamePasswordAsBefore()
         new_hash = Security.hash_password(new_password)
         await self.repo.update_password(str(db_user.id), new_hash)
         # Révoquer tous les refresh tokens (déconnexion de tous les appareils)
@@ -142,20 +123,11 @@ class UserService:
     async def request_email_change(self, user_id: str, new_email: str, password: str):
         db_user = await self.repo.get_user_by_id(user_id)
         if not db_user.password_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This account uses LinkedIn sign-in",
-            )
+            raise LinkedInOnlyAccount()
         if not Security.verify_password(db_user.password_hash, password):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid password"
-            )
+            raise IncorrectPassword()
         if await self.repo.get_user_by_email(new_email):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already in use"
-            )
+            raise EmailAlreadyInUse()
 
         await self.repo.update_user(user_id, {"pending_email": new_email})
         await self.otp_svc.send_email_change_otp(new_email, user_id)
@@ -164,45 +136,27 @@ class UserService:
     async def confirm_email_change(self, user_id: str, code: str):
         db_user = await self.repo.get_user_by_id(user_id)
         if not db_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User not found"
-            )
+            raise UserNotFound()
 
         pending_email = db_user.pending_email
         if not pending_email:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No pending email change"
-            )
+            raise NoPendingEmailChange()
 
         if not db_user.email_change_code_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No email change code found"
-            )
+            raise NoEmailChangeCode()
 
         if db_user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Too many attempts, request a new code"
-            )
+            raise TooManyVerificationAttempts()
 
         await self.repo.increment_verification_attempts(str(db_user.id))
 
         code_hash = Security.hash_token(code)
         if code_hash != db_user.email_change_code_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid verification code"
-            )
+            raise InvalidVerificationCode()
 
         expires_at = db_user.email_change_code_expires_at
         if expires_at and expires_at < datetime.now(timezone.utc):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verification code expired. Please request a new one."
-            )
+            raise VerificationCodeExpired()
 
         await self.repo.update_user(str(db_user.id), {
             "email": pending_email,
@@ -213,18 +167,51 @@ class UserService:
         })
         return {"message": "Email changed successfully"}
 
-    async def delete_account(self, user_id: str, email_confirmation: str):
-        """Supprime le compte après vérification de l'email."""
+    async def delete_account(
+        self,
+        user_id: str,
+        email_confirmation: str,
+        r2_service=None,
+        application_repo=None,
+        coach_repo=None,
+    ):
+        """Supprime le compte après vérification de l'email + nettoie les fichiers R2 associés."""
         db_user = await self.repo.get_user_by_id(user_id)
         if not db_user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise UserNotFound()
 
         if db_user.email != email_confirmation:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email does not match your account"
-            )
+            raise EmailMismatch()
 
+        # Collecte les file_keys AVANT le CASCADE (sinon les rows sont déjà supprimées)
+        cv_keys: list[str] = []
+        avatar_key: str | None = None
+
+        if r2_service is not None:
+            if application_repo is not None:
+                cv_keys.extend(await application_repo.get_cv_keys_for_user(user_id))
+            if coach_repo is not None:
+                cv_keys.extend(await coach_repo.get_cv_keys_for_user(user_id))
+
+            # Avatar : file_key R2 uniquement, pas une URL externe (ui-avatars, LinkedIn)
+            if db_user.avatar_url and not db_user.avatar_url.startswith("http"):
+                avatar_key = db_user.avatar_url
+
+        # Supprime le user — les FK CASCADE suppriment toutes les données liées
         await self.repo.delete_user(user_id)
         logger.info("Account deleted: user_id=%s email=%s", user_id, db_user.email)
+
+        # Nettoyage R2 best-effort  un échec laisse les fichiers orphelins mais ne casse pas la suppression
+        if r2_service is not None:
+            for key in cv_keys:
+                try:
+                    await r2_service.delete_cv(key)
+                except Exception:
+                    logger.warning("Failed to delete CV from R2: key=%s", key)
+            if avatar_key:
+                try:
+                    await r2_service.delete_avatar(avatar_key)
+                except Exception:
+                    logger.warning("Failed to delete avatar from R2: key=%s", avatar_key)
+
         return {"message": "Account deleted successfully"}

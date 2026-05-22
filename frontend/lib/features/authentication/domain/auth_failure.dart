@@ -4,7 +4,7 @@ class AuthFailure {
 
   const AuthFailure(this.key, {this.statusCode});
 
-  /// Backend `detail` string → i18n key.
+  /// Backend `message`/`detail` string → i18n key.
   static const _map = {
     // Register
     'Email already registered': 'auth_error.email_already_registered',
@@ -12,6 +12,7 @@ class AuthFailure {
     // Login
     'Invalid email or password': 'auth_error.invalid_credentials',
     'Please verify your email before logging in': 'auth_error.email_not_verified',
+    'Your account has been banned': 'auth_error.account_banned',
 
     // Verify email
     'Invalid verification request': 'auth_error.invalid_verification_request',
@@ -31,11 +32,13 @@ class AuthFailure {
     'No pending email change': 'auth_error.no_pending_email_change',
     'No email change code found': 'auth_error.no_email_change_code',
     'Email already in use': 'auth_error.email_already_in_use',
+    'Email does not match your account': 'auth_error.email_mismatch',
 
     // Password
     'Current password is incorrect': 'auth_error.wrong_current_password',
     'New password must be different from current password': 'auth_error.same_password',
     'Invalid password': 'auth_error.invalid_password',
+    'Account already has a password': 'auth_error.password_already_set',
 
     // Refresh token / session
     'Invalid or expired refresh token': 'auth_error.session_expired',
@@ -43,6 +46,7 @@ class AuthFailure {
     // LinkedIn
     'This account uses LinkedIn sign-in': 'auth_error.linkedin_account',
     'Failed to authenticate with LinkedIn': 'auth_error.linkedin_failed',
+    'Failed to fetch LinkedIn profile': 'auth_error.linkedin_profile_failed',
     'LinkedIn account has no email address': 'auth_error.linkedin_no_email',
 
     // Other
@@ -55,6 +59,7 @@ class AuthFailure {
     400: 'auth_error.bad_request',
     401: 'auth_error.unauthorized',
     403: 'auth_error.forbidden',
+    409: 'auth_error.conflict',
     429: 'auth_error.too_many_attempts',
     500: 'auth_error.server_error',
   };

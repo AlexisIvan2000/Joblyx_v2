@@ -1,10 +1,23 @@
 import logging
 import re
-from fastapi import HTTPException, status
 
 logger = logging.getLogger(__name__)
 from models.schemas import UserCreate, UserLogin
 from core.security import Security
+from core.exceptions import (
+    WeakPassword,
+    EmailAlreadyRegistered,
+    InvalidCredentials,
+    LinkedInOnlyAccount,
+    EmailNotVerified,
+    InvalidVerificationRequest,
+    InvalidVerificationCode,
+    VerificationCodeExpired,
+    TooManyVerificationAttempts,
+    NoPendingEmailChange,
+    InvalidRefreshToken,
+    UserBanned,
+)
 from repositories.auth_repository import AuthRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
 from services.emailing.otp_service import OtpService
@@ -23,16 +36,10 @@ class EmailPasswordAuth:
     async def register_user(self, user: UserCreate):
         # Validation mot de passe côté serveur
         if len(user.password) < 8 or not _PASSWORD_SPECIAL.search(user.password):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Password must be at least 8 characters with a special character"
-            )
+            raise WeakPassword()
 
         if await self.repo.get_user_by_email(user.email):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
-            )
+            raise EmailAlreadyRegistered()
 
         hashed_password = Security.hash_password(user.password)
 
@@ -56,31 +63,22 @@ class EmailPasswordAuth:
         db_user = await self.repo.get_user_by_email(user.email)
         if not db_user:
             logger.warning("Login failed: email=%s reason=not_found", user.email)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
+            raise InvalidCredentials()
         # Compte créé via LinkedIn sans mot de passe
         if not db_user.password_hash:
             logger.warning("Login failed: user_id=%s reason=linkedin_only", db_user.id)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This account uses LinkedIn sign-in"
-            )
+            raise LinkedInOnlyAccount()
         if not Security.verify_password(db_user.password_hash, user.password):
             logger.warning("Login failed: user_id=%s reason=wrong_password", db_user.id)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
+            raise InvalidCredentials()
         if not db_user.is_verified:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Please verify your email before logging in"
-            )
+            raise EmailNotVerified()
+        if not db_user.is_active:
+            logger.warning("Login blocked: user_id=%s reason=deactivated", db_user.id)
+            raise UserBanned()
         user_id = str(db_user.id)
-        logger.info("Login success: user_id=%s email=%s", user_id, user.email)
-        access_token = Security.create_access_token(user_id)
+        logger.info("Login success: user_id=%s email=%s role=%s", user_id, user.email, db_user.role)
+        access_token = Security.create_access_token(user_id, role=db_user.role)
         refresh_token = Security.create_refresh_token(user_id)
 
         token_hash = Security.hash_token(refresh_token)
@@ -96,37 +94,25 @@ class EmailPasswordAuth:
     async def verify_email(self, email: str, code: str):
         db_user = await self.repo.get_user_by_email(email)
         if not db_user or db_user.is_verified:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid verification request"
-            )
+            raise InvalidVerificationRequest()
 
         if db_user.verification_attempts >= MAX_VERIFICATION_ATTEMPTS:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Too many attempts, request a new code"
-            )
+            raise TooManyVerificationAttempts()
 
         await self.repo.increment_verification_attempts(str(db_user.id))
 
         code_hash = Security.hash_token(code)
         if code_hash != db_user.verification_code_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid verification code"
-            )
+            raise InvalidVerificationCode()
 
         expires_at = db_user.verification_code_expires_at
         if expires_at and expires_at < datetime.now(timezone.utc):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verification code expired. Please request a new one."
-            )
+            raise VerificationCodeExpired()
 
         user_id = str(db_user.id)
         await self.repo.update_verification_status(user_id)
 
-        access_token = Security.create_access_token(user_id)
+        access_token = Security.create_access_token(user_id, role=db_user.role)
         refresh_token = Security.create_refresh_token(user_id)
 
         token_hash = Security.hash_token(refresh_token)
@@ -149,10 +135,7 @@ class EmailPasswordAuth:
         db_user = await self.repo.get_user_by_id(user_id)
         pending_email = db_user.pending_email
         if not pending_email:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No pending email change"
-            )
+            raise NoPendingEmailChange()
 
         await self.otp_svc.send_email_change_otp(pending_email, user_id, db_user=db_user)
         return {"message": "Verification code resent to new address"}
@@ -160,24 +143,21 @@ class EmailPasswordAuth:
     async def refresh_access_token(self, refresh_token: str):
         payload = Security.decode_token(refresh_token)
         if not payload or payload.get("type") != "refresh":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired refresh token"
-            )
+            raise InvalidRefreshToken()
 
         token_hash = Security.hash_token(refresh_token)
         db_token = await self.rt_repo.get_by_token_hash(token_hash)
         if not db_token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired refresh token"
-            )
+            raise InvalidRefreshToken()
 
         # Rotate: revoke old, issue new
         await self.rt_repo.revoke(token_hash)
 
         user_id = payload.get("sub")
-        new_access_token = Security.create_access_token(user_id)
+        # Re-fetch le user pour avoir le role à jour (si promotion/demotion entre-temps)
+        db_user = await self.repo.get_user_by_id(user_id)
+        role = db_user.role if db_user else "user"
+        new_access_token = Security.create_access_token(user_id, role=role)
         new_refresh_token = Security.create_refresh_token(user_id)
 
         new_token_hash = Security.hash_token(new_refresh_token)

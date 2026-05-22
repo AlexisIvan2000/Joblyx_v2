@@ -1,0 +1,21 @@
+// Wrapper localStorage pour les tokens JWT — centralise les clés et le typage
+
+const ACCESS_KEY = 'joblyx_admin_access_token';
+const REFRESH_KEY = 'joblyx_admin_refresh_token';
+
+export const tokenStorage = {
+  getAccess() {
+    return localStorage.getItem(ACCESS_KEY);
+  },
+  getRefresh() {
+    return localStorage.getItem(REFRESH_KEY);
+  },
+  setTokens(accessToken, refreshToken) {
+    localStorage.setItem(ACCESS_KEY, accessToken);
+    localStorage.setItem(REFRESH_KEY, refreshToken);
+  },
+  clear() {
+    localStorage.removeItem(ACCESS_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+  },
+};

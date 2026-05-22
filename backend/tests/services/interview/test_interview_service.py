@@ -4,8 +4,8 @@ from datetime import datetime, timezone, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from fastapi import HTTPException
 
+from core.exceptions import SessionNotFound
 from services.interview.interview_service import (
     InterviewService,
     _get_tomorrow_midnight,
@@ -123,9 +123,8 @@ class TestGetSession:
         service.repo = AsyncMock()
         service.repo.get_session_by_id.return_value = None
 
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(SessionNotFound):
             await service.get_session("s1", FAKE_USER_ID)
-        assert exc.value.status_code == 404
 
 
 class TestDeleteSession:
@@ -142,9 +141,8 @@ class TestDeleteSession:
         service.repo = AsyncMock()
         service.repo.delete_session.return_value = False
 
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(SessionNotFound):
             await service.delete_session("s1", FAKE_USER_ID)
-        assert exc.value.status_code == 404
 
 
 class TestDeleteAll:

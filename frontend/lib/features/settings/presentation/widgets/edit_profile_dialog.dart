@@ -59,7 +59,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
       });
     } on DioException catch (e) {
       if (!mounted) return;
-      final detail = e.response?.data is Map ? e.response?.data['detail'] : null;
+      final data = e.response?.data;
+      final detail = data is Map ? (data['message'] ?? data['detail']) : null;
       final key = UserFailure.resolve(detail as String?, statusCode: e.response?.statusCode);
       AppSnackbar.error(context, t.t(key));
     } finally {

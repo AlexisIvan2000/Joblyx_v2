@@ -11,16 +11,14 @@ logger = logging.getLogger(__name__)
 
 async def refresh_market_cache() -> None:
     # Point d'entrée appelé par APScheduler 2x par jour (2h et 14h)
-    print("[CRON] Lancement du refresh market cache...")
+    logger.info("Market cache refresh started")
     async with AsyncSessionLocal() as session:
         try:
             svc = MarketCacheService(session, jsearch_service, spacy_extractor)
             summary = await svc.refresh_cache()
-            print(f"[CRON] Refresh terminé — {summary}")
+            logger.info("Market cache refresh finished: %s", summary)
         except Exception as e:
-            print(f"[CRON] ERREUR: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.exception("Market cache refresh failed: %s", e)
             await session.rollback()
 
 

@@ -24,9 +24,9 @@ class Security:
             return False
         
     @staticmethod
-    def create_access_token(user_id: str) ->str:
+    def create_access_token(user_id: str, role: str = "user") -> str:
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        payload = {"sub": user_id, "exp": expire, "type": "access"}
+        payload = {"sub": user_id, "exp": expire, "type": "access", "role": role}
         return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     
     @staticmethod

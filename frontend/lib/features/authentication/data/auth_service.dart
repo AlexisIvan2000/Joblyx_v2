@@ -160,10 +160,11 @@ class AuthException implements Exception {
     final data = e.response?.data;
     final statusCode = e.response?.statusCode;
 
-    if (data is Map && data.containsKey('detail')) {
-      final detail = data['detail'] as String;
+    // Le backend retourne `message` (nouveau format) ou `detail` (legacy)
+    final messageOrDetail = data is Map ? (data['message'] ?? data['detail']) : null;
+    if (messageOrDetail is String) {
       return AuthException(
-        AuthFailure.resolve(detail, statusCode: statusCode),
+        AuthFailure.resolve(messageOrDetail, statusCode: statusCode),
         statusCode: statusCode,
       );
     }

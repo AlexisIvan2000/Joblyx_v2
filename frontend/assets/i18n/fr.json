@@ -140,7 +140,7 @@
     },
 
     "first_page": {
-        "continue_with_email": "Continuer avec email",
+        "continue_with_email": "Continuer avec l'adresse email",
         "continue_with_linkedin": "Continuer avec LinkedIn",
         "legal_prefix": "En continuant, vous acceptez nos ",
         "terms_of_use": "Conditions d'utilisation",
@@ -224,7 +224,12 @@
         "unknown": "Une erreur inattendue s'est produite",
         "linkedin_account": "Ce compte utilise la connexion LinkedIn",
         "linkedin_failed": "Échec de l'authentification LinkedIn",
-        "linkedin_no_email": "Le compte LinkedIn n'a pas d'adresse email"
+        "linkedin_profile_failed": "Impossible de récupérer le profil LinkedIn",
+        "linkedin_no_email": "Le compte LinkedIn n'a pas d'adresse email",
+        "account_banned": "Votre compte a été désactivé. Contactez le support",
+        "email_mismatch": "L'email ne correspond pas à votre compte",
+        "password_already_set": "Ce compte a déjà un mot de passe",
+        "conflict": "Cette action entre en conflit avec l'état actuel"
     },
 
     "onboarding": {
@@ -625,8 +630,14 @@
         "too_many_attempts": "Trop de tentatives. Demandez un nouveau code",
         "rate_limited": "Trop de demandes. Réessayez plus tard",
         "no_fields": "Aucune modification à enregistrer",
+        "linkedin_account": "Ce compte utilise la connexion LinkedIn",
+        "password_already_set": "Ce compte a déjà un mot de passe",
+        "email_mismatch": "L'email ne correspond pas à votre compte",
+        "account_banned": "Votre compte a été désactivé",
         "bad_request": "Une erreur est survenue",
         "unauthorized": "Veuillez vous reconnecter",
+        "forbidden": "Action non autorisée",
+        "conflict": "Cette action entre en conflit avec l'état actuel",
         "server_error": "Erreur serveur. Réessayez plus tard",
         "unknown": "Une erreur inattendue s'est produite"
     },

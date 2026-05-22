@@ -120,7 +120,7 @@ class TestSetPassword:
         """Un compte qui a déjà un mot de passe ne peut pas utiliser set-password."""
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
         resp = test_client.post("/users/me/set-password", json={"new_password": "Test@123!"})
-        assert resp.status_code == 400
+        assert resp.status_code == 409
 
 
 class TestGetMeHasPassword:

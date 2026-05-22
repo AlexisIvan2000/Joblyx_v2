@@ -7,6 +7,35 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+
+# Initialisation Sentry — avant tous les autres imports pour capturer même les erreurs de boot
+from core.config import (
+    CORS_ORIGINS,
+    SENTRY_DSN,
+    SENTRY_ENVIRONMENT,
+    SENTRY_TRACES_SAMPLE_RATE,
+)
+
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=SENTRY_ENVIRONMENT,
+        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+        integrations=[
+            FastApiIntegration(transaction_style="endpoint"),
+            StarletteIntegration(),
+            SqlalchemyIntegration(),
+        ],
+        # Ne pas envoyer les emails/IPs/headers sensibles par défaut
+        send_default_pii=False,
+    )
+    logging.getLogger(__name__).info("Sentry initialized: env=%s", SENTRY_ENVIRONMENT)
+
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -15,11 +44,13 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from core.rate_limit import limiter
 from core.database import engine
+from core.exceptions import DomainError
 from api.routers.auth import router as auth_router
 from api.routers.users import router as users_router
 from api.routers.roadmap import router as roadmap_router
 from api.routers.applications import router as applications_router
 from api.routers.assistant import router as assistant_router
+from api.v1 import v1_router
 
 scheduler = AsyncIOScheduler()
 
@@ -59,9 +90,49 @@ def _run_migrations():
         else:
             logging.getLogger(__name__).info("Alembic migrations applied")
 
+async def _ensure_admin_account():
+    from core.config import ADMIN_EMAIL, ADMIN_PASSWORD
+    from core.database import AsyncSessionLocal
+    from core.security import Security
+    from repositories.auth_repository import AuthRepository
+
+    logger = logging.getLogger(__name__)
+
+    if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+        logger.warning("Admin seed skipped: missing ADMIN_EMAIL or ADMIN_PASSWORD")
+        return
+
+    async with AsyncSessionLocal() as session:
+        repo = AuthRepository(session)
+        existing = await repo.get_user_by_email(ADMIN_EMAIL)
+
+        if existing:
+            if existing.role != "super_admin":
+                await repo.update_user(str(existing.id), {"role": "super_admin"})
+                await session.commit()
+                logger.info("Admin promoted: email=%s user_id=%s", ADMIN_EMAIL, existing.id)
+            else:
+                logger.info("Admin already exists: email=%s", ADMIN_EMAIL)
+            return
+
+        # Création d'un nouveau compte super_admin pré-vérifié
+        password_hash = Security.hash_password(ADMIN_PASSWORD)
+        new_admin = await repo.create_user({
+            "first_name": "Admin",
+            "last_name": "Joblyx",
+            "email": ADMIN_EMAIL,
+            "password_hash": password_hash,
+            "is_verified": True,
+            "role": "super_admin",
+        })
+        await session.commit()
+        logger.info("Admin account created: email=%s user_id=%s", ADMIN_EMAIL, new_admin.id)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _run_migrations()
+    await _ensure_admin_account()
     from cron.refresh_market_cache import refresh_market_cache
 
     scheduler.add_job(
@@ -82,23 +153,71 @@ app = FastAPI(title="Joblyx API", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+
+# Traduit toute DomainError levée par les services en réponse JSON normalisée
+@app.exception_handler(DomainError)
+async def domain_exception_handler(request: Request, exc: DomainError):
+    # On capture aussi les 4xx dans Sentry pour spotter brute force, anomalies, etc.
+    if SENTRY_DSN:
+        import sentry_sdk
+        with sentry_sdk.push_scope() as scope:
+            scope.set_tag("error_code", exc.error_code)
+            scope.set_tag("status_code", str(exc.status_code))
+            scope.set_context("request", {
+                "method": request.method,
+                "path": request.url.path,
+            })
+            # Level "warning" pour les 4xx (erreurs client attendues), "error" pour les 5xx
+            scope.level = "warning" if 400 <= exc.status_code < 500 else "error"
+            sentry_sdk.capture_exception(exc)
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.error_code,
+            "message": exc.message,
+            "details": exc.details,
+        },
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
+# API versionnée — toutes les nouvelles intégrations doivent pointer vers /v1/...
+app.include_router(v1_router)
+
+# Compat legacy pour l'app mobile en production qui pointe vers la racine
+# À supprimer quand le mobile aura migré vers /v1/ (surveillé via le middleware ci-dessous)
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(roadmap_router)
 app.include_router(applications_router)
 app.include_router(assistant_router)
 
+
+# Logue les appels aux routes non-versionnées pour suivre la migration mobile
+@app.middleware("http")
+async def log_legacy_routes(request: Request, call_next):
+    path = request.url.path
+    if not path.startswith(("/v1/", "/health", "/docs", "/openapi", "/redoc")):
+        logging.getLogger(__name__).warning(
+            "LEGACY ROUTE: %s %s", request.method, path
+        )
+    return await call_next(request)
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+# @app.get("/sentry-debug")
+# async def trigger_error():
+#     division_by_zero = 1 / 0
 
 if __name__ == "__main__":
     import os

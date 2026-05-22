@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from fastapi import HTTPException, status
+from core.exceptions import TooManyCodeRequests
 from core.security import Security
 from repositories.auth_repository import AuthRepository
 from services.emailing.email_sender import EmailSender
@@ -65,10 +65,7 @@ class OtpService:
         if db_user.last_code_sent_at:
             one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
             if db_user.last_code_sent_at > one_hour_ago and db_user.code_resend_count >= MAX_RESEND_PER_HOUR:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Too many code requests, please try again later"
-                )
+                raise TooManyCodeRequests()
 
     @staticmethod
     def _compute_resend_count(db_user, now: datetime) -> int:

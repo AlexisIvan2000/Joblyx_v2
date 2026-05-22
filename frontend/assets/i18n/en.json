@@ -140,7 +140,7 @@
     },
 
     "first_page": {
-        "continue_with_email": "Continue with email",
+        "continue_with_email": "Continue with e-mail address",
         "continue_with_linkedin": "Continue with LinkedIn",
         "legal_prefix": "By continuing, you agree to our ",
         "terms_of_use": "Terms of Use",
@@ -223,7 +223,12 @@
         "unknown": "An unexpected error occurred",
         "linkedin_account": "This account uses LinkedIn sign-in",
         "linkedin_failed": "LinkedIn authentication failed",
-        "linkedin_no_email": "LinkedIn account has no email address"
+        "linkedin_profile_failed": "Failed to fetch LinkedIn profile",
+        "linkedin_no_email": "LinkedIn account has no email address",
+        "account_banned": "Your account has been deactivated. Contact support",
+        "email_mismatch": "Email does not match your account",
+        "password_already_set": "This account already has a password",
+        "conflict": "This action conflicts with the current state"
     },
 
     "onboarding": {
@@ -624,8 +629,14 @@
         "too_many_attempts": "Too many attempts. Request a new code",
         "rate_limited": "Too many requests. Try again later",
         "no_fields": "No changes to save",
+        "linkedin_account": "This account uses LinkedIn sign-in",
+        "password_already_set": "This account already has a password",
+        "email_mismatch": "Email does not match your account",
+        "account_banned": "Your account has been deactivated",
         "bad_request": "Something went wrong",
         "unauthorized": "Please log in again",
+        "forbidden": "Action not allowed",
+        "conflict": "This action conflicts with the current state",
         "server_error": "Server error. Try again later",
         "unknown": "An unexpected error occurred"
     },

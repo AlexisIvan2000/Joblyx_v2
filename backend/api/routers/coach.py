@@ -20,7 +20,7 @@ async def get_coach_service(session: AsyncSession = Depends(get_db_session)) -> 
     return CoachService(session)
 
 
-# ─── Analyse coach IA (SSE streaming) ───────────────────────────
+# Analyse coach IA (SSE streaming)
 
 @router.post("/analyze")
 @limiter.limit("5/minute", key_func=get_user_id_from_jwt)
@@ -69,7 +69,7 @@ async def analyze(
     return StreamingResponse(_stream(), media_type="text/event-stream")
 
 
-# ─── Historique ──────────────────────────────────────────────────
+#  Historique 
 
 @router.get("/history")
 async def get_history(
@@ -89,7 +89,7 @@ async def get_history(
     ]
 
 
-# ─── Usage (AVANT {session_id} pour éviter le conflit) ──────────
+# Usage (AVANT {session_id} pour éviter le conflit) 
 
 @router.get("/usage")
 async def get_usage(
@@ -99,7 +99,7 @@ async def get_usage(
     return await svc.check_usage(str(current_user.id))
 
 
-# ─── Détail d'une session ───────────────────────────────────────
+# Détail d'une session
 
 @router.get("/{session_id}")
 async def get_session(
@@ -120,7 +120,7 @@ async def get_session(
     }
 
 
-# ─── Suppression ────────────────────────────────────────────────
+# Suppression 
 
 @router.delete("/{session_id}")
 async def delete_session(

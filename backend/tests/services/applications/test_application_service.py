@@ -3,8 +3,8 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from fastapi import HTTPException
 
+from core.exceptions import ApplicationNotFound, NoCvAttached, NoFieldsToUpdate
 from services.applications.application_service import ApplicationService
 from tests.conftest import FAKE_USER_ID
 
@@ -81,9 +81,8 @@ class TestGetById:
     @pytest.mark.asyncio
     async def test_raises_404_when_not_found(self, service, mock_repo):
         mock_repo.get_by_id.return_value = None
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(ApplicationNotFound):
             await service.get_by_id(FAKE_APP_ID, FAKE_USER_ID)
-        assert exc.value.status_code == 404
 
 
 class TestGetAll:
@@ -107,16 +106,14 @@ class TestUpdate:
 
     @pytest.mark.asyncio
     async def test_raises_400_when_no_fields(self, service):
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(NoFieldsToUpdate):
             await service.update(FAKE_APP_ID, FAKE_USER_ID, {"status": None, "notes": None})
-        assert exc.value.status_code == 400
 
     @pytest.mark.asyncio
     async def test_raises_404_when_not_found(self, service, mock_repo):
         mock_repo.update.return_value = None
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(ApplicationNotFound):
             await service.update(FAKE_APP_ID, FAKE_USER_ID, {"status": "offer"})
-        assert exc.value.status_code == 404
 
     @pytest.mark.asyncio
     async def test_updates_with_new_cv(self, service, mock_repo, mock_r2):
@@ -165,9 +162,8 @@ class TestDelete:
     @pytest.mark.asyncio
     async def test_raises_404_when_not_found(self, service, mock_repo):
         mock_repo.delete.return_value = None
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(ApplicationNotFound):
             await service.delete(FAKE_APP_ID, FAKE_USER_ID)
-        assert exc.value.status_code == 404
 
 
 class TestGetCvUrl:
@@ -181,6 +177,5 @@ class TestGetCvUrl:
     @pytest.mark.asyncio
     async def test_raises_404_when_no_cv(self, service, mock_repo):
         mock_repo.get_by_id.return_value = _mock_app(cv_file_key=None)
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(NoCvAttached):
             await service.get_cv_url(FAKE_APP_ID, FAKE_USER_ID)
-        assert exc.value.status_code == 404

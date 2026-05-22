@@ -55,6 +55,16 @@ class CoachRepository:
         await self.session.flush()
         return session
     
+    async def get_cv_keys_for_user(self, user_id: str) -> list[str]:
+        # Retourne tous les cv_file_keys non-null des sessions coach pour un user
+        result = await self.session.execute(
+            select(CoachSession.cv_file_key).where(
+                CoachSession.user_id == user_id,
+                CoachSession.cv_file_key.isnot(None),
+            )
+        )
+        return [r[0] for r in result.all()]
+
     # Supprime toutes les sessions d'un utilisateur, retourne les cv_file_keys pour cleanup R2
     async def delete_all_by_user(self, user_id: str) -> list[str]:
         result = await self.session.execute(

@@ -94,13 +94,12 @@ class TestGetSession:
 
     @pytest.mark.asyncio
     async def test_raises_404_when_not_found(self, service):
-        from fastapi import HTTPException
+        from core.exceptions import SessionNotFound
         service.repo = AsyncMock()
         service.repo.get_by_id.return_value = None
 
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(SessionNotFound):
             await service.get_session("s1", FAKE_USER_ID)
-        assert exc.value.status_code == 404
 
 
 class TestDeleteSession:
@@ -117,13 +116,12 @@ class TestDeleteSession:
 
     @pytest.mark.asyncio
     async def test_raises_404_when_not_found(self, service):
-        from fastapi import HTTPException
+        from core.exceptions import SessionNotFound
         service.repo = AsyncMock()
         service.repo.delete_session.return_value = None
 
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(SessionNotFound):
             await service.delete_session("s1", FAKE_USER_ID)
-        assert exc.value.status_code == 404
 
 
 class TestDeleteAll:

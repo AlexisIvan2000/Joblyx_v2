@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -9,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.db_models import Career, MarketSkillsCache
 from services.analysis.jsearch_service import JSearchService
 from services.analysis.spacy_skills import SpacySkillsExtractor
+
+logger = logging.getLogger(__name__)
 
 # Villes IT canadiennes principales
 CANADIAN_IT_CITIES = [
@@ -94,43 +97,43 @@ class MarketCacheService:
     async def refresh_cache(self) -> dict:
         # Source 1 : combos prédéfinies (job_titles_it.json × villes IT)
         predefined = self._build_predefined_combos()
-        print(f"[CACHE] Source 1 (prédéfinie) : {len(predefined)} combos")
+        logger.info("Cache predefined combos loaded: count=%d", len(predefined))
 
         # Source 2 : combos depuis la table career (utilisateurs)
         career_combos = await self._get_career_combos()
-        print(f"[CACHE] Source 2 (career) : {len(career_combos)} combos")
+        logger.info("Cache career combos loaded: count=%d", len(career_combos))
 
         # Fusion et déduplication (career ajoute celles qui manquent)
         all_combos = predefined | career_combos
         extra = len(all_combos) - len(predefined)
-        print(f"[CACHE] Total après déduplication : {len(all_combos)} combos ({extra} extras depuis career)")
+        logger.info("Cache combos merged: total=%d extra_from_career=%d", len(all_combos), extra)
 
         processed = 0
         skipped = 0
 
         for i, (job_title, city, province) in enumerate(all_combos, 1):
             location = f"{city}, {province}, Canada"
-            print(f"\n[{i}/{len(all_combos)}] '{job_title}' à {location}")
+            logger.info("Cache processing %d/%d: job=%r location=%r", i, len(all_combos), job_title, location)
 
             try:
                 # Appel JSearch pour récupérer les descriptions d'offres
                 descriptions = await self.jsearch.get_job_descriptions(
                     query=job_title, location=location, num_pages=3
                 )
-                print(f"  -> JSearch: {len(descriptions)} descriptions récupérées")
+                logger.info("JSearch descriptions fetched: count=%d", len(descriptions))
 
                 if not descriptions:
-                    print("  -> SKIP: aucune description")
+                    logger.info("Cache skipped: no descriptions")
                     skipped += 1
                     continue
 
                 # Extraction et classement des skills par fréquence
                 ranked_skills = await self.extractor.extract_and_rank(descriptions)
-                print(f"  -> Skills extraits: {len(ranked_skills)} skills uniques")
+                logger.info("Skills extracted: count=%d", len(ranked_skills))
 
                 if ranked_skills:
                     top3 = [s['name'] for s in ranked_skills[:3]]
-                    print(f"  -> Top 3: {', '.join(top3)}")
+                    logger.info("Top skills: %s", ', '.join(top3))
 
                 # Upsert dans le cache
                 await self._upsert_cache(
@@ -141,17 +144,15 @@ class MarketCacheService:
                     job_count=len(descriptions),
                 )
                 processed += 1
-                print(f"  -> OK: inséré/mis à jour dans le cache")
+                logger.info("Cache upserted: job=%r location=%r", job_title, location)
 
             except Exception as e:
-                print(f"  -> ERREUR: {e}")
-                import traceback
-                traceback.print_exc()
+                logger.exception("Cache entry failed: job=%r error=%s", job_title, e)
                 skipped += 1
 
         await self.session.commit()
-        print(f"\n[CACHE] Commit effectué")
+        logger.info("Cache committed")
 
         summary = {"processed": processed, "skipped": skipped, "total": len(all_combos)}
-        print(f"[CACHE] Refresh terminé : {summary}")
+        logger.info("Cache refresh finished: %s", summary)
         return summary

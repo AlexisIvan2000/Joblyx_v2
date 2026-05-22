@@ -1,7 +1,13 @@
 """Validation des titres de poste — restreint aux métiers IT."""
 
 import re
-from fastapi import HTTPException, status
+
+from core.exceptions import (
+    JobTitleRequired,
+    JobTitleTooLong,
+    JobTitleInvalidCharacters,
+    JobTitleNotIT,
+)
 
 # Caractères autorisés : lettres (accents inclus), chiffres, espaces, tirets, points, slashes, parenthèses
 _ALLOWED_PATTERN = re.compile(r"^[\w\s\-./()&+,#àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ]+$", re.UNICODE)
@@ -54,40 +60,22 @@ _MAX_LENGTH = 100
 
 
 def validate_job_title(title: str) -> str:
-    """Valide et nettoie un titre de poste IT.
-
-    Raises HTTPException 400 si :
-    - Le titre est vide ou trop long
-    - Le titre contient des caractères spéciaux non autorisés
-    - Le titre ne correspond pas à un métier IT
-    """
+    """Valide et nettoie un titre de poste IT — raise une exception métier si invalide."""
     if not title or not title.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Job title is required",
-        )
+        raise JobTitleRequired()
 
     title = title.strip()
 
     if len(title) > _MAX_LENGTH:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Job title too long (max {_MAX_LENGTH} characters)",
-        )
+        raise JobTitleTooLong(f"Job title too long (max {_MAX_LENGTH} characters)")
 
     if not _ALLOWED_PATTERN.match(title):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Job title contains invalid characters",
-        )
+        raise JobTitleInvalidCharacters()
 
     # Vérifier qu'au moins un mot-clé IT est présent
     title_lower = title.lower()
     if not any(kw in title_lower for kw in _IT_KEYWORDS):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Job title must be related to IT/tech",
-        )
+        raise JobTitleNotIT()
 
     return title
 

@@ -4,8 +4,8 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
-from fastapi import HTTPException
 
+from core.exceptions import TooManyCodeRequests
 from services.emailing.otp_service import OtpService
 from tests.conftest import FAKE_USER_ID, _make_user_obj
 
@@ -42,9 +42,8 @@ class TestSendVerificationOtp:
             last_code_sent_at=datetime.now(timezone.utc) - timedelta(minutes=5),
             code_resend_count=5,
         )
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(TooManyCodeRequests):
             await otp_service.send_verification_otp("john@example.com", FAKE_USER_ID, db_user=rate_limited)
-        assert exc_info.value.status_code == 429
 
     @pytest.mark.asyncio
     async def test_resets_count_after_one_hour(self, otp_service, mock_auth_repo):
@@ -98,6 +97,5 @@ class TestSendEmailChangeOtp:
             last_code_sent_at=datetime.now(timezone.utc) - timedelta(minutes=5),
             code_resend_count=5,
         )
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(TooManyCodeRequests):
             await otp_service.send_email_change_otp("new@example.com", FAKE_USER_ID, db_user=rate_limited)
-        assert exc_info.value.status_code == 429

@@ -4,13 +4,23 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi import HTTPException
 
+from core.exceptions import (
+    DomainError,
+    EmailAlreadyRegistered,
+    EmailNotVerified,
+    InvalidCredentials,
+    InvalidRefreshToken,
+    InvalidVerificationCode,
+    InvalidVerificationRequest,
+    NoPendingEmailChange,
+    TooManyCodeRequests,
+    TooManyVerificationAttempts,
+    VerificationCodeExpired,
+)
 from models.schemas import UserCreate, UserLogin
 from tests.conftest import FAKE_USER_ID, FAKE_OTP_CODE, FAKE_OTP_HASH, _make_user_obj
 
-
-# ─── register_user ────────────────────────────────────────────────────
 
 class TestRegisterUser:
     @pytest.mark.asyncio
@@ -39,9 +49,8 @@ class TestRegisterUser:
             email="john@example.com",
             password="Secure1!x",
         )
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(EmailAlreadyRegistered):
             await auth_service.register_user(user)
-        assert exc_info.value.status_code == 400
 
     @pytest.mark.asyncio
     async def test_calls_hash_password(self, auth_service, mock_auth_repo):
@@ -86,8 +95,6 @@ class TestRegisterUser:
         mock_otp_service.send_verification_otp.assert_called_once_with("a@b.com", FAKE_USER_ID)
 
 
-# ─── login_user ──────────────────────────────────────────────────────
-
 class TestLoginUser:
     @pytest.mark.asyncio
     async def test_success_returns_tokens(self, auth_service, mock_auth_repo, fake_user_dict):
@@ -108,9 +115,8 @@ class TestLoginUser:
     async def test_unknown_email_raises_401(self, auth_service, mock_auth_repo):
         mock_auth_repo.get_user_by_email.return_value = None
         user = UserLogin(email="unknown@example.com", password="pass")
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(InvalidCredentials):
             await auth_service.login_user(user)
-        assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
     async def test_wrong_password_raises_401(self, auth_service, mock_auth_repo, fake_user_dict):
@@ -118,9 +124,8 @@ class TestLoginUser:
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.verify_password.return_value = False
             user = UserLogin(email="john@example.com", password="wrong")
-            with pytest.raises(HTTPException) as exc_info:
+            with pytest.raises(InvalidCredentials):
                 await auth_service.login_user(user)
-        assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
     async def test_unverified_user_raises_403(self, auth_service, mock_auth_repo, fake_unverified_user_dict):
@@ -128,12 +133,9 @@ class TestLoginUser:
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.verify_password.return_value = True
             user = UserLogin(email="john@example.com", password="Secure1!x")
-            with pytest.raises(HTTPException) as exc_info:
+            with pytest.raises(EmailNotVerified):
                 await auth_service.login_user(user)
-        assert exc_info.value.status_code == 403
 
-
-# ─── verify_email ────────────────────────────────────────────────────
 
 class TestVerifyEmail:
     @pytest.mark.asyncio
@@ -155,9 +157,8 @@ class TestVerifyEmail:
         mock_auth_repo.get_user_by_email.return_value = fake_unverified_user_dict
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.hash_token.return_value = "wrong-hash"
-            with pytest.raises(HTTPException) as exc_info:
+            with pytest.raises(InvalidVerificationCode):
                 await auth_service.verify_email("john@example.com", "000000")
-        assert exc_info.value.status_code == 400
 
     @pytest.mark.asyncio
     async def test_expired_code_raises_400(self, auth_service, mock_auth_repo):
@@ -170,16 +171,14 @@ class TestVerifyEmail:
         mock_auth_repo.get_user_by_email.return_value = expired
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.hash_token.return_value = FAKE_OTP_HASH
-            with pytest.raises(HTTPException) as exc_info:
+            with pytest.raises(VerificationCodeExpired):
                 await auth_service.verify_email("john@example.com", FAKE_OTP_CODE)
-        assert exc_info.value.status_code == 400
 
     @pytest.mark.asyncio
     async def test_already_verified_raises_400(self, auth_service, mock_auth_repo, fake_user_dict):
         mock_auth_repo.get_user_by_email.return_value = fake_user_dict  # is_verified=True
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(InvalidVerificationRequest):
             await auth_service.verify_email("john@example.com", FAKE_OTP_CODE)
-        assert exc_info.value.status_code == 400
 
     @pytest.mark.asyncio
     async def test_brute_force_5_attempts_raises_429(self, auth_service, mock_auth_repo):
@@ -190,21 +189,18 @@ class TestVerifyEmail:
             verification_attempts=5,
         )
         mock_auth_repo.get_user_by_email.return_value = maxed_out
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(TooManyVerificationAttempts):
             await auth_service.verify_email("john@example.com", FAKE_OTP_CODE)
-        assert exc_info.value.status_code == 429
 
     @pytest.mark.asyncio
     async def test_increments_attempts_on_wrong_code(self, auth_service, mock_auth_repo, fake_unverified_user_dict):
         mock_auth_repo.get_user_by_email.return_value = fake_unverified_user_dict
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.hash_token.return_value = "wrong-hash"
-            with pytest.raises(HTTPException):
+            with pytest.raises(DomainError):
                 await auth_service.verify_email("john@example.com", "000000")
         mock_auth_repo.increment_verification_attempts.assert_called_once()
 
-
-# ─── resend_verification_email ────────────────────────────────────────
 
 class TestResendVerificationEmail:
     @pytest.mark.asyncio
@@ -237,15 +233,10 @@ class TestResendVerificationEmail:
             code_resend_count=5,
         )
         mock_auth_repo.get_user_by_email.return_value = rate_limited
-        mock_otp_service.send_verification_otp.side_effect = HTTPException(
-            status_code=429, detail="Too many code requests, please try again later"
-        )
-        with pytest.raises(HTTPException) as exc_info:
+        mock_otp_service.send_verification_otp.side_effect = TooManyCodeRequests()
+        with pytest.raises(TooManyCodeRequests):
             await auth_service.resend_verification_email("john@example.com")
-        assert exc_info.value.status_code == 429
 
-
-# ─── resend_email_change_verification ─────────────────────────────────
 
 class TestResendEmailChangeVerification:
     @pytest.mark.asyncio
@@ -258,12 +249,9 @@ class TestResendEmailChangeVerification:
     @pytest.mark.asyncio
     async def test_raises_400_if_no_pending(self, auth_service, mock_auth_repo, fake_user_dict):
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NoPendingEmailChange):
             await auth_service.resend_email_change_verification(FAKE_USER_ID)
-        assert exc_info.value.status_code == 400
 
-
-# ─── refresh_access_token ────────────────────────────────────────────
 
 class TestRefreshAccessToken:
     @pytest.mark.asyncio
@@ -281,14 +269,12 @@ class TestRefreshAccessToken:
     async def test_invalid_token_raises_401(self, auth_service):
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.decode_token.return_value = None
-            with pytest.raises(HTTPException) as exc_info:
+            with pytest.raises(InvalidRefreshToken):
                 await auth_service.refresh_access_token("garbage")
-        assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
     async def test_access_type_raises_401(self, auth_service):
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.decode_token.return_value = {"sub": FAKE_USER_ID, "type": "access"}
-            with pytest.raises(HTTPException) as exc_info:
+            with pytest.raises(InvalidRefreshToken):
                 await auth_service.refresh_access_token("access-token-instead")
-        assert exc_info.value.status_code == 401

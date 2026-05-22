@@ -62,3 +62,13 @@ class ApplicationRepository:
         )
         await self.session.flush()
         return existing
+
+    async def get_cv_keys_for_user(self, user_id: str) -> list[str]:
+        # Retourne tous les cv_file_keys non-null pour un user (utilisé avant cleanup R2)
+        result = await self.session.execute(
+            select(Application.cv_file_key).where(
+                Application.user_id == user_id,
+                Application.cv_file_key.isnot(None),
+            )
+        )
+        return [r[0] for r in result.all()]
