@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { tokenStorage } from '../utils/storage';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.joblyx.com';
 const API_PREFIX = '/v1';
 
 export const apiClient = axios.create({
