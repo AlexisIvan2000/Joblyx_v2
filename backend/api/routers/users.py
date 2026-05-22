@@ -38,6 +38,8 @@ async def get_me(
         "avatar_url": avatar_url,
         "pending_email": current_user.pending_email,
         "has_password": current_user.password_hash is not None,
+        # Exposé pour le panel admin : conditionne l'affichage du bouton "Modifier le rôle"
+        "role": current_user.role,
     }
 
 @router.put("/me")
