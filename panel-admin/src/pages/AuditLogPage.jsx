@@ -18,6 +18,7 @@ const ACTION_LABELS = {
   'user.delete': 'Suppression',
   'user.role.change': 'Changement de rôle',
   'user.notes.update': 'Notes admin',
+  'user.email.send': 'Email envoyé',
   'user.ban': 'Bannissement',
   'user.unban': 'Débannissement',
 };
@@ -29,6 +30,7 @@ const ACTION_VARIANTS = {
   'user.delete': 'danger',
   'user.role.change': 'primary',
   'user.notes.update': 'default',
+  'user.email.send': 'primary',
   'user.ban': 'danger',
   'user.unban': 'success',
 };
@@ -56,6 +58,10 @@ function renderPayload(entry) {
   if (p.reason) parts.push(`Raison : ${p.reason}`);
   if (p.previous_role && p.new_role) parts.push(`${p.previous_role} → ${p.new_role}`);
   if (p.target_role && entry.action === 'user.delete') parts.push(`Rôle : ${p.target_role}`);
+  if (entry.action === 'user.email.send' && p.subject) parts.push(`Objet : "${p.subject}"`);
+  if (entry.action === 'user.notes.update') {
+    parts.push(p.previous_had_notes ? 'Notes modifiées' : 'Nouvelles notes');
+  }
   if (parts.length === 0) return <span className="muted">—</span>;
   return <span className="text-xs">{parts.join(' · ')}</span>;
 }
@@ -143,6 +149,7 @@ export default function AuditLogPage() {
           <option value="user.delete">Suppressions</option>
           <option value="user.role.change">Changements de rôle</option>
           <option value="user.notes.update">Notes admin</option>
+          <option value="user.email.send">Emails envoyés</option>
         </select>
       </div>
 

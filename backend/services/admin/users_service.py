@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.exceptions import UserNotFound, ValidationError
+from core.exceptions import ExternalServiceError, UserNotFound, ValidationError
 from repositories.admin_repository import AdminRepository
 from repositories.application_repository import ApplicationRepository
 from repositories.audit_log_repository import AuditLogRepository
@@ -12,6 +12,7 @@ from repositories.coach_repository import CoachRepository
 from repositories.interview_repository import InterviewRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
 from repositories.roadmap_repository import RoadmapRepository
+from services.emailing.email_sender import EmailSender
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +176,50 @@ class AdminUsersService:
             admin_id, user_id, len(cleaned) if cleaned else 0,
         )
         return updated_user
+
+    async def send_email(
+        self, user_id: str, subject: str, body: str,
+        *, admin_id: str | None = None,
+    ):
+        target = await self.admin_repo.get_user(user_id)
+        if not target:
+            raise UserNotFound()
+
+        subject = (subject or "").strip()
+        body = (body or "").strip()
+        if not subject:
+            raise ValidationError("Subject is required")
+        if not body:
+            raise ValidationError("Body is required")
+        if len(subject) > 200:
+            raise ValidationError("Subject must be 200 characters or less")
+        if len(body) > 10000:
+            raise ValidationError("Body must be 10000 characters or less")
+
+        # Envoi Resend, en cas d'erreur on remonte un 502 et on n'écrit PAS d'audit log
+        try:
+            EmailSender().send_admin_email(target.email, subject, body)
+        except Exception as exc:
+            logger.error("Resend send_admin_email failed: admin=%s target=%s error=%s", admin_id, user_id, exc)
+            raise ExternalServiceError("Failed to send email") from exc
+
+        # Audit, on log la longueur du body sans le contenu (privacy)
+        await self.audit_repo.create(
+            admin_id=admin_id,
+            action="user.email.send",
+            target_type="user",
+            target_id=user_id,
+            payload={
+                "target_email": target.email,
+                "subject": subject,
+                "body_length": len(body),
+            },
+        )
+        await self.session.commit()
+        logger.info(
+            "Admin email send: admin=%s target=%s subject_length=%d body_length=%d",
+            admin_id, user_id, len(subject), len(body),
+        )
 
     async def reset_user_limits(self, user_id: str, *, admin_id: str | None = None):
         target = await self.admin_repo.get_user(user_id)

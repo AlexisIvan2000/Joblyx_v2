@@ -33,7 +33,7 @@ from models.api_schemas import (
     AdminUserSummary,
     AdminUserUsage,
 )
-from models.api_schemas.admin import AdminNotesRequest
+from models.api_schemas.admin import AdminEmailRequest, AdminNotesRequest
 from repositories.application_repository import ApplicationRepository
 from repositories.coach_repository import CoachRepository
 from services.storage.r2_service import R2Service
@@ -228,6 +228,18 @@ async def reset_user_limits(
 ):
     await svc.reset_user_limits(user_id, admin_id=str(admin.id))
     return {"message": "Usage limits reset successfully"}
+
+
+@router.post("/users/{user_id}/email")
+async def send_email_to_user(
+    user_id: str,
+    body: AdminEmailRequest,
+    admin: User = Depends(require_admin),
+    svc: AdminUsersService = Depends(get_admin_users_service),
+):
+    """Envoie un email custom (texte brut) à un user, via Resend."""
+    await svc.send_email(user_id, body.subject, body.body, admin_id=str(admin.id))
+    return {"message": "Email sent"}
 
 
 @router.patch("/users/{user_id}/notes")

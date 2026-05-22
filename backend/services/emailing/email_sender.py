@@ -1,6 +1,18 @@
+import html
 import resend
 from core.config import RESEND_API_KEY, RESEND_FROM_EMAIL, RESEND_FROM_NAME
 from typing import Dict
+
+
+def _plain_text_to_html_paragraphs(text: str) -> str:
+    """Convertit un texte brut en HTML safe (escape + paragraphes <p> + <br> intra paragraphe)."""
+    escaped = html.escape(text.strip())
+    paragraphs = [p.strip() for p in escaped.split("\n\n") if p.strip()]
+    return "".join(
+        f'<p style="margin: 0 0 16px 0; line-height: 1.6;">{p.replace(chr(10), "<br/>")}</p>'
+        for p in paragraphs
+    )
+
 
 class EmailSender:
 
@@ -49,6 +61,29 @@ class EmailSender:
             "to": [to],
             "subject": subject,
             "html": html
+        }
+        response = resend.Emails.send(params)
+        return response
+
+    def send_admin_email(self, to: str, subject: str, body_text: str) -> Dict:
+        """Envoie un email custom écrit par un admin, texte brut converti en HTML."""
+        body_html = _plain_text_to_html_paragraphs(body_text)
+        html_template = f"""
+                <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; color: #333;">
+                    <h2 style="color: #0D9488; text-align: center; font-size: 22px; margin-top: 0;">Joblyx</h2>
+                    <div style="margin: 24px 0;">{body_html}</div>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+                    <p style="color: #888; font-size: 12px; text-align: center; margin: 0;">
+                        Ce message vous est envoyé par l'équipe Joblyx.<br/>
+                        Ne pas répondre directement à cet email.
+                    </p>
+                </div>
+            """
+        params = {
+            "from": f"{RESEND_FROM_NAME} <{RESEND_FROM_EMAIL}>",
+            "to": [to],
+            "subject": subject,
+            "html": html_template,
         }
         response = resend.Emails.send(params)
         return response

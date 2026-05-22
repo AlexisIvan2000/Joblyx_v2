@@ -124,6 +124,11 @@ class AdminNotesRequest(BaseModel):
     notes: str | None = None
 
 
+class AdminEmailRequest(BaseModel):
+    subject: str
+    body: str
+
+
 class AdminUserActionResponse(BaseModel):
     id: str
     is_active: bool

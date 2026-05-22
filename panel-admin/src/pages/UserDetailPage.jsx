@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ShieldCheck, NotebookPen, Check } from 'lucide-react';
+import { ShieldCheck, NotebookPen, Check, Mail } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Badge from '../components/Badge';
 import ConfirmDialog from '../components/ConfirmDialog';
 import RoleDialog from '../components/RoleDialog';
+import EmailDialog from '../components/EmailDialog';
 import { useAuth } from '../auth/AuthContext';
 import {
-  getUserDetail, setUserStatus, resetUserLimits, deleteUser, updateUserRole, updateUserNotes,
+  getUserDetail, setUserStatus, resetUserLimits, deleteUser, updateUserRole, updateUserNotes, sendEmailToUser,
 } from '../api/admin';
 import { getErrorMessage } from '../api/errors';
 import { formatDateTime } from '../utils/format';
@@ -60,9 +61,11 @@ export default function UserDetailPage() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
 
   // Toast d'action
   const [actionError, setActionError] = useState(null);
+  const [actionSuccess, setActionSuccess] = useState(null);
 
   // Notes admin (édition inline)
   const [notesDraft, setNotesDraft] = useState('');
@@ -124,6 +127,19 @@ export default function UserDetailPage() {
       await updateUserRole(id, newRole);
       setShowRoleDialog(false);
       await load();
+    } catch (err) {
+      setActionError(getErrorMessage(err));
+    }
+  }
+
+  async function handleSendEmail({ subject, body }) {
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      await sendEmailToUser(id, { subject, body });
+      setShowEmailDialog(false);
+      setActionSuccess(`Email envoyé à ${user.email}`);
+      setTimeout(() => setActionSuccess(null), 4000);
     } catch (err) {
       setActionError(getErrorMessage(err));
     }
@@ -208,6 +224,14 @@ export default function UserDetailPage() {
           )}
           <button
             type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowEmailDialog(true)}
+          >
+            <Mail size={16} strokeWidth={2.25} />
+            Envoyer un email
+          </button>
+          <button
+            type="button"
             className={`btn ${user.is_active ? 'btn-danger' : 'btn-success'}`}
             onClick={() => setShowStatusDialog(true)}
           >
@@ -232,6 +256,19 @@ export default function UserDetailPage() {
           marginBottom: 'var(--space-md)',
         }}>
           {actionError}
+        </div>
+      )}
+
+      {actionSuccess && (
+        <div style={{
+          padding: 'var(--space-md)',
+          backgroundColor: 'var(--color-success-bg)',
+          color: 'var(--color-success-hover, var(--color-success))',
+          borderRadius: 'var(--radius)',
+          borderLeft: '3px solid var(--color-success)',
+          marginBottom: 'var(--space-md)',
+        }}>
+          {actionSuccess}
         </div>
       )}
 
@@ -462,6 +499,14 @@ export default function UserDetailPage() {
         userName={`${user.first_name} ${user.last_name}`}
         onConfirm={handleUpdateRole}
         onCancel={() => setShowRoleDialog(false)}
+      />
+
+      <EmailDialog
+        isOpen={showEmailDialog}
+        userEmail={user.email}
+        userName={`${user.first_name} ${user.last_name}`}
+        onConfirm={handleSendEmail}
+        onCancel={() => setShowEmailDialog(false)}
       />
     </div>
   );

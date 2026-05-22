@@ -57,6 +57,11 @@ export async function updateUserNotes(userId, notes) {
   return data;
 }
 
+export async function sendEmailToUser(userId, { subject, body }) {
+  const { data } = await apiClient.post(`/admin/users/${userId}/email`, { subject, body });
+  return data;
+}
+
 export async function deleteUser(userId) {
   const { data } = await apiClient.delete(`/admin/users/${userId}`);
   return data;
