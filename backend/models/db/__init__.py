@@ -5,6 +5,7 @@ from models.db.career import Career, UserSkill
 from models.db.coach import CoachSession
 from models.db.interview import InterviewMessage, InterviewSession
 from models.db.market import MarketSkillsCache
+from models.db.openai_usage import OpenAIUsageLog
 from models.db.roadmap import Roadmap, RoadmapPhase
 from models.db.user import RefreshToken, User
 
@@ -22,4 +23,5 @@ __all__ = [
     "InterviewMessage",
     "MarketSkillsCache",
     "AuditLog",
+    "OpenAIUsageLog",
 ]

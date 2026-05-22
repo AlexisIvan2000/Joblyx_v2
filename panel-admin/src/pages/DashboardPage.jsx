@@ -110,19 +110,47 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Section 3 — Coût IA */}
+      {/* Section 3 — Coût IA (réel, basé sur les tokens trackés à chaque appel) */}
       <section className="dashboard-section">
-        <h2 className="dashboard-section-title">Coût IA estimé</h2>
+        <h2 className="dashboard-section-title">Coût OpenAI réel</h2>
         <div className="dashboard-grid">
           <StatCard
-            title="OpenAI cumulé"
-            value={s.openai_usage_estimate_usd}
+            title="Cumulé total"
+            value={s.openai_cost_total_usd}
             formatter={formatUSD}
-            subtitle="Estimation à la louche, pas un tracking précis"
+            subtitle="Depuis l'activation du tracking"
             icon={DollarSign}
             variant="warning"
           />
+          <StatCard
+            title="Ce mois"
+            value={s.openai_cost_month_usd}
+            formatter={formatUSD}
+            subtitle="Du 1er du mois à aujourd'hui"
+            icon={DollarSign}
+            variant="accent"
+          />
         </div>
+
+        {/* Breakdown par feature pour ce mois */}
+        {(s.openai_cost_by_feature || []).length > 0 && (
+          <div className="openai-breakdown">
+            <div className="openai-breakdown-header">
+              <span>Feature</span>
+              <span>Appels</span>
+              <span>Tokens</span>
+              <span>Coût</span>
+            </div>
+            {s.openai_cost_by_feature.map((row) => (
+              <div className="openai-breakdown-row" key={row.feature}>
+                <span className="openai-breakdown-feature">{row.feature}</span>
+                <span className="muted">{row.calls.toLocaleString('fr-CA')}</span>
+                <span className="muted">{row.tokens.toLocaleString('fr-CA')}</span>
+                <span className="openai-breakdown-cost">{formatUSD(row.cost_usd)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Section 4 — Graph inscriptions */}

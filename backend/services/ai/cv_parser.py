@@ -2,7 +2,7 @@ import json
 import fitz  # PyMuPDF
 from pathlib import Path
 from core.config import OPENAI_MODEL_FAST
-from services.ai.openai_client import client
+from services.ai.openai_client import tracked_completion, tracked_completion_stream
 from services.utils.text_cleaner import clean_cv_text
 
 # Charger le référentiel de skills une seule fois
@@ -86,12 +86,14 @@ def _validate_skills(raw_skills: list[dict]) -> list[dict]:
     return validated
 
 # Parse le CV, extrait les skills via GPT, et les normalise.
-async def extract_skills_from_cv(pdf_bytes: bytes) -> list[dict]:
+async def extract_skills_from_cv(pdf_bytes: bytes, *, user_id: str | None = None) -> list[dict]:
     cv_text = clean_cv_text(extract_text_from_pdf(pdf_bytes))
     if not cv_text:
         return []
 
-    response = await client.chat.completions.create(
+    response = await tracked_completion(
+        user_id=user_id,
+        feature="cv_parser",
         model=OPENAI_MODEL_FAST,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
@@ -107,14 +109,17 @@ async def extract_skills_from_cv(pdf_bytes: bytes) -> list[dict]:
     return _validate_skills(result.get("skills", []))
 
 
-async def extract_skills_from_cv_stream(pdf_bytes: bytes):
-   
+async def extract_skills_from_cv_stream(pdf_bytes: bytes, *, user_id: str | None = None):
+
     cv_text = clean_cv_text(extract_text_from_pdf(pdf_bytes))
     if not cv_text:
         yield ("done", [])
         return
 
-    stream = await client.chat.completions.create(
+    accumulated = ""
+    async for chunk in tracked_completion_stream(
+        user_id=user_id,
+        feature="cv_parser",
         model=OPENAI_MODEL_FAST,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
@@ -123,11 +128,7 @@ async def extract_skills_from_cv_stream(pdf_bytes: bytes):
         temperature=0.2,
         max_tokens=1000,
         response_format={"type": "json_object"},
-        stream=True,
-    )
-
-    accumulated = ""
-    async for chunk in stream:
+    ):
         delta = chunk.choices[0].delta
         if delta.content:
             accumulated += delta.content

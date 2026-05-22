@@ -174,7 +174,7 @@ class TestExtractSkillsFromCv:
         })
 
         with patch("services.ai.cv_parser.fitz") as mock_fitz, \
-             patch("services.ai.cv_parser.client") as mock_client:
+             patch("services.ai.openai_client.client") as mock_client:
             mock_fitz.open.return_value = _mock_fitz_doc(["Je maîtrise Python et Docker"])
             mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
@@ -201,7 +201,7 @@ class TestExtractSkillsFromCv:
         from services.ai.cv_parser import extract_skills_from_cv
 
         with patch("services.ai.cv_parser.fitz") as mock_fitz, \
-             patch("services.ai.cv_parser.client") as mock_client:
+             patch("services.ai.openai_client.client") as mock_client:
             mock_fitz.open.return_value = _mock_fitz_doc(["Some CV content here"])
             mock_client.chat.completions.create = AsyncMock(
                 side_effect=Exception("API rate limit exceeded")
@@ -220,7 +220,7 @@ class TestExtractSkillsFromCv:
         mock_response.choices[0].message.content = "not valid json {"
 
         with patch("services.ai.cv_parser.fitz") as mock_fitz, \
-             patch("services.ai.cv_parser.client") as mock_client:
+             patch("services.ai.openai_client.client") as mock_client:
             mock_fitz.open.return_value = _mock_fitz_doc(["Un CV avec du texte"])
             mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 

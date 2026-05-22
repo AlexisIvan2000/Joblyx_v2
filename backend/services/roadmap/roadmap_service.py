@@ -168,7 +168,7 @@ class RoadmapService:
                 career_dict, skills, market_data, completed_data
             )
 
-            gpt_response = await call_gpt(system_prompt, user_prompt)
+            gpt_response = await call_gpt(system_prompt, user_prompt, user_id=user_id)
 
             # Extract summary from GPT response
             summary = {}
@@ -257,7 +257,7 @@ class RoadmapService:
             yield 'event: status\ndata: {"status":"generating"}\n\n'
 
             gpt_response = None
-            async for event_type, data in generate_roadmap_stream(system_prompt, user_prompt):
+            async for event_type, data in generate_roadmap_stream(system_prompt, user_prompt, user_id=user_id):
                 if event_type == "chunk":
                     yield f'event: chunk\ndata: {json.dumps({"text": data})}\n\n'
                 elif event_type == "done":

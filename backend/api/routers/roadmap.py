@@ -163,7 +163,7 @@ async def extract_skills(
 
     async def _stream():
         yield 'event: status\ndata: {"status":"extracting"}\n\n'
-        async for event_type, data in extract_skills_from_cv_stream(content):
+        async for event_type, data in extract_skills_from_cv_stream(content, user_id=str(current_user.id)):
             if event_type == "done":
                 # Émettre chaque skill avec un délai pour l'effet visuel
                 for skill in data:

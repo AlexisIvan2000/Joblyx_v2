@@ -14,7 +14,7 @@ from core.exceptions import (
     SessionNotFound,
 )
 from repositories.coach_repository import CoachRepository
-from services.ai.openai_client import client
+from services.ai.openai_client import tracked_completion_stream
 from services.coach.coach_prompt_builder import build_coach_prompt
 from services.storage.r2_service import R2Service
 from services.utils.text_cleaner import clean_cv_text
@@ -114,8 +114,11 @@ class CoachService:
         # Construire les prompts
         system_prompt, user_prompt = build_coach_prompt(cv_text, job_description, language)
 
-        # Appel GPT en streaming
-        stream = await client.chat.completions.create(
+        # Appel GPT en streaming, usage tracké via le wrapper
+        accumulated = ""
+        async for chunk in tracked_completion_stream(
+            user_id=user_id,
+            feature="coach",
             model=OPENAI_MODEL_FAST,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -124,11 +127,7 @@ class CoachService:
             temperature=0.2,
             max_tokens=3000,
             response_format={"type": "json_object"},
-            stream=True,
-        )
-
-        accumulated = ""
-        async for chunk in stream:
+        ):
             delta = chunk.choices[0].delta
             if delta.content:
                 accumulated += delta.content

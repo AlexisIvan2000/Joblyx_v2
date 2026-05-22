@@ -25,7 +25,10 @@ class AdminStatsService:
             "coach_sessions_month": await self.admin_repo.count_coach_sessions_since(start_of_month),
             "interview_sessions_month": await self.admin_repo.count_interview_sessions_since(start_of_month),
             "total_applications": await self.admin_repo.count_applications(),
-            "openai_usage_estimate_usd": await self.admin_repo.estimate_openai_cost(),
+            # Coût OpenAI réel (tokens trackés), pas une estimation
+            "openai_cost_total_usd": await self.admin_repo.get_openai_cost_total(),
+            "openai_cost_month_usd": await self.admin_repo.get_openai_cost_since(start_of_month),
+            "openai_cost_by_feature": await self.admin_repo.get_openai_cost_by_feature(start_of_month),
         }
 
     async def get_registrations(self, period: str = "week") -> list[dict]:

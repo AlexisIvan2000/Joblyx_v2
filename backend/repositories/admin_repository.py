@@ -10,16 +10,11 @@ from models.db import (
     Career,
     CoachSession,
     InterviewSession,
+    OpenAIUsageLog,
     Roadmap,
     RoadmapPhase,
     User,
 )
-
-
-# Coûts estimés par appel IA (USD) — basés sur les modèles utilisés et les tailles de prompts moyennes
-_COST_PER_ROADMAP = 0.15           # gpt-4o avec ~10k tokens cumulés
-_COST_PER_COACH_SESSION = 0.005    # gpt-4o-mini avec ~3-5k tokens
-_COST_PER_INTERVIEW_SESSION = 0.01  # gpt-4o-mini multi-tours avec ~10-20k tokens cumulés
 
 
 class AdminRepository:
@@ -228,14 +223,42 @@ class AdminRepository:
         result = await self.session.execute(select(func.count()).select_from(InterviewSession))
         return int(result.scalar() or 0)
 
-    async def estimate_openai_cost(self) -> float:
-        # Estimation à la louche du coût OpenAI cumulé (USD) — pas de tracking précis des tokens
-        roadmaps = await self.count_roadmaps()
-        coach = await self.count_coach_sessions()
-        interview = await self.count_interview_sessions()
-        total = (
-            roadmaps * _COST_PER_ROADMAP
-            + coach * _COST_PER_COACH_SESSION
-            + interview * _COST_PER_INTERVIEW_SESSION
+    async def get_openai_cost_total(self) -> float:
+        # Coût OpenAI cumulé depuis la table de tracking des tokens réels
+        result = await self.session.execute(
+            select(func.coalesce(func.sum(OpenAIUsageLog.cost_usd), 0))
         )
-        return round(total, 2)
+        value = result.scalar() or 0
+        return round(float(value), 2)
+
+    async def get_openai_cost_since(self, since: datetime) -> float:
+        # Coût OpenAI depuis une date donnée (ex début du mois)
+        result = await self.session.execute(
+            select(func.coalesce(func.sum(OpenAIUsageLog.cost_usd), 0))
+            .where(OpenAIUsageLog.created_at >= since)
+        )
+        value = result.scalar() or 0
+        return round(float(value), 2)
+
+    async def get_openai_cost_by_feature(self, since: datetime) -> list[dict]:
+        # Coût agrégé par feature depuis une date, pour le breakdown dashboard
+        result = await self.session.execute(
+            select(
+                OpenAIUsageLog.feature,
+                func.coalesce(func.sum(OpenAIUsageLog.cost_usd), 0).label("cost"),
+                func.coalesce(func.sum(OpenAIUsageLog.total_tokens), 0).label("tokens"),
+                func.count().label("calls"),
+            )
+            .where(OpenAIUsageLog.created_at >= since)
+            .group_by(OpenAIUsageLog.feature)
+            .order_by(desc("cost"))
+        )
+        return [
+            {
+                "feature": row.feature,
+                "cost_usd": round(float(row.cost), 2),
+                "tokens": int(row.tokens),
+                "calls": int(row.calls),
+            }
+            for row in result.all()
+        ]

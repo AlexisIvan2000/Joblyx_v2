@@ -13,7 +13,7 @@ from core.exceptions import (
     SessionNotFound,
 )
 from repositories.interview_repository import InterviewRepository
-from services.ai.openai_client import client
+from services.ai.openai_client import tracked_completion, tracked_completion_stream
 from services.utils.text_cleaner import clean_cv_text
 from services.interview.interview_prompt_builder import (
     build_interview_prompt,
@@ -106,7 +106,9 @@ class InterviewService:
         )
 
         # Appeler GPT pour la première question (sans streaming pour le start)
-        response = await client.chat.completions.create(
+        response = await tracked_completion(
+            user_id=user_id,
+            feature="interview_start",
             model=OPENAI_MODEL_FAST,
             messages=[{"role": "system", "content": system_prompt}],
             temperature=0.7,
@@ -217,22 +219,21 @@ class InterviewService:
                 "content": "C'est la dernière question. Remercie le candidat et clôture l'entretien. question_type=closing, question_number=15."
             })
 
-        # Appeler GPT en streaming
-        stream = await client.chat.completions.create(
-            model=OPENAI_MODEL_FAST,
-            messages=gpt_messages,
-            temperature=0.7,
-            max_tokens=500,
-            stream=True,
-        )
-
+        # Appeler GPT en streaming, usage tracké via le wrapper
         # full_text accumule le message COMPLET pour la sauvegarde en base
         # accumulated est le buffer de streaming (trimé après chaque envoi)
         full_text = ""
         accumulated = ""
         streaming_text = True
 
-        async for chunk in stream:
+        async for chunk in tracked_completion_stream(
+            user_id=user_id,
+            feature="interview_turn",
+            model=OPENAI_MODEL_FAST,
+            messages=gpt_messages,
+            temperature=0.7,
+            max_tokens=500,
+        ):
             delta = chunk.choices[0].delta
             if delta.content:
                 full_text += delta.content
@@ -345,7 +346,9 @@ class InterviewService:
             "content": "Le candidat souhaite terminer l'entretien. Pose-lui 'Avez-vous des questions sur le poste ou l'entreprise ?' puis clôture. question_type=candidate_questions puis closing."
         })
 
-        response = await client.chat.completions.create(
+        response = await tracked_completion(
+            user_id=user_id,
+            feature="interview_end_early",
             model=OPENAI_MODEL_FAST,
             messages=gpt_messages,
             temperature=0.7,
@@ -384,7 +387,9 @@ class InterviewService:
 
         summary_prompt = build_summary_prompt(language)
 
-        response = await client.chat.completions.create(
+        response = await tracked_completion(
+            user_id=user_id,
+            feature="interview_summary",
             model=OPENAI_MODEL_FAST,
             messages=[
                 {"role": "system", "content": summary_prompt},

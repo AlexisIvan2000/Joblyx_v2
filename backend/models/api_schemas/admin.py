@@ -142,6 +142,13 @@ class AdminUserActionResponse(BaseModel):
 # Stats
 
 
+class OpenAIFeatureCost(BaseModel):
+    feature: str
+    cost_usd: float
+    tokens: int
+    calls: int
+
+
 class AdminStatsResponse(BaseModel):
     total_users: int
     verified_users: int
@@ -152,7 +159,10 @@ class AdminStatsResponse(BaseModel):
     coach_sessions_month: int
     interview_sessions_month: int
     total_applications: int
-    openai_usage_estimate_usd: float
+    # Coût OpenAI réel depuis la table de tracking
+    openai_cost_total_usd: float
+    openai_cost_month_usd: float
+    openai_cost_by_feature: list[OpenAIFeatureCost]
 
 
 class AdminRegistrationPoint(BaseModel):

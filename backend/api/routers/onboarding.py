@@ -66,7 +66,7 @@ async def extract_skills(
     if len(content) > 5 * 1024 * 1024:  # 5 MB max
         raise HTTPException(status_code=400, detail="File too large (max 5 MB)")
 
-    skills = await extract_skills_from_cv(content)
+    skills = await extract_skills_from_cv(content, user_id=str(current_user.id))
     return {"skills": skills}
 
 
