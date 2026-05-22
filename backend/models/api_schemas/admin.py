@@ -15,6 +15,7 @@ class AdminUserSummary(BaseModel):
     is_active: bool
     has_linkedin: bool
     role: str
+    is_founder: bool = False
     created_at: str
     last_active: str | None
     roadmaps_count: int
@@ -98,6 +99,7 @@ class AdminUserDetailResponse(BaseModel):
     has_linkedin: bool
     avatar_url: str | None
     role: str
+    is_founder: bool = False
     deactivated_at: str | None
     deactivation_reason: str | None
     admin_notes: str | None

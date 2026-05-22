@@ -105,6 +105,14 @@ class CannotModifyAdmin(ForbiddenError):
     default_message = "Only a super admin can modify another admin account"
 
 
+class CannotModifyFounder(ForbiddenError):
+    default_message = "The founder account is locked and cannot be modified via the panel"
+
+
+class CannotPromoteToSuperAdmin(ValidationError):
+    default_message = "Promoting to super_admin is not allowed via the panel"
+
+
 class LinkedInOnlyAccount(ValidationError):
     default_message = "This account uses LinkedIn sign-in"
 

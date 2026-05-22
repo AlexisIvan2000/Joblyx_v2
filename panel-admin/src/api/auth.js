@@ -15,7 +15,7 @@ export async function logout() {
     try {
       await apiClient.post('/auth/logout', { refresh_token: refreshToken });
     } catch {
-      // Ignore les erreurs de logout — on purge quand même côté client
+      // Ignore les erreurs de logout on purge quand même côté client
     }
   }
   tokenStorage.clear();

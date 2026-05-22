@@ -10,6 +10,7 @@ from api.dependencies import (
     require_admin,
     require_super_admin,
 )
+from core.config import ADMIN_EMAIL
 from core.database import get_db_session
 from models.db_models import User
 from services.admin.audit_service import AdminAuditService
@@ -48,6 +49,10 @@ router = APIRouter(
 
 # Helpers de conversion (modèles SQLAlchemy → dicts pour DTOs)
 
+def _is_founder(user) -> bool:
+    return bool(ADMIN_EMAIL and user.email == ADMIN_EMAIL)
+
+
 def _user_summary(user, stats: dict) -> dict:
     return {
         "id": str(user.id),
@@ -58,6 +63,7 @@ def _user_summary(user, stats: dict) -> dict:
         "is_active": user.is_active,
         "has_linkedin": user.linkedin_id is not None,
         "role": user.role,
+        "is_founder": _is_founder(user),
         "created_at": user.created_at.isoformat() if user.created_at else "",
         "last_active": user.updated_at.isoformat() if user.updated_at else None,
         "roadmaps_count": stats["roadmaps"],
@@ -184,6 +190,7 @@ async def get_user_detail(user_id: str, svc: AdminUsersService = Depends(get_adm
         "deactivated_at": user.deactivated_at.isoformat() if user.deactivated_at else None,
         "deactivation_reason": user.deactivation_reason,
         "admin_notes": user.admin_notes,
+        "is_founder": _is_founder(user),
         "created_at": user.created_at.isoformat() if user.created_at else "",
         "last_active": user.updated_at.isoformat() if user.updated_at else None,
         "career": _career_summary(detail["career"]),
@@ -210,7 +217,10 @@ async def update_user_status(
     admin: User = Depends(require_admin),
     svc: AdminUsersService = Depends(get_admin_users_service),
 ):
-    user = await svc.set_user_status(user_id, body.is_active, body.reason, admin_id=str(admin.id))
+    user = await svc.set_user_status(
+        user_id, body.is_active, body.reason,
+        admin_id=str(admin.id), caller_role=admin.role,
+    )
     return {
         "id": str(user.id),
         "is_active": user.is_active,
@@ -226,7 +236,7 @@ async def reset_user_limits(
     admin: User = Depends(require_admin),
     svc: AdminUsersService = Depends(get_admin_users_service),
 ):
-    await svc.reset_user_limits(user_id, admin_id=str(admin.id))
+    await svc.reset_user_limits(user_id, admin_id=str(admin.id), caller_role=admin.role)
     return {"message": "Usage limits reset successfully"}
 
 
@@ -234,11 +244,14 @@ async def reset_user_limits(
 async def send_email_to_user(
     user_id: str,
     body: AdminEmailRequest,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_super_admin),
     svc: AdminUsersService = Depends(get_admin_users_service),
 ):
-    """Envoie un email custom (texte brut) à un user, via Resend."""
-    await svc.send_email(user_id, body.subject, body.body, admin_id=str(admin.id))
+    """Envoie un email custom (texte brut) à un user, réservé au super_admin."""
+    await svc.send_email(
+        user_id, body.subject, body.body,
+        admin_id=str(admin.id), caller_role=admin.role,
+    )
     return {"message": "Email sent"}
 
 
@@ -250,7 +263,10 @@ async def update_user_notes(
     svc: AdminUsersService = Depends(get_admin_users_service),
 ):
     """Met à jour les notes admin (texte libre) sur la fiche d'un user."""
-    user = await svc.update_admin_notes(user_id, body.notes, admin_id=str(admin.id))
+    user = await svc.update_admin_notes(
+        user_id, body.notes,
+        admin_id=str(admin.id), caller_role=admin.role,
+    )
     return {
         "id": str(user.id),
         "admin_notes": user.admin_notes,
@@ -286,6 +302,7 @@ async def delete_user(
     await svc.delete_user(
         user_id,
         admin_id=str(admin.id),
+        caller_role=admin.role,
         r2_service=r2,
         application_repo=ApplicationRepository(session),
         coach_repo=CoachRepository(session),

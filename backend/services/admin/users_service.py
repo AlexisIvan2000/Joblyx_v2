@@ -2,7 +2,15 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.exceptions import ExternalServiceError, UserNotFound, ValidationError
+from core.config import ADMIN_EMAIL
+from core.exceptions import (
+    CannotModifyAdmin,
+    CannotModifyFounder,
+    CannotPromoteToSuperAdmin,
+    ExternalServiceError,
+    UserNotFound,
+    ValidationError,
+)
 from repositories.admin_repository import AdminRepository
 from repositories.application_repository import ApplicationRepository
 from repositories.audit_log_repository import AuditLogRepository
@@ -17,6 +25,11 @@ from services.emailing.email_sender import EmailSender
 logger = logging.getLogger(__name__)
 
 _ALLOWED_ROLES = ("user", "admin", "super_admin")
+_ASSIGNABLE_ROLES = ("user", "admin")  # super_admin reste unique, non assignable via l'UI
+
+
+def _is_founder(user) -> bool:
+    return bool(ADMIN_EMAIL and user.email == ADMIN_EMAIL)
 
 
 class AdminUsersService:
@@ -26,6 +39,17 @@ class AdminUsersService:
         self.audit_repo = AuditLogRepository(session)
         self.auth_repo = AuthRepository(session)
         self.rt_repo = RefreshTokenRepository(session)
+
+    def _check_can_modify(self, target, caller_role: str | None) -> None:
+        """Garde-fou commun, exécuté sur toute action mutante visant un user.
+
+        Bloque si la cible est le founder (verrouillage total).
+        Bloque si la cible est super_admin et que l'admin appelant n'est pas super_admin.
+        """
+        if _is_founder(target):
+            raise CannotModifyFounder()
+        if target.role == "super_admin" and caller_role != "super_admin":
+            raise CannotModifyAdmin()
 
     async def list_users(
         self,
@@ -80,11 +104,13 @@ class AdminUsersService:
 
     async def set_user_status(
         self, user_id: str, is_active: bool, reason: str | None = None,
-        *, admin_id: str | None = None,
+        *, admin_id: str | None = None, caller_role: str | None = None,
     ):
         target = await self.admin_repo.get_user(user_id)
         if not target:
             raise UserNotFound()
+
+        self._check_can_modify(target, caller_role)
 
         updated_user = await self.admin_repo.set_user_status(user_id, is_active, reason)
 
@@ -111,12 +137,19 @@ class AdminUsersService:
         self, user_id: str, new_role: str,
         *, admin_id: str | None = None,
     ):
-        if new_role not in _ALLOWED_ROLES:
+        # Seuls user et admin sont assignables, super_admin reste unique et hors UI
+        if new_role not in _ASSIGNABLE_ROLES:
+            if new_role == "super_admin":
+                raise CannotPromoteToSuperAdmin()
             raise ValidationError(f"Invalid role: {new_role}")
 
         target = await self.admin_repo.get_user(user_id)
         if not target:
             raise UserNotFound()
+
+        # Founder verrouillé : aucun changement de rôle possible, même par lui-même
+        if _is_founder(target):
+            raise CannotModifyFounder()
 
         # Empêche un super_admin de se rétrograder lui-même par accident
         if admin_id and str(target.id) == admin_id:
@@ -145,11 +178,13 @@ class AdminUsersService:
 
     async def update_admin_notes(
         self, user_id: str, notes: str | None,
-        *, admin_id: str | None = None,
+        *, admin_id: str | None = None, caller_role: str | None = None,
     ):
         target = await self.admin_repo.get_user(user_id)
         if not target:
             raise UserNotFound()
+
+        self._check_can_modify(target, caller_role)
 
         # Normalise les notes vides en None pour rester cohérent
         cleaned = notes.strip() if notes else None
@@ -179,11 +214,13 @@ class AdminUsersService:
 
     async def send_email(
         self, user_id: str, subject: str, body: str,
-        *, admin_id: str | None = None,
+        *, admin_id: str | None = None, caller_role: str | None = None,
     ):
         target = await self.admin_repo.get_user(user_id)
         if not target:
             raise UserNotFound()
+
+        self._check_can_modify(target, caller_role)
 
         subject = (subject or "").strip()
         body = (body or "").strip()
@@ -221,10 +258,12 @@ class AdminUsersService:
             admin_id, user_id, len(subject), len(body),
         )
 
-    async def reset_user_limits(self, user_id: str, *, admin_id: str | None = None):
+    async def reset_user_limits(self, user_id: str, *, admin_id: str | None = None, caller_role: str | None = None):
         target = await self.admin_repo.get_user(user_id)
         if not target:
             raise UserNotFound()
+
+        self._check_can_modify(target, caller_role)
 
         await self.admin_repo.reset_user_limits(user_id)
 
@@ -244,6 +283,7 @@ class AdminUsersService:
         user_id: str,
         *,
         admin_id: str | None = None,
+        caller_role: str | None = None,
         r2_service=None,
         application_repo=None,
         coach_repo=None,
@@ -251,6 +291,8 @@ class AdminUsersService:
         target = await self.admin_repo.get_user(user_id)
         if not target:
             raise UserNotFound()
+
+        self._check_can_modify(target, caller_role)
 
         # Collecte les file_keys AVANT le CASCADE (sinon les rows sont déjà supprimées)
         cv_keys: list[str] = []

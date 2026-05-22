@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
 import '../styles/components/button.css';
 
+// Seuls user et admin sont assignables, super_admin reste unique (founder)
 const ROLES = [
   {
     value: 'user',
@@ -12,11 +13,6 @@ const ROLES = [
     value: 'admin',
     label: 'Admin',
     description: 'Accès au panel admin, peut gérer les utilisateurs normaux',
-  },
-  {
-    value: 'super_admin',
-    label: 'Super admin',
-    description: 'Accès complet, peut modifier les autres admins et changer les rôles',
   },
 ];
 
@@ -43,8 +39,8 @@ export default function RoleDialog({ isOpen, currentRole, userName, onConfirm, o
     }
   }
 
-  const isDangerous = selectedRole === 'super_admin' && currentRole !== 'super_admin';
-  const isDemotion = currentRole === 'super_admin' && selectedRole !== 'super_admin';
+  const isDemotion = currentRole === 'admin' && selectedRole === 'user';
+  const isPromotion = currentRole === 'user' && selectedRole === 'admin';
 
   return (
     <div className="dialog-backdrop" onClick={onCancel}>
@@ -81,13 +77,13 @@ export default function RoleDialog({ isOpen, currentRole, userName, onConfirm, o
           ))}
         </div>
 
-        {(isDangerous || isDemotion) && (
+        {(isDemotion || isPromotion) && (
           <div className="role-warning">
             <ShieldAlert size={16} strokeWidth={2.25} />
             <span>
-              {isDangerous
-                ? "Attention : ce rôle a un accès complet et peut modifier d'autres admins."
-                : "Attention : cet admin perdra ses privilèges actuels."}
+              {isPromotion
+                ? "Cet user aura accès au panel admin et pourra gérer les autres users."
+                : "Cet admin perdra ses privilèges et redeviendra un utilisateur standard."}
             </span>
           </div>
         )}
@@ -103,7 +99,7 @@ export default function RoleDialog({ isOpen, currentRole, userName, onConfirm, o
           </button>
           <button
             type="button"
-            className={`btn ${isDangerous ? 'btn-danger-solid' : 'btn-primary'}`}
+            className="btn btn-primary"
             onClick={handleConfirm}
             disabled={isLoading || selectedRole === currentRole}
           >

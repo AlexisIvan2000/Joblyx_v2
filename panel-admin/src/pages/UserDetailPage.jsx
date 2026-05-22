@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ShieldCheck, NotebookPen, Check, Mail } from 'lucide-react';
+import { ShieldCheck, NotebookPen, Check, Mail, Lock } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Badge from '../components/Badge';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -189,6 +189,13 @@ export default function UserDetailPage() {
   const coachHistory = user.coach_history || [];
   const interviewHistory = user.interview_history || [];
 
+  // Verrouillage : founder = lecture seule pour tous, super_admin = lecture seule pour les admins non super
+  const isSuper = currentUser?.role === 'super_admin';
+  const isLocked = user.is_founder || (user.role === 'super_admin' && !isSuper);
+  const lockReason = user.is_founder
+    ? 'Compte fondateur (verrouillé)'
+    : 'Réservé super_admin';
+
   return (
     <div>
       <button type="button" className="user-detail-back" onClick={() => navigate(-1)}>
@@ -212,37 +219,48 @@ export default function UserDetailPage() {
         </div>
 
         <div className="user-detail-actions">
-          {currentUser?.role === 'super_admin' && currentUser?.id !== user.id && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setShowRoleDialog(true)}
-            >
-              <ShieldCheck size={16} strokeWidth={2.25} />
-              Modifier le rôle
-            </button>
+          {isLocked ? (
+            <Badge variant="default">
+              <Lock size={13} strokeWidth={2.25} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+              {lockReason}
+            </Badge>
+          ) : (
+            <>
+              {isSuper && currentUser?.id !== user.id && user.role !== 'super_admin' && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowRoleDialog(true)}
+                >
+                  <ShieldCheck size={16} strokeWidth={2.25} />
+                  Modifier le rôle
+                </button>
+              )}
+              {isSuper && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowEmailDialog(true)}
+                >
+                  <Mail size={16} strokeWidth={2.25} />
+                  Envoyer un email
+                </button>
+              )}
+              <button
+                type="button"
+                className={`btn ${user.is_active ? 'btn-danger' : 'btn-success'}`}
+                onClick={() => setShowStatusDialog(true)}
+              >
+                {user.is_active ? 'Désactiver' : 'Réactiver'}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowResetDialog(true)}>
+                Reset limites
+              </button>
+              <button type="button" className="btn btn-danger-solid" onClick={() => setShowDeleteDialog(true)}>
+                Supprimer
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => setShowEmailDialog(true)}
-          >
-            <Mail size={16} strokeWidth={2.25} />
-            Envoyer un email
-          </button>
-          <button
-            type="button"
-            className={`btn ${user.is_active ? 'btn-danger' : 'btn-success'}`}
-            onClick={() => setShowStatusDialog(true)}
-          >
-            {user.is_active ? 'Désactiver' : 'Réactiver'}
-          </button>
-          <button type="button" className="btn btn-secondary" onClick={() => setShowResetDialog(true)}>
-            Reset limites
-          </button>
-          <button type="button" className="btn btn-danger-solid" onClick={() => setShowDeleteDialog(true)}>
-            Supprimer
-          </button>
         </div>
       </div>
 
@@ -290,9 +308,12 @@ export default function UserDetailPage() {
             className="admin-notes-textarea"
             value={notesDraft}
             onChange={(e) => setNotesDraft(e.target.value)}
-            placeholder="Ajouter une note interne sur ce user (visible uniquement par les admins)…"
+            placeholder={isLocked
+              ? 'Notes en lecture seule sur un compte verrouillé'
+              : 'Ajouter une note interne sur ce user (visible uniquement par les admins)…'}
             rows={4}
             maxLength={5000}
+            disabled={isLocked}
           />
           <div className="admin-notes-footer">
             <span className="muted text-xs">
@@ -302,7 +323,7 @@ export default function UserDetailPage() {
               type="button"
               className="btn btn-primary"
               onClick={handleSaveNotes}
-              disabled={isSavingNotes || (notesDraft || '') === (user.admin_notes || '')}
+              disabled={isLocked || isSavingNotes || (notesDraft || '') === (user.admin_notes || '')}
             >
               {isSavingNotes ? 'Enregistrement…' : 'Enregistrer'}
             </button>
