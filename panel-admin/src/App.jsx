@@ -10,6 +10,7 @@ import UserDetailPage from './pages/UserDetailPage';
 import AuditLogPage from './pages/AuditLogPage';
 import ErrorsPage from './pages/ErrorsPage';
 import ErrorDetailPage from './pages/ErrorDetailPage';
+import NotFoundPage from './pages/NotFoundPage';
 import './App.css';
 
 function App() {
@@ -37,7 +38,7 @@ function App() {
           </Route>
 
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </ErrorBoundary>
       </AuthProvider>
