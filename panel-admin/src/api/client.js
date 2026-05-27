@@ -1,7 +1,6 @@
-// Instance axios partagée avec intercepteurs JWT et auto-refresh sur 401
-
 import axios from 'axios';
 import { tokenStorage } from '../utils/storage';
+import { isExpired } from '../utils/jwt';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.joblyx.com';
 const API_PREFIX = '/v1';
@@ -66,7 +65,8 @@ apiClient.interceptors.response.use(
     isRefreshing = true;
     try {
       const refreshToken = tokenStorage.getRefresh();
-      if (!refreshToken) throw new Error('No refresh token');
+      // Refresh absent ou expiré : inutile d'appeler le backend, on purge directement
+      if (!refreshToken || isExpired(refreshToken)) throw new Error('No valid refresh token');
 
       const { data } = await axios.post(`${BASE_URL}${API_PREFIX}/auth/refresh`, {
         refresh_token: refreshToken,

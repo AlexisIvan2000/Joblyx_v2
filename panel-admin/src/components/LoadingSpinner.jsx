@@ -1,5 +1,3 @@
-// Spinner inline simple avec animation CSS
-
 export default function LoadingSpinner({ size = 24, label }) {
   return (
     <div style={{

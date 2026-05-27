@@ -1,5 +1,3 @@
-// Indicateur visuel "données live" — pulse vert + timestamp dernière update
-
 import { useEffect, useState } from 'react';
 
 function formatRelative(timestamp) {

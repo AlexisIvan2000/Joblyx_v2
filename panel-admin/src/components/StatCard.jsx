@@ -1,13 +1,6 @@
 import { useCountUp } from '../hooks/useCountUp';
 import '../styles/components/card.css';
 
-// Carte de stat avec icône, animation d'apparition, count-up et trend optionnel
-// value : number (animé via count-up) ou string déjà formaté
-// formatter : fn(number) appliquée à chaque frame quand value est un number
-// variant : 'default' | 'accent' | 'success' | 'warning' | 'danger'
-// icon : composant lucide-react optionnel
-// trend : { value: number, label: string } optionnel
-
 export default function StatCard({
   title, value, subtitle, variant = 'default',
   icon: Icon, trend, formatter,

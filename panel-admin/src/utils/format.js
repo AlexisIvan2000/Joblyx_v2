@@ -1,5 +1,3 @@
-// Formatters de présentation — chiffres, devise, dates
-
 const NUMBER_FORMAT = new Intl.NumberFormat('fr-FR');
 const CURRENCY_FORMAT = new Intl.NumberFormat('fr-FR', {
   style: 'currency',

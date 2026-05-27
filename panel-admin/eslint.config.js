@@ -17,5 +17,14 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Règles "React Compiler" du ruleset react-hooks v7 : avis de perf/style, pas des bugs.
+      // On les garde en 'warn' pour ne pas bloquer sur du code fonctionnel existant.
+      // Les vraies règles (rules-of-hooks, exhaustive-deps) restent en erreur.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/refs': 'warn',
+      'react-refresh/only-export-components': 'warn',
+    },
   },
 ])

@@ -1,9 +1,7 @@
-// Contexte d'authentification global  expose user + login + logout
-
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { login as apiLogin, logout as apiLogout, getMe } from '../api/auth';
 import { tokenStorage } from '../utils/storage';
-import { isAdmin as jwtIsAdmin } from '../utils/jwt';
+import { isAdmin as jwtIsAdmin, isExpired } from '../utils/jwt';
 
 const AuthContext = createContext(null);
 
@@ -20,6 +18,12 @@ export function AuthProvider({ children }) {
     }
     if (!jwtIsAdmin(token)) {
       // Token valide mais pas admin  on purge pour forcer un nouveau login
+      tokenStorage.clear();
+      setIsLoading(false);
+      return;
+    }
+    // Session morte (access ET refresh expirés) : on purge sans appeler le backend
+    if (isExpired(token) && isExpired(tokenStorage.getRefresh())) {
       tokenStorage.clear();
       setIsLoading(false);
       return;

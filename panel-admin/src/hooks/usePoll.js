@@ -1,11 +1,3 @@
-// Hook custom pour rafraîchir des données à intervalle régulier.
-//
-// Particularités :
-// - Pause automatiquement quand l'onglet passe en background (économise les requêtes)
-// - Refetch immédiatement au retour sur l'onglet (refetchOnFocus)
-// - Annule les requêtes en vol si le component démonte
-// - Retourne { data, error, isLoading, isRefreshing, lastUpdate, refetch }
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function usePoll(fetchFn, deps = [], { interval = 15000, enabled = true } = {}) {
@@ -15,27 +7,26 @@ export function usePoll(fetchFn, deps = [], { interval = 15000, enabled = true }
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
 
-  // Ref pour cancel les requêtes en flight quand un nouveau fetch démarre
-  const cancelRef = useRef(false);
-  // Ref vers fetchFn pour éviter de recréer l'intervalle si la fonction est inline
+  const requestIdRef = useRef(0);
+  
   const fetchFnRef = useRef(fetchFn);
   fetchFnRef.current = fetchFn;
 
   const doFetch = useCallback(async ({ silent = false } = {}) => {
     if (!enabled) return;
+    const requestId = ++requestIdRef.current;
     if (!silent) setIsRefreshing(true);
     setError(null);
-    cancelRef.current = false;
     try {
       const result = await fetchFnRef.current();
-      if (cancelRef.current) return;
+      if (requestId !== requestIdRef.current) return;
       setData(result);
       setLastUpdate(Date.now());
     } catch (err) {
-      if (cancelRef.current) return;
+      if (requestId !== requestIdRef.current) return;
       setError(err);
     } finally {
-      if (!cancelRef.current) {
+      if (requestId === requestIdRef.current) {
         setIsLoading(false);
         setIsRefreshing(false);
       }
@@ -46,7 +37,8 @@ export function usePoll(fetchFn, deps = [], { interval = 15000, enabled = true }
   useEffect(() => {
     setIsLoading(true);
     doFetch();
-    return () => { cancelRef.current = true; };
+    // Invalide toute requête en vol au démontage / changement de deps
+    return () => { requestIdRef.current++; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 

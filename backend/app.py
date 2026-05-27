@@ -100,12 +100,22 @@ async def _ensure_admin_account():
         existing = await repo.get_user_by_email(ADMIN_EMAIL)
 
         if existing:
+            updates = {}
             if existing.role != "super_admin":
-                await repo.update_user(str(existing.id), {"role": "super_admin"})
+                updates["role"] = "super_admin"
+            # Le mot de passe de l'env fait foi : on resynchronise s'il ne correspond plus
+            # (sinon un changement d'ADMIN_PASSWORD ne se reflète jamais en base)
+            password_ok = bool(existing.password_hash) and Security.verify_password(
+                existing.password_hash, ADMIN_PASSWORD
+            )
+            if not password_ok:
+                updates["password_hash"] = Security.hash_password(ADMIN_PASSWORD)
+            if updates:
+                await repo.update_user(str(existing.id), updates)
                 await session.commit()
-                logger.info("Admin promoted: email=%s user_id=%s", ADMIN_EMAIL, existing.id)
+                logger.info("Admin account synced: email=%s fields=%s", ADMIN_EMAIL, list(updates.keys()))
             else:
-                logger.info("Admin already exists: email=%s", ADMIN_EMAIL)
+                logger.info("Admin already up to date: email=%s", ADMIN_EMAIL)
             return
 
         # Création d'un nouveau compte super_admin pré-vérifié

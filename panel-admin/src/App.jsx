@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -15,6 +16,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ErrorBoundary>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
@@ -37,6 +39,7 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   );
