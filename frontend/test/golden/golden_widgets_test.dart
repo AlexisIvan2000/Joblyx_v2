@@ -11,7 +11,7 @@ import 'package:frontend/features/settings/presentation/widgets/set_password_dia
 import 'package:frontend/features/settings/presentation/widgets/change_email_dialog.dart';
 import 'package:frontend/features/settings/presentation/widgets/edit_profile_dialog.dart';
 
-// ─── Traductions ──────────────────────────────────────────────
+//  Traductions 
 
 final _t = AppLocalizations({
   'settings.current_password': 'Mot de passe actuel',
@@ -44,7 +44,7 @@ class _TestLocDelegate extends LocalizationsDelegate<AppLocalizations> {
   bool shouldReload(_) => false;
 }
 
-// ─── Tailles d'écran ──────────────────────────────────────────
+//  Tailles d'écran 
 
 const _sizes = {
   'small': Size(320, 568),
@@ -52,7 +52,7 @@ const _sizes = {
   'tablet': Size(768, 1024),
 };
 
-// ─── Helper ───────────────────────────────────────────────────
+//  Helper 
 
 /// Configure la taille du viewport et pump un dialog dans une MaterialApp.
 Future<void> _pumpDialog(WidgetTester tester, Size size, Widget dialog) async {
@@ -113,7 +113,7 @@ Future<void> _pumpWidget(WidgetTester tester, Size size, Widget child) async {
   await tester.pumpAndSettle();
 }
 
-// ─── Golden Tests ─────────────────────────────────────────────
+// Golden Tests 
 
 void main() {
   // ChangePasswordDialog
@@ -221,7 +221,7 @@ void main() {
   });
 }
 
-// ─── Widgets reproductions ────────────────────────────────────
+//  Widgets reproductions 
 
 class _OtpFields extends StatelessWidget {
   @override

@@ -113,7 +113,21 @@ class TestUsage:
         assert usage["interview_usage_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_increment_usage(self, repo, mock_session):
-        await repo.increment_usage(FAKE_USER_ID)
+    async def test_try_consume_usage_succeeds(self, repo, mock_session):
+        result_mock = MagicMock()
+        result_mock.rowcount = 1
+        mock_session.execute.return_value = result_mock
+
+        consumed = await repo.try_consume_usage(FAKE_USER_ID, 2)
+        assert consumed is True
         mock_session.execute.assert_called_once()
         mock_session.flush.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_try_consume_usage_at_limit(self, repo, mock_session):
+        result_mock = MagicMock()
+        result_mock.rowcount = 0
+        mock_session.execute.return_value = result_mock
+
+        consumed = await repo.try_consume_usage(FAKE_USER_ID, 2)
+        assert consumed is False

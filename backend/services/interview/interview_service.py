@@ -103,6 +103,13 @@ class InterviewService:
                 details={"remaining": 0, "resets_at": usage["resets_at"]},
             )
 
+        # Réserve un créneau atomiquement avant l'appel GPT
+        if not await self.repo.try_consume_usage(user_id, DAILY_LIMIT):
+            raise InterviewDailyLimitReached(
+                f"Daily interview session limit reached ({DAILY_LIMIT} per day)",
+                details={"remaining": 0, "resets_at": usage["resets_at"]},
+            )
+
         # Nettoyer le CV
         if cv_text:
             cv_text = clean_cv_text(cv_text)
@@ -144,8 +151,6 @@ class InterviewService:
             "position": 1,
         })
 
-        # Incrémenter l'usage
-        await self.repo.increment_usage(user_id)
         await self.session.commit()
 
         return {

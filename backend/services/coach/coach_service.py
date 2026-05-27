@@ -91,6 +91,12 @@ class CoachService:
             yield ("done", cached.analysis)
             return
 
+        # Réserve un créneau atomiquement avant l'appel GPT, le cache reste gratuit
+        if not await self.repo.try_consume_usage(user_id, WEEKLY_LIMIT):
+            raise CoachWeeklyLimitReached(
+                details={"remaining": 0, "resets_at": usage["resets_at"]},
+            )
+
         # Upload le CV sur R2
         cv_file_key = await self.r2.upload_cv(user_id, cv_bytes, cv_filename)
 
@@ -140,8 +146,6 @@ class CoachService:
             "language": language,
         })
 
-        # Incrémenter le compteur d'usage
-        await self.repo.increment_usage(user_id)
         await self.session.commit()
 
         yield ("done", analysis)

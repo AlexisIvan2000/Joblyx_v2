@@ -94,13 +94,15 @@ class CoachRepository:
             "coach_usage_reset_at": row[1],
         }
 
-    async def increment_usage(self, user_id: str) -> None:
-        await self.session.execute(
+    async def try_consume_usage(self, user_id: str, limit: int) -> bool:
+        # Réserve un créneau de façon atomique, échoue si la limite est déjà atteinte
+        result = await self.session.execute(
             update(User)
-            .where(User.id == user_id)
+            .where(User.id == user_id, User.coach_usage_count < limit)
             .values(coach_usage_count=User.coach_usage_count + 1)
         )
         await self.session.flush()
+        return result.rowcount > 0
 
     async def reset_usage(self, user_id: str, reset_at) -> None:
         await self.session.execute(

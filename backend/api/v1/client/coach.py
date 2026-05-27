@@ -1,7 +1,7 @@
 import json
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from core.uploads import validate_pdf, PDF_MAX_BYTES_LARGE
+from core.uploads import validate_pdf, validate_pdf_signature, PDF_MAX_BYTES_LARGE
 from fastapi.responses import StreamingResponse
 from api.v1.client.dependencies import get_current_user
 from core.database import get_db_session
@@ -36,8 +36,9 @@ async def analyze(
     if job_title:
         job_title = validate_job_title(job_title)
 
+    validate_pdf(cv_file.content_type, cv_file.size or 0, max_bytes=PDF_MAX_BYTES_LARGE)
     cv_bytes = await cv_file.read()
-    validate_pdf(cv_file.content_type, len(cv_bytes), max_bytes=PDF_MAX_BYTES_LARGE)
+    validate_pdf_signature(cv_bytes)
 
     user_id = str(current_user.id)
 

@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/assistant/data/coach_service.dart';
 
 final coachServiceProvider = Provider((_) => CoachService());
 
-// ─── Usage ──────────────────────────────────────────────────────
+// Usage
 
 final coachUsageProvider =
     AsyncNotifierProvider<CoachUsageNotifier, Map<String, dynamic>>(
@@ -25,7 +26,7 @@ class CoachUsageNotifier extends AsyncNotifier<Map<String, dynamic>> {
   }
 }
 
-// ─── Historique ─────────────────────────────────────────────────
+// Historique
 
 final coachHistoryProvider =
     AsyncNotifierProvider<CoachHistoryNotifier, List<Map<String, dynamic>>>(
@@ -57,7 +58,7 @@ class CoachHistoryNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
   }
 }
 
-// ─── Analyse (state pour le streaming) ──────────────────────────
+// Analyse (state pour le streaming)
 
 class CoachAnalysisState {
   final String status; // idle | analyzing | done | error
@@ -93,6 +94,8 @@ final coachAnalysisProvider =
         CoachAnalysisNotifier.new);
 
 class CoachAnalysisNotifier extends Notifier<CoachAnalysisState> {
+  CancelToken? _cancelToken;
+
   @override
   CoachAnalysisState build() => const CoachAnalysisState();
 
@@ -117,59 +120,80 @@ class CoachAnalysisNotifier extends Notifier<CoachAnalysisState> {
     }
   }
 
-  /// Lance l'analyse en streaming.
-  Stream<Map<String, dynamic>> analyze({
+  /// Lance l'analyse en streaming. La boucle vit dans le notifier, l'écran
+  /// observe l'état. Le CancelToken permet d'arrêter le flux si l'utilisateur quitte.
+  Future<void> analyze({
     required String cvPath,
     required String jobDescription,
     String? jobTitle,
     String? companyName,
     String language = 'fr',
-  }) async* {
+  }) async {
+    // Annule une analyse précédente encore en cours
+    _cancelToken?.cancel();
+    final cancelToken = CancelToken();
+    _cancelToken = cancelToken;
+
     state = const CoachAnalysisState(status: 'analyzing');
 
     final svc = ref.read(coachServiceProvider);
 
-    await for (final event in svc.analyzeStream(
-      cvPath: cvPath,
-      jobDescription: jobDescription,
-      jobTitle: jobTitle,
-      companyName: companyName,
-      language: language,
-    )) {
-      yield event;
+    try {
+      await for (final event in svc.analyzeStream(
+        cvPath: cvPath,
+        jobDescription: jobDescription,
+        jobTitle: jobTitle,
+        companyName: companyName,
+        language: language,
+        cancelToken: cancelToken,
+      )) {
+        final eventType = event['event'] as String;
+        final data = event['data'] as Map<String, dynamic>;
 
-      final eventType = event['event'] as String;
-      final data = event['data'] as Map<String, dynamic>;
-
-      if (eventType == 'chunk') {
-        final text = data['text'] as String? ?? '';
-        final newText = state.streamingText + text;
-        final partial = _tryParsePartial(newText);
-        state = state.copyWith(
-          streamingText: newText,
-          analysis: partial,
-        );
-      } else if (eventType == 'analysis') {
-        state = state.copyWith(
-          status: 'done',
-          analysis: data,
-          streamingText: '',
-        );
-        // Rafraîchir l'historique et l'usage
-        ref.invalidate(coachHistoryProvider);
-        ref.invalidate(coachUsageProvider);
-      } else if (eventType == 'error') {
-        state = state.copyWith(
-          status: 'error',
-          errorMessage: data['error'] as String?,
-          streamingText: '',
-        );
+        if (eventType == 'chunk') {
+          final text = data['text'] as String? ?? '';
+          final newText = state.streamingText + text;
+          final partial = _tryParsePartial(newText);
+          state = state.copyWith(
+            streamingText: newText,
+            analysis: partial,
+          );
+        } else if (eventType == 'analysis') {
+          state = state.copyWith(
+            status: 'done',
+            analysis: data,
+            streamingText: '',
+          );
+          // Rafraîchir l'historique et l'usage
+          ref.invalidate(coachHistoryProvider);
+          ref.invalidate(coachUsageProvider);
+        } else if (eventType == 'error') {
+          state = state.copyWith(
+            status: 'error',
+            errorMessage: data['error'] as String?,
+            streamingText: '',
+          );
+        }
       }
+    } on DioException catch (e) {
+      // Annulation volontaire : on ne traite pas comme une erreur
+      if (CancelToken.isCancel(e)) return;
+      state = state.copyWith(status: 'error', streamingText: '');
+      rethrow;
+    } finally {
+      if (identical(_cancelToken, cancelToken)) _cancelToken = null;
     }
+  }
+
+  /// Annule l'analyse en cours (ex. l'utilisateur quitte l'écran résultat).
+  void cancel() {
+    _cancelToken?.cancel();
+    _cancelToken = null;
   }
 
   /// Reset l'état pour une nouvelle analyse.
   void reset() {
+    cancel();
     state = const CoachAnalysisState();
   }
 }

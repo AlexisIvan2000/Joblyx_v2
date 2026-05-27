@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.uploads import validate_image
+from core.uploads import validate_image, validate_image_signature
 from models.schemas import UpdateProfile, ChangePassword, SetPassword, ChangeEmail, VerifyEmailChange
 from models.db_models import User
 from core.database import get_db_session
@@ -89,8 +89,9 @@ async def upload_avatar(
     svc: UserService = Depends(get_user_service),
     r2: R2Service = Depends(get_r2_service),
 ):
+    validate_image(file.content_type, file.size or 0)
     content = await file.read()
-    validate_image(file.content_type, len(content))
+    validate_image_signature(content)
 
     user_id = str(current_user.id)
 

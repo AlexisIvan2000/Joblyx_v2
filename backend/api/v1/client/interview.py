@@ -2,7 +2,7 @@ import json
 import logging
 
 from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, WebSocket, WebSocketDisconnect
-from core.uploads import validate_pdf, PDF_MAX_BYTES_LARGE
+from core.uploads import validate_pdf, validate_pdf_signature, PDF_MAX_BYTES_LARGE
 from core.exceptions import InterviewNotCompleted, InvalidToken, SessionNotFound, SessionAlreadyCompleted
 from services.utils.pdf import extract_text_from_pdf
 from api.v1.client.dependencies import get_current_user
@@ -42,8 +42,9 @@ async def start_interview(
     # Extraire le texte du CV si fourni
     cv_text = None
     if cv_file:
+        validate_pdf(cv_file.content_type, cv_file.size or 0, max_bytes=PDF_MAX_BYTES_LARGE)
         cv_bytes = await cv_file.read()
-        validate_pdf(cv_file.content_type, len(cv_bytes), max_bytes=PDF_MAX_BYTES_LARGE)
+        validate_pdf_signature(cv_bytes)
         cv_text = extract_text_from_pdf(cv_bytes) or None
 
     return await svc.start_session(

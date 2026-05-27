@@ -130,12 +130,12 @@ class DashboardScreen extends ConsumerWidget {
         actions: const [],
       ),
       body: RefreshIndicator(
-        onRefresh: () async {
-          ref.read(roadmapProvider.notifier).loadRoadmap();
-          ref.read(applicationsProvider.notifier).refresh();
-          ref.read(regenerationStatusProvider.notifier).refresh();
-          ref.read(userProvider.notifier).refresh();
-        },
+        onRefresh: () => Future.wait([
+          ref.read(roadmapProvider.notifier).loadRoadmap(),
+          ref.read(applicationsProvider.notifier).refresh(),
+          ref.read(regenerationStatusProvider.notifier).refresh(),
+          ref.read(userProvider.notifier).refresh(),
+        ]),
         child: ListView(
           physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics()),

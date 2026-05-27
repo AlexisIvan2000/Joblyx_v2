@@ -73,7 +73,7 @@ const _screenSizes = {
   'tablette_768x1024': Size(768, 1024),
 };
 
-// ─── Helpers ──────────────────────────────────────────────────
+//  Helpers 
 
 /// Crée une app de test à une taille donnée avec un dialog auto-affiché.
 Widget _testAppWithDialog(Size size, Widget dialog) {
@@ -112,7 +112,7 @@ void _expectNoOverflow(WidgetTester tester) {
   expect(errors, isNull, reason: 'Pas d\'erreur de rendu (overflow)');
 }
 
-// ─── Tests ────────────────────────────────────────────────────
+//  Tests 
 
 void main() {
   // ChangePasswordDialog
@@ -288,7 +288,7 @@ void main() {
   });
 }
 
-// ─── Widgets de test (reproductions légères) ──────────────────
+//  Widgets de test (reproductions légères) 
 
 /// Reproduction des 6 champs OTP côte à côte.
 class _OtpFieldsTest extends StatelessWidget {

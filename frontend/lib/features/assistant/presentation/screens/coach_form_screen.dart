@@ -69,22 +69,21 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
     ref.read(coachAnalysisProvider.notifier).reset();
 
     try {
-      // Naviguer vers l'écran résultat qui écoute le stream
+      // Naviguer vers l'écran résultat qui observe le stream
       context.push('/assistant/coach/result');
 
-      // Lancer l'analyse en streaming
-      await for (final event in ref.read(coachAnalysisProvider.notifier).analyze(
+      // Lancer l'analyse, la boucle SSE vit dans le notifier
+      await ref.read(coachAnalysisProvider.notifier).analyze(
         cvPath: _cvFile!.path!,
         jobDescription: _descriptionController.text.trim(),
         jobTitle: _jobTitleController.text.trim().isEmpty ? null : _jobTitleController.text.trim(),
         companyName: _companyController.text.trim().isEmpty ? null : _companyController.text.trim(),
         language: _language,
-      )) {
-        final eventType = event['event'] as String;
-        if (eventType == 'error') break;
+      );
+      // Reset le formulaire seulement si l'analyse a abouti
+      if (mounted && ref.read(coachAnalysisProvider).status == 'done') {
+        _resetForm();
       }
-      // Reset le formulaire après une analyse réussie
-      if (mounted) _resetForm();
     } catch (e) {
       if (!mounted) return;
       if (e.toString().contains('429')) {

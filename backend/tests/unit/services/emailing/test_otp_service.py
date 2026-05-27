@@ -11,7 +11,7 @@ from tests.conftest import FAKE_USER_ID, _make_user_obj
 @pytest.fixture
 def otp_service(mock_auth_repo):
     with patch("services.emailing.otp_service.EmailSender") as MockEmailSender:
-        MockEmailSender.return_value = MagicMock()
+        MockEmailSender.return_value = AsyncMock()
         svc = OtpService(mock_auth_repo)
         svc._mock_email_sender = MockEmailSender
         yield svc

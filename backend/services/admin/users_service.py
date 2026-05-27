@@ -228,7 +228,7 @@ class AdminUsersService:
 
         # Envoi Resend, en cas d'erreur on remonte un 502 et on n'écrit PAS d'audit log
         try:
-            EmailSender().send_admin_email(target.email, subject, body)
+            await EmailSender().send_admin_email(target.email, subject, body)
         except Exception as exc:
             logger.error("Resend send_admin_email failed: admin=%s target=%s error=%s", admin_id, user_id, exc)
             raise ExternalServiceError("Failed to send email") from exc

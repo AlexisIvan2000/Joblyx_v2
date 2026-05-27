@@ -108,13 +108,15 @@ class InterviewRepository:
             "interview_usage_reset_at": row[1],
         }
 
-    async def increment_usage(self, user_id: str) -> None:
-        await self.session.execute(
+    async def try_consume_usage(self, user_id: str, limit: int) -> bool:
+        # Réserve un créneau de façon atomique, échoue si la limite est déjà atteinte
+        result = await self.session.execute(
             update(User)
-            .where(User.id == user_id)
+            .where(User.id == user_id, User.interview_usage_count < limit)
             .values(interview_usage_count=User.interview_usage_count + 1)
         )
         await self.session.flush()
+        return result.rowcount > 0
 
     async def reset_usage(self, user_id: str, reset_at: datetime) -> None:
         await self.session.execute(

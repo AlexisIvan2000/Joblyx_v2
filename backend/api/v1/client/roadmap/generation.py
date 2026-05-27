@@ -4,7 +4,7 @@ import json
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from fastapi.responses import StreamingResponse
 
-from core.uploads import validate_pdf
+from core.uploads import validate_pdf, validate_pdf_signature
 from core.rate_limit import limiter, get_user_id_from_jwt
 from models.schemas import RoadmapGenerateRequest
 from models.db_models import User
@@ -79,8 +79,9 @@ async def extract_skills(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
+    validate_pdf(file.content_type, file.size or 0)
     content = await file.read()
-    validate_pdf(file.content_type, len(content))
+    validate_pdf_signature(content)
 
     async def _stream():
         yield 'event: status\ndata: {"status":"extracting"}\n\n'

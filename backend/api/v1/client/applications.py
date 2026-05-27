@@ -1,7 +1,7 @@
 import json
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from core.exceptions import ValidationError
-from core.uploads import validate_pdf
+from core.uploads import validate_pdf, validate_pdf_signature
 from models.schemas import ApplicationCreate, ApplicationUpdate, ApplicationResponse
 from models.db_models import User
 from services.applications.application_service import ApplicationService
@@ -41,8 +41,9 @@ async def create_application(
     cv_bytes = None
     cv_filename = None
     if cv:
+        validate_pdf(cv.content_type, cv.size or 0)
         cv_bytes = await cv.read()
-        validate_pdf(cv.content_type, len(cv_bytes))
+        validate_pdf_signature(cv_bytes)
         cv_filename = cv.filename or "cv.pdf"
 
     app = await svc.create(
@@ -94,8 +95,9 @@ async def update_application(
     cv_bytes = None
     cv_filename = None
     if cv:
+        validate_pdf(cv.content_type, cv.size or 0)
         cv_bytes = await cv.read()
-        validate_pdf(cv.content_type, len(cv_bytes))
+        validate_pdf_signature(cv_bytes)
         cv_filename = cv.filename or "cv.pdf"
 
     app = await svc.update(
