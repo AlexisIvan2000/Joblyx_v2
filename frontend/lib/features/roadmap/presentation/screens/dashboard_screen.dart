@@ -76,6 +76,14 @@ class DashboardScreen extends ConsumerWidget {
         '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}'
             .toUpperCase();
 
+    // Salutation selon l'heure locale
+    final hour = DateTime.now().hour;
+    final greetingKey = hour < 12
+        ? 'home.greeting_morning'
+        : hour < 18
+            ? 'home.greeting_afternoon'
+            : 'home.greeting_evening';
+
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 20.w,
@@ -102,12 +110,12 @@ class DashboardScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(t.t('home.greeting'),
+                  Text(t.t(greetingKey),
                       style: TextStyle(
                           fontSize: 12.sp,
                           color: cs.onSurfaceVariant,
                           fontWeight: FontWeight.w500)),
-                  Text('$firstName \u{1F44B}',
+                  Text(firstName,
                       style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w800,

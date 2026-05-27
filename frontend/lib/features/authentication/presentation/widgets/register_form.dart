@@ -7,6 +7,7 @@ import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
 import 'package:frontend/features/authentication/presentation/widgets/verify_email_dialog.dart';
 import 'package:frontend/core/utils/haptic.dart';
+import 'package:frontend/core/utils/password_validator.dart';
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
@@ -17,9 +18,6 @@ class RegisterForm extends StatefulWidget {
 
 class _RegisterFormState extends State<RegisterForm> {
   static final _emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-  static final _passwordRegex = RegExp(
-    r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''',
-  );
 
   final _authService = AuthService();
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
@@ -82,12 +80,15 @@ class _RegisterFormState extends State<RegisterForm> {
     required String label,
     required IconData icon,
     Widget? suffixIcon,
+    String? helperText,
   }) {
     final cs = Theme.of(context).colorScheme;
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, size: 20.sp),
       suffixIcon: suffixIcon,
+      helperText: helperText,
+      helperMaxLines: 2,
       filled: true,
       fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.4),
       border: OutlineInputBorder(
@@ -200,11 +201,12 @@ class _RegisterFormState extends State<RegisterForm> {
                 decoration: _inputDecoration(
                   label: t.t('register.password'),
                   icon: Icons.lock_outline,
+                  helperText: t.t('register.password_hint'),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isPasswordVisible
-                          ? Icons.visibility_rounded
-                          : Icons.visibility_off_rounded,
+                          ? Icons.visibility_off_rounded
+                          : Icons.visibility_rounded,
                       size: 20.sp,
                     ),
                     onPressed: () {
@@ -218,7 +220,7 @@ class _RegisterFormState extends State<RegisterForm> {
                   if (value == null || value.isEmpty) {
                     return t.t('register.no_password');
                   }
-                  if (value.length < 8 || !_passwordRegex.hasMatch(value)) {
+                  if (!isStrongPassword(value)) {
                     return t.t('register.invalid_password');
                   }
                   return null;

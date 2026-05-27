@@ -5,6 +5,7 @@ import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/settings/data/user_service.dart';
 import 'package:frontend/features/settings/domain/user_failure.dart';
+import 'package:frontend/core/utils/password_validator.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   const ChangePasswordDialog({super.key});
@@ -22,8 +23,6 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   bool _isLoading = false;
   bool _showCurrent = false;
   bool _showNew = false;
-
-  static final _specialCharRegex = RegExp(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''');
 
   @override
   void dispose() {
@@ -49,8 +48,9 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     } on DioException catch (e) {
       if (!mounted) return;
       final data = e.response?.data;
+      final code = data is Map ? data['error'] as String? : null;
       final detail = data is Map ? (data['message'] ?? data['detail']) : null;
-      final key = UserFailure.resolve(detail as String?, statusCode: e.response?.statusCode);
+      final key = UserFailure.resolve(detail as String?, code: code, statusCode: e.response?.statusCode);
       AppSnackbar.error(context, t.t(key));
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -86,7 +86,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   labelText: t.t('settings.current_password'),
                   prefixIcon: Icon(Icons.lock_rounded, size: 20.sp),
                   suffixIcon: IconButton(
-                    icon: Icon(_showCurrent ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 20.sp),
+                    icon: Icon(_showCurrent ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 20.sp),
                     onPressed: () => setState(() => _showCurrent = !_showCurrent),
                   ),
                 ),
@@ -101,13 +101,13 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   labelText: t.t('settings.new_password'),
                   prefixIcon: Icon(Icons.lock_open_rounded, size: 20.sp),
                   suffixIcon: IconButton(
-                    icon: Icon(_showNew ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 20.sp),
+                    icon: Icon(_showNew ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 20.sp),
                     onPressed: () => setState(() => _showNew = !_showNew),
                   ),
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return t.t('settings.required');
-                  if (v.length < 8 || !_specialCharRegex.hasMatch(v)) {
+                  if (!isStrongPassword(v)) {
                     return t.t('settings.password_rules');
                   }
                   return null;

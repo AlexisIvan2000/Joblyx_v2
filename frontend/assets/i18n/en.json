@@ -8,7 +8,9 @@
     },
 
     "home": {
-        "greeting": "Hello",
+        "greeting_morning": "Good morning",
+        "greeting_afternoon": "Good afternoon",
+        "greeting_evening": "Good evening",
         "progress_title": "ROADMAP PROGRESS",
         "actions_label": "actions",
         "skills_acquired": "skills acquired",
@@ -161,7 +163,7 @@
         "email_required": "Email is required",
         "email_invalid": "Please enter a valid email",
         "no_password": "Password is required",
-        "invalid_password": "Password must be at least 8 characters\nand contain a special character"
+        "invalid_password": "Password must be at least 8 characters with one uppercase, one lowercase and one special character"
 
     },
 
@@ -180,8 +182,8 @@
         "email_required": "Email is required",
         "email_invalid": "Please enter a valid email",
         "no_password": "Password is required",
-        "invalid_password": "Password must be at least 8 characters\nand contain a special character"
-
+        "invalid_password": "Password must be at least 8 characters with one uppercase, one lowercase and one special character",
+        "password_hint": "Min. 8 characters with one uppercase, one lowercase and one special character"
     },
 
     "verify_email": {
@@ -211,6 +213,12 @@
         "wrong_current_password": "Current password is incorrect",
         "same_password": "New password must be different from your current password",
         "invalid_password": "Invalid password",
+        "weak_password": "Password must be at least 8 characters with one uppercase, one lowercase and one special character",
+        "password_too_short": "Password must be at least 8 characters",
+        "password_too_long": "Password must not exceed 72 characters",
+        "password_missing_uppercase": "Password must contain at least one uppercase letter",
+        "password_missing_lowercase": "Password must contain at least one lowercase letter",
+        "password_missing_special": "Password must contain at least one special character",
         "session_expired": "Your session has expired. Please log in again",
         "user_not_found": "User not found",
         "no_fields_to_update": "No fields to update",
@@ -550,7 +558,7 @@
         "code_invalid": "Code must be 6 digits",
         "new_password": "New password",
         "password_required": "Password is required",
-        "password_weak": "At least 8 characters with a special character",
+        "password_weak": "Min. 8 characters with one uppercase, one lowercase and one special character",
         "reset_button": "Reset password",
         "resend_code": "Resend code",
         "success": "Password reset successfully. You can now log in."
@@ -571,7 +579,7 @@
         "current_password": "Current password",
         "new_password": "New password",
         "confirm_password": "Confirm new password",
-        "password_rules": "Min. 8 characters with a special character",
+        "password_rules": "Min. 8 characters with one uppercase, one lowercase and one special character",
         "passwords_mismatch": "Passwords do not match",
         "password_changed": "Password changed successfully",
         "set_password": "Set a password",
@@ -621,6 +629,12 @@
     "settings_error": {
         "wrong_password": "Current password is incorrect",
         "invalid_password": "Invalid password format",
+        "weak_password": "Password must be at least 8 characters with one uppercase, one lowercase and one special character",
+        "password_too_short": "Password must be at least 8 characters",
+        "password_too_long": "Password must not exceed 72 characters",
+        "password_missing_uppercase": "Password must contain at least one uppercase letter",
+        "password_missing_lowercase": "Password must contain at least one lowercase letter",
+        "password_missing_special": "Password must contain at least one special character",
         "email_taken": "This email is already in use",
         "no_pending_change": "No pending email change",
         "no_change_code": "No verification code found",

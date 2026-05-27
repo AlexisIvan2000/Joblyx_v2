@@ -18,7 +18,6 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   static final _emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-  static final _passwordRegex = RegExp(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''');
 
   final _authService = AuthService();
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
@@ -159,8 +158,8 @@ class _LoginFormState extends State<LoginForm> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isPasswordVisible
-                          ? Icons.visibility_rounded
-                          : Icons.visibility_off_rounded,
+                          ? Icons.visibility_off_rounded
+                          : Icons.visibility_rounded,
                       size: 20.sp,
                     ),
                     onPressed: () {
@@ -173,9 +172,6 @@ class _LoginFormState extends State<LoginForm> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return t.t('login.no_password');
-                  }
-                  if (value.length < 8 || !_passwordRegex.hasMatch(value)) {
-                    return t.t('login.invalid_password');
                   }
                   return null;
                 },

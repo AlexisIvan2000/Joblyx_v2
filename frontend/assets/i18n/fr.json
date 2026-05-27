@@ -8,7 +8,9 @@
     },
 
     "home": {
-        "greeting": "Bonjour",
+        "greeting_morning": "Bonjour",
+        "greeting_afternoon": "Bonjour",
+        "greeting_evening": "Bonsoir",
         "progress_title": "PROGRESSION ROADMAP",
         "actions_label": "actions",
         "skills_acquired": "skills acquis",
@@ -161,7 +163,7 @@
         "email_required": "L'email est requis",
         "email_invalid": "Veuillez entrer un email valide",
         "no_password": "Le mot de passe est requis",
-        "invalid_password": "Le mot de passe doit comporter au moins 8 caractères\net contenir au moins un caractère spécial"
+        "invalid_password": "Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule et un caractère spécial"
 
     },
 
@@ -180,9 +182,8 @@
         "email_required": "L'email est requis",
         "email_invalid": "Veuillez entrer un email valide",
         "no_password": "Le mot de passe est requis",
-        "invalid_password": "Le mot de passe doit comporter au moins 8 caractères\net contenir au moins un caractère spécial"
-
-
+        "invalid_password": "Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule et un caractère spécial",
+        "password_hint": "Min. 8 caractères, une majuscule, une minuscule et un caractère spécial"
     },
 
     "verify_email": {
@@ -212,6 +213,12 @@
         "wrong_current_password": "Le mot de passe actuel est incorrect",
         "same_password": "Le nouveau mot de passe doit être différent de l'actuel",
         "invalid_password": "Mot de passe invalide",
+        "weak_password": "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un caractère spécial",
+        "password_too_short": "Le mot de passe doit contenir au moins 8 caractères",
+        "password_too_long": "Le mot de passe ne doit pas dépasser 72 caractères",
+        "password_missing_uppercase": "Le mot de passe doit contenir au moins une majuscule",
+        "password_missing_lowercase": "Le mot de passe doit contenir au moins une minuscule",
+        "password_missing_special": "Le mot de passe doit contenir au moins un caractère spécial",
         "session_expired": "Votre session a expiré. Veuillez vous reconnecter",
         "user_not_found": "Utilisateur introuvable",
         "no_fields_to_update": "Aucun champ à mettre à jour",
@@ -551,7 +558,7 @@
         "code_invalid": "Le code doit contenir 6 chiffres",
         "new_password": "Nouveau mot de passe",
         "password_required": "Le mot de passe est requis",
-        "password_weak": "Au moins 8 caractères avec un caractère spécial",
+        "password_weak": "Min. 8 caractères, une majuscule, une minuscule et un caractère spécial",
         "reset_button": "Réinitialiser",
         "resend_code": "Renvoyer le code",
         "success": "Mot de passe réinitialisé avec succès. Vous pouvez vous connecter."
@@ -572,7 +579,7 @@
         "current_password": "Mot de passe actuel",
         "new_password": "Nouveau mot de passe",
         "confirm_password": "Confirmer le nouveau mot de passe",
-        "password_rules": "Min. 8 caractères avec un caractère spécial",
+        "password_rules": "Min. 8 caractères, une majuscule, une minuscule et un caractère spécial",
         "passwords_mismatch": "Les mots de passe ne correspondent pas",
         "password_changed": "Mot de passe modifié avec succès",
         "set_password": "Définir un mot de passe",
@@ -622,6 +629,12 @@
     "settings_error": {
         "wrong_password": "Le mot de passe actuel est incorrect",
         "invalid_password": "Format de mot de passe invalide",
+        "weak_password": "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un caractère spécial",
+        "password_too_short": "Le mot de passe doit contenir au moins 8 caractères",
+        "password_too_long": "Le mot de passe ne doit pas dépasser 72 caractères",
+        "password_missing_uppercase": "Le mot de passe doit contenir au moins une majuscule",
+        "password_missing_lowercase": "Le mot de passe doit contenir au moins une minuscule",
+        "password_missing_special": "Le mot de passe doit contenir au moins un caractère spécial",
         "email_taken": "Cet email est déjà utilisé",
         "no_pending_change": "Aucun changement d'email en attente",
         "no_change_code": "Aucun code de vérification trouvé",
