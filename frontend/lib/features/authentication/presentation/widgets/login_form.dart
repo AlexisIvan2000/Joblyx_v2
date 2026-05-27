@@ -7,6 +7,7 @@ import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
 import 'package:frontend/features/authentication/presentation/widgets/verify_email_dialog.dart';
 import 'package:frontend/features/authentication/presentation/widgets/forgot_password_dialog.dart';
+import 'package:frontend/features/authentication/presentation/widgets/admin_only_dialog.dart';
 import 'package:frontend/core/utils/haptic.dart';
 
 class LoginForm extends StatefulWidget {
@@ -67,6 +68,9 @@ class _LoginFormState extends State<LoginForm> {
         if (verified) {
           context.go('/dashboard');
         }
+      } else if (e.key == 'auth_error.admin_only') {
+        // Compte super_admin : réservé au panel admin
+        await showAdminOnlyDialog(context);
       } else {
         final t = AppLocalizations.of(context);
         AppSnackbar.error(context, t.t(e.key));

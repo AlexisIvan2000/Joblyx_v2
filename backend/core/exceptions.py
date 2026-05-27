@@ -97,6 +97,14 @@ class CannotModifyAdmin(ForbiddenError):
     default_message = "Only a super admin can modify another admin account"
 
 
+class CannotModifySuperAdmin(ForbiddenError):
+    default_message = "The super admin account is locked and cannot be modified via the API"
+
+
+class CannotDeleteSuperAdmin(ForbiddenError):
+    default_message = "The super admin account cannot be deleted"
+
+
 class CannotModifyFounder(ForbiddenError):
     default_message = "The founder account is locked and cannot be modified via the panel"
 

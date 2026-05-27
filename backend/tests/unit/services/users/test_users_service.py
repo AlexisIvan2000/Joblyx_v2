@@ -6,7 +6,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from core.exceptions import (
+    CannotDeleteSuperAdmin,
     EmailAlreadyInUse,
+    EmailMismatch,
     IncorrectCurrentPassword,
     IncorrectPassword,
     InvalidOrExpiredResetCode,
@@ -192,6 +194,33 @@ class TestConfirmEmailChange:
         mock_auth_repo.get_user_by_id.return_value = maxed_out
         with pytest.raises(TooManyVerificationAttempts):
             await user_service.confirm_email_change(FAKE_USER_ID, FAKE_OTP_CODE)
+
+
+class TestDeleteAccount:
+    @pytest.mark.asyncio
+    async def test_super_admin_cannot_be_deleted(self, user_service, mock_auth_repo):
+        super_admin = _make_user_obj(email="super@joblyx.com", role="super_admin")
+        mock_auth_repo.get_user_by_id.return_value = super_admin
+        # Même avec l'email correct, le super_admin est verrouillé
+        with pytest.raises(CannotDeleteSuperAdmin):
+            await user_service.delete_account(FAKE_USER_ID, "super@joblyx.com")
+        mock_auth_repo.delete_user.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_user_can_delete_own_account(self, user_service, mock_auth_repo):
+        user = _make_user_obj(email="john@example.com", role="user")
+        mock_auth_repo.get_user_by_id.return_value = user
+        result = await user_service.delete_account(FAKE_USER_ID, "john@example.com")
+        assert "deleted" in result["message"].lower()
+        mock_auth_repo.delete_user.assert_called_once_with(FAKE_USER_ID)
+
+    @pytest.mark.asyncio
+    async def test_email_mismatch_raises(self, user_service, mock_auth_repo):
+        user = _make_user_obj(email="john@example.com", role="user")
+        mock_auth_repo.get_user_by_id.return_value = user
+        with pytest.raises(EmailMismatch):
+            await user_service.delete_account(FAKE_USER_ID, "wrong@example.com")
+        mock_auth_repo.delete_user.assert_not_called()
 
 
 class TestRequestEmailChange:

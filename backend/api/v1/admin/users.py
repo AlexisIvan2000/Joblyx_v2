@@ -252,7 +252,7 @@ async def update_user_role(
 @router.delete("/users/{user_id}")
 async def delete_user(
     user_id: str,
-    admin: User = Depends(require_admin),
+    admin: User = Depends(require_super_admin),
     svc: AdminUsersService = Depends(get_admin_users_service),
     r2: R2Service = Depends(get_r2_service),
     session: AsyncSession = Depends(get_db_session),

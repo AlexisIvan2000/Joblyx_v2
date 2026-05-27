@@ -6,9 +6,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/core/utils/jwt_utils.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
+import 'package:frontend/features/authentication/presentation/widgets/admin_only_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const _linkedInClientId = String.fromEnvironment(
@@ -82,6 +84,13 @@ class _FirstPageState extends State<FirstPage> {
     final accessToken = uri.queryParameters['access_token'];
     final refreshToken = uri.queryParameters['refresh_token'];
     if (accessToken == null || refreshToken == null) return;
+
+    // Le super_admin est réservé au panel admin : on ne stocke aucun token
+    if (isSuperAdminToken(accessToken)) {
+      if (mounted) await showAdminOnlyDialog(context);
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
 
     await AuthService().saveLinkedInTokens(
       accessToken: accessToken,

@@ -258,7 +258,10 @@
         "account_banned": "Your account has been deactivated. Contact support",
         "email_mismatch": "Email does not match your account",
         "password_already_set": "This account already has a password",
-        "conflict": "This action conflicts with the current state"
+        "conflict": "This action conflicts with the current state",
+        "admin_only_title": "Administrator account",
+        "admin_only": "This account is reserved for administration. Use the admin panel to sign in.",
+        "admin_only_action": "OK"
     },
 
     "onboarding": {

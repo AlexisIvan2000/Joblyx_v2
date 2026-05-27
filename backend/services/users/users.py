@@ -20,6 +20,7 @@ from core.exceptions import (
     EmailAlreadyInUse,
     UserNotFound,
     NoFieldsToUpdate,
+    CannotDeleteSuperAdmin,
 )
 from core.security import Security
 from core.password import validate_password
@@ -168,6 +169,10 @@ class UserService:
         db_user = await self.repo.get_user_by_id(user_id)
         if not db_user:
             raise UserNotFound()
+
+        # Le super_admin est unique et ne peut jamais être supprimé, même par lui-même
+        if db_user.role == "super_admin":
+            raise CannotDeleteSuperAdmin()
 
         if db_user.email != email_confirmation:
             raise EmailMismatch()

@@ -4,10 +4,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from core.exceptions import (
-    CannotModifyAdmin,
     CannotModifyFounder,
+    CannotModifySuperAdmin,
     CannotPromoteToSuperAdmin,
-    ValidationError,
 )
 from services.admin import users_service as users_service_module
 from services.admin.users_service import AdminUsersService
@@ -54,7 +53,7 @@ class TestFounderProtection:
         admin_users_service.audit_repo.create.assert_not_called()
 
 
-# 2. _check_can_modify bloque les actions sur un super_admin par un admin non super
+# 2. _check_can_modify bloque toute action sur un super_admin, quel que soit l'appelant
 
 class TestSuperAdminProtection:
     @pytest.mark.asyncio
@@ -66,8 +65,8 @@ class TestSuperAdminProtection:
         )
         admin_users_service.admin_repo.get_user.return_value = target
 
-        # Un admin classique (caller_role="admin") ne peut pas toucher un super_admin
-        with pytest.raises(CannotModifyAdmin):
+        # Un admin classique ne peut pas toucher un super_admin
+        with pytest.raises(CannotModifySuperAdmin):
             await admin_users_service.set_user_status(
                 str(target.id), is_active=False, reason=None,
                 admin_id="admin-id", caller_role="admin",
@@ -76,24 +75,23 @@ class TestSuperAdminProtection:
         admin_users_service.admin_repo.set_user_status.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_super_admin_can_modify_other_super_admin(self, admin_users_service):
-        """Vérifie que le guard ne bloque PAS un super_admin appelant sur un autre super_admin
-        (utile pour révoquer un compte super_admin compromis, hors founder)."""
+    async def test_super_admin_cannot_modify_other_super_admin(self, admin_users_service):
+        """Policy : un super_admin est immuable via l'API, même appelé par un autre super_admin.
+        La récupération d'un compte super_admin compromis passe uniquement par SQL direct."""
         target = _make_user_obj(
             id=uuid.UUID("33333333-3333-3333-3333-333333333333"),
             email="another-super@joblyx.com",
             role="super_admin",
         )
         admin_users_service.admin_repo.get_user.return_value = target
-        admin_users_service.admin_repo.set_user_status.return_value = target
 
-        # Ne doit pas lever
-        await admin_users_service.set_user_status(
-            str(target.id), is_active=False, reason=None,
-            admin_id="super-id", caller_role="super_admin",
-        )
-        admin_users_service.admin_repo.set_user_status.assert_called_once()
-        admin_users_service.audit_repo.create.assert_called_once()
+        with pytest.raises(CannotModifySuperAdmin):
+            await admin_users_service.set_user_status(
+                str(target.id), is_active=False, reason=None,
+                admin_id="super-id", caller_role="super_admin",
+            )
+        admin_users_service.admin_repo.set_user_status.assert_not_called()
+        admin_users_service.audit_repo.create.assert_not_called()
 
 
 # 3. update_user_role refuse la promotion vers super_admin
@@ -114,7 +112,8 @@ class TestRolePromotionGuard:
         admin_users_service.audit_repo.create.assert_not_called()
 
 
-# 4. update_user_role refuse la self modification
+# 4. update_user_role : un super_admin se ciblant lui-même est bloqué par l'immuabilité
+#    (le check self devient inatteignable car l'appelant est toujours super_admin)
 
 class TestSelfModificationGuard:
     @pytest.mark.asyncio
@@ -126,14 +125,64 @@ class TestSelfModificationGuard:
         )
         admin_users_service.admin_repo.get_user.return_value = admin
 
-        # On essaie de se rétrograder soi-même, doit lever
-        with pytest.raises(ValidationError, match="own role"):
+        with pytest.raises(CannotModifySuperAdmin):
             await admin_users_service.update_user_role(
                 str(admin.id), new_role="admin",
                 admin_id=str(admin.id),
             )
 
         admin_users_service.admin_repo.update_user_role.assert_not_called()
+
+
+# 6. update_user_role verrouille le rôle super_admin et coupe les sessions en cas de rétrogradation
+
+class TestRoleChangeProtection:
+    @pytest.mark.asyncio
+    async def test_cannot_change_super_admin_role(self, admin_users_service):
+        target = _make_user_obj(
+            id=uuid.UUID("55555555-5555-5555-5555-555555555555"),
+            email="super@joblyx.com",
+            role="super_admin",
+        )
+        admin_users_service.admin_repo.get_user.return_value = target
+
+        with pytest.raises(CannotModifySuperAdmin):
+            await admin_users_service.update_user_role(
+                str(target.id), new_role="admin", admin_id="other-super-id",
+            )
+        admin_users_service.admin_repo.update_user_role.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_demotion_admin_to_user_revokes_refresh_tokens(self, admin_users_service):
+        target = _make_user_obj(
+            id=uuid.UUID("66666666-6666-6666-6666-666666666666"),
+            email="admin@joblyx.com",
+            role="admin",
+        )
+        admin_users_service.admin_repo.get_user.return_value = target
+        admin_users_service.admin_repo.update_user_role.return_value = target
+
+        await admin_users_service.update_user_role(
+            str(target.id), new_role="user", admin_id="super-id",
+        )
+        # Perte de privilèges : toutes les sessions sont révoquées
+        admin_users_service.rt_repo.revoke_all_for_user.assert_called_once_with(str(target.id))
+
+    @pytest.mark.asyncio
+    async def test_promotion_user_to_admin_does_not_revoke(self, admin_users_service):
+        target = _make_user_obj(
+            id=uuid.UUID("77777777-7777-7777-7777-777777777777"),
+            email="user@joblyx.com",
+            role="user",
+        )
+        admin_users_service.admin_repo.get_user.return_value = target
+        admin_users_service.admin_repo.update_user_role.return_value = target
+
+        await admin_users_service.update_user_role(
+            str(target.id), new_role="admin", admin_id="super-id",
+        )
+        # Promotion : aucune révocation
+        admin_users_service.rt_repo.revoke_all_for_user.assert_not_called()
 
 
 # 5. delete_user empêche la suppression du founder

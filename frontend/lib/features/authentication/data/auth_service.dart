@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/core/utils/jwt_utils.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
 import 'package:frontend/features/authentication/domain/auth_failure.dart';
 
@@ -66,6 +67,10 @@ class AuthService {
         'email': email,
         'password': password,
       });
+      // Le super_admin est réservé au panel admin : on ne stocke aucun token
+      if (response.data['role'] == kSuperAdminRole) {
+        throw AuthException('auth_error.admin_only', statusCode: 403);
+      }
       await _storage.saveTokens(
         accessToken: response.data['access_token'],
         refreshToken: response.data['refresh_token'],

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:frontend/core/utils/jwt_utils.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
+import 'package:frontend/features/authentication/presentation/widgets/admin_only_dialog.dart';
 import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
 import 'package:frontend/features/roadmap/presentation/providers/roadmap_provider.dart';
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
@@ -45,6 +47,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (!mounted) return;
 
     if (hasTokens) {
+      // Le super_admin est réservé au panel admin : déconnexion automatique
+      final accessToken = await AuthStorage().getAccessToken();
+      if (isSuperAdminToken(accessToken)) {
+        await AuthStorage().clearTokens();
+        if (!mounted) return;
+        await showAdminOnlyDialog(context);
+        if (!mounted) return;
+        context.go('/first-page');
+        return;
+      }
+      if (!mounted) return;
+
       // Pré-charger tous les providers pour éviter les chargements sur les écrans
       ref.read(userProvider);
       ref.read(roadmapProvider);

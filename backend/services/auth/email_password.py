@@ -84,7 +84,8 @@ class EmailPasswordAuth:
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "role": db_user.role,
         }
 
     async def verify_email(self, email: str, code: str):
@@ -118,7 +119,8 @@ class EmailPasswordAuth:
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "role": db_user.role,
         }
 
     async def resend_verification_email(self, email: str):
@@ -163,7 +165,8 @@ class EmailPasswordAuth:
         return {
             "access_token": new_access_token,
             "refresh_token": new_refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "role": role,
         }
 
     async def logout_user(self, refresh_token: str):
