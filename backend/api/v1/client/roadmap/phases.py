@@ -19,7 +19,7 @@ async def add_phase(
     return phase_to_dict(phase)
 
 
-# Doit être déclarée avant /phases/{phase_id} sinon "reorder" est capturé comme phase_id
+
 @router.put("/phases/reorder")
 async def reorder_phases(
     body: PhaseReorder,
