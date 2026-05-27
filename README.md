@@ -161,7 +161,7 @@ Version courante : `1.0.2+7`. Le `super_admin` est refusé à la connexion sur m
 
 ---
 
-## Panel-admin — Console d'administration
+## Panel-admin  Console d'administration
 
 ### Stack
 
