@@ -33,6 +33,28 @@
         "add_application": "Add an application"
     },
 
+    "tutorial": {
+        "nav_home_title": "Home",
+        "nav_home_desc": "Your dashboard: progress, stats and shortcuts.",
+        "nav_roadmap_title": "Roadmap",
+        "nav_roadmap_desc": "Your personalized career plan, step by step.",
+        "nav_applications_title": "Applications",
+        "nav_applications_desc": "Track your applications and their status.",
+        "nav_assistant_title": "AI Assistant",
+        "nav_assistant_desc": "AI-powered CV analysis and mock interviews.",
+        "nav_profile_title": "Profile",
+        "nav_profile_desc": "Your info, skills and settings.",
+        "stats_title": "Your stats",
+        "stats_desc": "Active applications, interviews and regenerations at a glance.",
+        "roadmap_title": "Your roadmap",
+        "roadmap_desc": "Create and follow your personalized career plan.",
+        "phase_title": "Current phase",
+        "phase_desc": "The step to focus on right now.",
+        "next": "Next",
+        "skip": "Skip",
+        "finish": "Done"
+    },
+
     "applications_screen": {
         "title": "Applications",
         "filter_all": "All",
@@ -610,6 +632,9 @@
         "theme_light": "Light",
         "theme_dark": "Dark",
         "theme_system": "System",
+        "section_help": "Help",
+        "replay_tutorial": "Replay tutorial",
+        "replay_tutorial_sub": "Rediscover how the app works",
         "section_legal": "Legal",
         "terms": "Terms of use",
         "privacy": "Privacy policy",

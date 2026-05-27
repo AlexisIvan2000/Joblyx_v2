@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
+import 'package:frontend/core/tutorial/tutorial_keys.dart';
 
 /// Shell avec bottom navigation pour les 4 onglets principaux.
 class MainShell extends StatefulWidget {
@@ -64,6 +65,7 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final t = AppLocalizations.of(context);
+    final keys = TutorialKeys.instance;
 
     final Widget body;
     if (_isAnimating && _inAnimation != null) {
@@ -101,26 +103,42 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
             destinations: [
               NavigationDestination(
                 icon: const Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded, color: cs.primary),
+                // L'onglet Home est sélectionné sur le dashboard, on cible donc l'icône active
+                selectedIcon: KeyedSubtree(
+                  key: keys.navHome,
+                  child: Icon(Icons.home_rounded, color: cs.primary),
+                ),
                 label: t.t('nav.home'),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.route_outlined),
+                icon: KeyedSubtree(
+                  key: keys.navRoadmap,
+                  child: const Icon(Icons.route_outlined),
+                ),
                 selectedIcon: Icon(Icons.route_rounded, color: cs.primary),
                 label: t.t('nav.roadmap'),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.work_outline_rounded),
+                icon: KeyedSubtree(
+                  key: keys.navApplications,
+                  child: const Icon(Icons.work_outline_rounded),
+                ),
                 selectedIcon: Icon(Icons.work_rounded, color: cs.primary),
                 label: t.t('nav.applications'),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.auto_awesome_outlined),
+                icon: KeyedSubtree(
+                  key: keys.navAssistant,
+                  child: const Icon(Icons.auto_awesome_outlined),
+                ),
                 selectedIcon: Icon(Icons.auto_awesome_rounded, color: cs.primary),
                 label: t.t('nav.assistant'),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.person_outline_rounded),
+                icon: KeyedSubtree(
+                  key: keys.navProfile,
+                  child: const Icon(Icons.person_outline_rounded),
+                ),
                 selectedIcon: Icon(Icons.person_rounded, color: cs.primary),
                 label: t.t('nav.profile'),
               ),

@@ -10,12 +10,34 @@ import 'package:frontend/features/roadmap/presentation/widgets/dashboard_widgets
 import 'package:frontend/features/applications/presentation/providers/applications_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:frontend/features/settings/presentation/providers/user_provider.dart';
+import 'package:frontend/core/tutorial/tutorial_keys.dart';
+import 'package:frontend/core/tutorial/feature_tour.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _tourScheduled = false;
+
+  // Déclenche le tour guidé une seule fois, après le rendu du contenu réel
+  void _scheduleTourIfNeeded() {
+    if (_tourScheduled) return;
+    _tourScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (await hasSeenTour()) return;
+      if (!mounted) return;
+      showFeatureTour(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final keys = TutorialKeys.instance;
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final t = AppLocalizations.of(context);
@@ -34,6 +56,8 @@ class DashboardScreen extends ConsumerWidget {
     final roadmap = roadmapState.roadmap;
 
     if (roadmapState.isLoading) return const DashboardSkeleton();
+
+    _scheduleTourIfNeeded();
 
     // Calculs de progression
     final phases = (roadmap?['phases'] as List?) ?? [];
@@ -144,6 +168,7 @@ class DashboardScreen extends ConsumerWidget {
             StaggeredList(
               children: [
                 Padding(
+                  key: keys.roadmapCard,
                   padding: EdgeInsets.only(bottom: 20.h),
                   child: roadmap != null
                       ? ProgressCard(
@@ -164,6 +189,7 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                 ),
                 Padding(
+                  key: keys.statsCard,
                   padding: EdgeInsets.only(bottom: 24.h),
                   child: Row(
                     children: [
@@ -194,6 +220,7 @@ class DashboardScreen extends ConsumerWidget {
                     onAction: () => context.go('/roadmap'),
                   ),
                   Padding(
+                    key: keys.currentPhase,
                     padding: EdgeInsets.only(top: 8.h, bottom: 24.h),
                     child: CurrentPhaseCard(
                         phase: currentPhase,

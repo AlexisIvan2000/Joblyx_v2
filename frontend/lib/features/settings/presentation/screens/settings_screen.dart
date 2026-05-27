@@ -9,6 +9,7 @@ import 'package:frontend/core/utils/haptic.dart';
 import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
 import 'package:frontend/features/settings/presentation/utils/invalidate_providers.dart';
 import 'package:frontend/core/widgets/staggered_list.dart';
+import 'package:frontend/core/tutorial/feature_tour.dart';
 
 const _termsUrl = 'https://joblyx.com/conditions-utilisation';
 const _privacyUrl = 'https://joblyx.com/politiques-confidentialit%C3%A9';
@@ -58,7 +59,27 @@ class SettingsScreen extends ConsumerWidget {
 
           SizedBox(height: 20.h),
 
-          //  Légal 
+          // Aide
+          _SectionTitle(label: t.t('settings.section_help')),
+          SizedBox(height: 6.h),
+
+          _MenuItem(
+            icon: Icons.school_outlined,
+            iconColor: const Color(0xFF0D9488),
+            title: t.t('settings.replay_tutorial'),
+            subtitle: t.t('settings.replay_tutorial_sub'),
+            cs: cs,
+            onTap: () async {
+              Haptic.medium();
+              await resetTour();
+              if (!context.mounted) return;
+              context.go('/dashboard');
+            },
+          ),
+
+          SizedBox(height: 20.h),
+
+          //  Légal
           _SectionTitle(label: t.t('settings.section_legal')),
           SizedBox(height: 6.h),
 

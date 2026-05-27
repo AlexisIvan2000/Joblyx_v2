@@ -33,6 +33,28 @@
         "add_application": "Ajouter une candidature"
     },
 
+    "tutorial": {
+        "nav_home_title": "Accueil",
+        "nav_home_desc": "Votre tableau de bord : progression, statistiques et raccourcis.",
+        "nav_roadmap_title": "Roadmap",
+        "nav_roadmap_desc": "Votre plan de carrière personnalisé, étape par étape.",
+        "nav_applications_title": "Candidatures",
+        "nav_applications_desc": "Suivez vos candidatures et leur statut.",
+        "nav_assistant_title": "Assistant IA",
+        "nav_assistant_desc": "Analyse de CV et entretiens simulés par l'IA.",
+        "nav_profile_title": "Profil",
+        "nav_profile_desc": "Vos informations, compétences et paramètres.",
+        "stats_title": "Vos statistiques",
+        "stats_desc": "Candidatures actives, entretiens et régénérations en un coup d'œil.",
+        "roadmap_title": "Votre roadmap",
+        "roadmap_desc": "Créez et suivez votre plan de carrière personnalisé.",
+        "phase_title": "Phase en cours",
+        "phase_desc": "L'étape sur laquelle vous concentrer maintenant.",
+        "next": "Suivant",
+        "skip": "Passer",
+        "finish": "Terminer"
+    },
+
     "applications_screen": {
         "title": "Candidatures",
         "filter_all": "Toutes",
@@ -612,6 +634,9 @@
         "theme_light": "Clair",
         "theme_dark": "Sombre",
         "theme_system": "Système",
+        "section_help": "Aide",
+        "replay_tutorial": "Revoir le tutoriel",
+        "replay_tutorial_sub": "Redécouvrez les fonctionnalités de l'app",
         "section_legal": "Légal",
         "terms": "Conditions d'utilisation",
         "privacy": "Politique de confidentialité",
