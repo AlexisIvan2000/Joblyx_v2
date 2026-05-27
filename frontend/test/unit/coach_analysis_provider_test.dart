@@ -33,6 +33,40 @@ class _FakeCoachService extends CoachService {
   Future<List<Map<String, dynamic>>> getHistory() async => [];
 }
 
+/// Service coach factice qui émet un chunk puis se bloque jusqu'à l'annulation.
+class _CancellableCoachService extends CoachService {
+  _CancellableCoachService()
+      : super.withDio(Dio(BaseOptions(baseUrl: 'http://test')));
+
+  CancelToken? receivedToken;
+
+  @override
+  Stream<Map<String, dynamic>> analyzeStream({
+    required String cvPath,
+    required String jobDescription,
+    String? jobTitle,
+    String? companyName,
+    String language = 'fr',
+    CancelToken? cancelToken,
+  }) async* {
+    receivedToken = cancelToken;
+    yield {'event': 'chunk', 'data': {'text': 'partiel'}};
+    // Reste en attente jusqu'à ce que le notifier annule le token
+    await cancelToken!.whenCancel;
+    throw DioException(
+      requestOptions: RequestOptions(path: '/assistant/coach/analyze'),
+      type: DioExceptionType.cancel,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> getUsage() async =>
+      {'used': 0, 'limit': 3, 'remaining': 3};
+
+  @override
+  Future<List<Map<String, dynamic>>> getHistory() async => [];
+}
+
 ProviderContainer _container(List<Map<String, dynamic>> events) {
   final container = ProviderContainer(
     overrides: [coachServiceProvider.overrideWithValue(_FakeCoachService(events))],
@@ -86,6 +120,30 @@ void main() {
       expect(state.status, 'idle');
       expect(state.analysis, isNull);
       expect(state.streamingText, isEmpty);
+    });
+  });
+
+  group('CoachAnalysisNotifier.cancel', () {
+    test('annule le stream sans erreur et sans passer à done', () async {
+      final svc = _CancellableCoachService();
+      final container = ProviderContainer(
+        overrides: [coachServiceProvider.overrideWithValue(svc)],
+      );
+      addTearDown(container.dispose);
+      final notifier = container.read(coachAnalysisProvider.notifier);
+
+      // Démarre sans attendre, puis annule pendant le streaming
+      final future = notifier.analyze(cvPath: 'cv.pdf', jobDescription: 'desc');
+      await Future.delayed(const Duration(milliseconds: 20));
+      notifier.cancel();
+
+      // Le Future se termine proprement : l'annulation est avalée, pas de throw
+      await future;
+
+      expect(svc.receivedToken, isNotNull);
+      expect(svc.receivedToken!.isCancelled, isTrue);
+      // N'a jamais atteint l'analyse complète
+      expect(container.read(coachAnalysisProvider).status, isNot('done'));
     });
   });
 }
