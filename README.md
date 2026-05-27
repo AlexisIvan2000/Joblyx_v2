@@ -1,6 +1,6 @@
 # Joblyx
 
-Assistant de carrière IA pour les professionnels de la tech : génération de **roadmaps de carrière** personnalisées, **coach CV** (analyse de compatibilité offre/CV), **simulateur d'entretien**, et **suivi de candidatures** — le tout propulsé par l'IA.
+Assistant de carrière IA pour les professionnels de la tech : génération de **roadmaps de carrière** personnalisées, **coach CV** (analyse de compatibilité offre/CV), **simulateur d'entretien**, et **suivi de candidatures**  le tout propulsé par l'IA.
 
 Le projet est un **monorepo** à trois composants :
 
