@@ -1,11 +1,10 @@
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 from models.schemas import UserCreate, UserLogin
 from core.security import Security
+from core.password import validate_password
 from core.exceptions import (
-    WeakPassword,
     EmailAlreadyRegistered,
     InvalidCredentials,
     LinkedInOnlyAccount,
@@ -24,7 +23,6 @@ from services.emailing.otp_service import OtpService
 from datetime import datetime, timedelta, timezone
 
 MAX_VERIFICATION_ATTEMPTS = 5
-_PASSWORD_SPECIAL = re.compile(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''')
 
 
 class EmailPasswordAuth:
@@ -34,9 +32,7 @@ class EmailPasswordAuth:
         self.otp_svc = otp_service
 
     async def register_user(self, user: UserCreate):
-        # Validation mot de passe côté serveur
-        if len(user.password) < 8 or not _PASSWORD_SPECIAL.search(user.password):
-            raise WeakPassword()
+        validate_password(user.password)
 
         if await self.repo.get_user_by_email(user.email):
             raise EmailAlreadyRegistered()

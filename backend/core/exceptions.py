@@ -1,12 +1,4 @@
-"""Exceptions métier centralisées — chaque cas d'erreur de l'API a sa propre classe.
-
-Les services lèvent ces exceptions sans argument (sauf cas paramétrés).
-Le handler global dans app.py les traduit en réponses HTTP JSON normalisées.
-"""
-
-
 class DomainError(Exception):
-    # Erreur métier de base traduite en réponse HTTP par le handler global
     status_code: int = 500
     error_code: str = "internal_error"
     default_message: str = "An internal error occurred"
@@ -83,7 +75,7 @@ class UserBanned(ForbiddenError):
     default_message = "Your account has been banned"
 
 
-# Admin — protection des endpoints /v1/admin/*
+# Admin  protection des endpoints /v1/admin/*
 
 class AdminAccessRequired(ForbiddenError):
     default_message = "Admin privileges required"
@@ -121,6 +113,10 @@ class InvalidRefreshToken(UnauthorizedError):
     default_message = "Invalid or expired refresh token"
 
 
+class InvalidToken(UnauthorizedError):
+    default_message = "Invalid or expired token"
+
+
 class LinkedInAuthFailed(UnauthorizedError):
     default_message = "Failed to authenticate with LinkedIn"
 
@@ -136,7 +132,7 @@ class LinkedInMissingEmail(ValidationError):
 # Mots de passe
 
 class WeakPassword(ValidationError):
-    default_message = "Password must be at least 8 characters with a special character"
+    default_message = "Password must be at least 8 characters with one uppercase, one lowercase and one special character"
 
     def __init__(self, message: str | None = None, *, details: dict | None = None):
         super().__init__(message, details=details or {"field": "password"})
@@ -144,6 +140,18 @@ class WeakPassword(ValidationError):
 
 class PasswordTooShort(WeakPassword):
     default_message = "Password must be at least 8 characters"
+
+
+class PasswordTooLong(WeakPassword):
+    default_message = "Password must not exceed 72 bytes"
+
+
+class PasswordMissingUppercase(WeakPassword):
+    default_message = "Password must contain at least one uppercase letter"
+
+
+class PasswordMissingLowercase(WeakPassword):
+    default_message = "Password must contain at least one lowercase letter"
 
 
 class PasswordMissingSpecial(WeakPassword):
@@ -306,6 +314,10 @@ class InterviewDailyLimitReached(RateLimitError):
     default_message = "Daily interview session limit reached"
 
 
+class InterviewNotCompleted(ValidationError):
+    default_message = "Interview not completed yet"
+
+
 # Validation titre de poste
 
 class JobTitleRequired(ValidationError):
@@ -334,3 +346,13 @@ class JobTitleNotIT(ValidationError):
 
     def __init__(self, message: str | None = None, *, details: dict | None = None):
         super().__init__(message, details=details or {"field": "job_title"})
+
+
+# Uploads de fichiers
+
+class InvalidFileType(ValidationError):
+    default_message = "Unsupported file type"
+
+
+class FileTooLarge(ValidationError):
+    default_message = "File too large"

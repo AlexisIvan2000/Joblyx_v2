@@ -18,6 +18,8 @@ os.environ.setdefault("R2_SECRET_ACCESS_KEY", "fake-r2-secret")
 os.environ.setdefault("R2_ENDPOINT_URL", "https://fake.r2.cloudflarestorage.com")
 os.environ.setdefault("R2_BUCKET_NAME_RESUMES", "test-cvs")
 os.environ.setdefault("R2_BUCKET_NAME_IMAGES", "test-avatars")
+# Désactive Sentry en test pour ne pas envoyer d'events réels
+os.environ["SENTRY_DSN"] = ""
 
 import pytest
 from datetime import datetime, timedelta, timezone
@@ -179,7 +181,7 @@ def _patch_config(monkeypatch):
 def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_user_dict):
     from fastapi.testclient import TestClient
     from app import app
-    from api.dependencies import get_auth_service, get_user_service, get_current_user, get_roadmap_service, get_application_service
+    from api.v1.client.dependencies import get_auth_service, get_user_service, get_current_user, get_roadmap_service, get_application_service
     from services.auth.email_password import EmailPasswordAuth
     from services.users.users import UserService
 

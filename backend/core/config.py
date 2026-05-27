@@ -32,6 +32,7 @@ else:
     DATABASE_URL = _raw_db_url
 
 
+
 OPENAI_API_KEY = _require("OPENAI_API_KEY")
 OPENAI_MODEL_PRIMARY = "gpt-4o"        # Roadmap génération uniquement
 OPENAI_MODEL_FAST = "gpt-4o-mini"      # Coach, simulateur, extraction skills

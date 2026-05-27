@@ -67,11 +67,9 @@ class AdminUsersService:
             role=role, is_active=is_active, verified=verified, search=search,
         )
 
-        # Une query stats par user (acceptable jusqu'à ~50 users par page)
-        users_with_stats = []
-        for u in users:
-            stats = await self.admin_repo.get_user_stats(str(u.id))
-            users_with_stats.append({"user": u, "stats": stats})
+        # Stats agrégées en lot pour éviter le N+1 sur la page
+        stats_by_id = await self.admin_repo.get_user_stats_bulk([str(u.id) for u in users])
+        users_with_stats = [{"user": u, "stats": stats_by_id[str(u.id)]} for u in users]
 
         return {
             "users": users_with_stats,

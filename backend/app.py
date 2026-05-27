@@ -45,18 +45,14 @@ from slowapi.errors import RateLimitExceeded
 from core.rate_limit import limiter
 from core.database import engine
 from core.exceptions import DomainError
-from api.routers.auth import router as auth_router
-from api.routers.users import router as users_router
-from api.routers.roadmap import router as roadmap_router
-from api.routers.applications import router as applications_router
-from api.routers.assistant import router as assistant_router
 from api.v1 import v1_router
+from api.v1.client import router as client_router
+from api.middlewares import register_legacy_route_logger
 
 scheduler = AsyncIOScheduler()
 
-
+# Crée les tables si elles n'existent pas, puis applique les migrations Alembic.
 def _run_migrations():
-    """Crée les tables si elles n'existent pas, puis applique les migrations Alembic."""
     import subprocess
     from sqlalchemy import inspect, create_engine
     from core.config import DATABASE_URL
@@ -69,18 +65,15 @@ def _run_migrations():
     sync_engine.dispose()
 
     if "users" not in tables:
-        # Base vide — créer toutes les tables puis stamp à head
         logging.getLogger(__name__).info("Empty database detected, creating tables...")
         from models.db_models import Base
         from sqlalchemy import create_engine as ce
         eng = ce(sync_url)
         Base.metadata.create_all(eng)
         eng.dispose()
-        # Stamp pour qu'Alembic sache qu'on est à jour
         subprocess.run(["python", "-m", "alembic", "stamp", "head"], capture_output=True)
         logging.getLogger(__name__).info("Tables created and stamped at head")
     else:
-        # Base existante — appliquer les migrations
         result = subprocess.run(
             ["python", "-m", "alembic", "upgrade", "head"],
             capture_output=True, text=True,
@@ -188,27 +181,14 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-# API versionnée — toutes les nouvelles intégrations doivent pointer vers /v1/...
+# API versionnée, toutes les nouvelles intégrations doivent pointer vers /v1/...
 app.include_router(v1_router)
 
 # Compat legacy pour l'app mobile en production qui pointe vers la racine
-# À supprimer quand le mobile aura migré vers /v1/ (surveillé via le middleware ci-dessous)
-app.include_router(auth_router)
-app.include_router(users_router)
-app.include_router(roadmap_router)
-app.include_router(applications_router)
-app.include_router(assistant_router)
+# Caché de Swagger (include_in_schema=False), à retirer quand le mobile aura migré vers /v1/
+app.include_router(client_router, include_in_schema=False)
 
-
-# Logue les appels aux routes non-versionnées pour suivre la migration mobile
-@app.middleware("http")
-async def log_legacy_routes(request: Request, call_next):
-    path = request.url.path
-    if not path.startswith(("/v1/", "/health", "/docs", "/openapi", "/redoc")):
-        logging.getLogger(__name__).warning(
-            "LEGACY ROUTE: %s %s", request.method, path
-        )
-    return await call_next(request)
+register_legacy_route_logger(app)
 
 
 @app.get("/health")

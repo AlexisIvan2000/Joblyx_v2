@@ -9,9 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.config import OPENAI_MODEL_FAST
 from core.exceptions import (
     InterviewDailyLimitReached,
+    InvalidToken,
     SessionAlreadyCompleted,
     SessionNotFound,
 )
+from core.security import Security
 from repositories.interview_repository import InterviewRepository
 from services.ai.openai_client import tracked_completion, tracked_completion_stream
 from services.utils.text_cleaner import clean_cv_text
@@ -45,6 +47,21 @@ class InterviewService:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.repo = InterviewRepository(session)
+
+    async def authorize_websocket(self, session_id: str, token: str) -> str:
+        # Valide le token et l'état de la session, retourne l'user_id du candidat
+        payload = Security.decode_token(token)
+        if not payload or payload.get("type") != "access":
+            raise InvalidToken()
+        user_id = payload.get("sub")
+        if not user_id:
+            raise InvalidToken()
+        interview = await self.repo.get_session_by_id(session_id, user_id)
+        if not interview:
+            raise SessionNotFound()
+        if interview.status != "in_progress":
+            raise SessionAlreadyCompleted()
+        return user_id
 
     # ─── Usage ───────────────────────────────────────────────────
 

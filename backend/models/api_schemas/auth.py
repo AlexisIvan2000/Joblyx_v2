@@ -1,6 +1,4 @@
-import re
-
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr
 
 
 class UserCreate(BaseModel):
@@ -9,15 +7,6 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     avatar_url: str | None = None
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;\'`~]', v):
-            raise ValueError("Password must contain at least 1 special character")
-        return v
 
 
 class UserLogin(BaseModel):

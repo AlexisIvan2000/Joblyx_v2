@@ -4,7 +4,6 @@ import hashlib
 import json
 from datetime import datetime, timezone, timedelta
 
-import fitz  # PyMuPDF
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import OPENAI_MODEL_FAST
@@ -18,17 +17,10 @@ from services.ai.openai_client import tracked_completion_stream
 from services.coach.coach_prompt_builder import build_coach_prompt
 from services.storage.r2_service import R2Service
 from services.utils.text_cleaner import clean_cv_text
+from services.utils.pdf import extract_text_from_pdf
 
 WEEKLY_LIMIT = 3
 
-
-def _extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    text = ""
-    for page in doc:
-        text += page.get_text()
-    doc.close()
-    return text.strip()
 
 # Retourne le prochain lundi à minuit UTC.
 def _get_next_monday() -> datetime:
@@ -96,7 +88,7 @@ class CoachService:
             )
 
         # Extraire et nettoyer le texte du CV
-        cv_text = clean_cv_text(_extract_text_from_pdf(cv_bytes))
+        cv_text = clean_cv_text(extract_text_from_pdf(cv_bytes))
         if not cv_text:
             raise CvTextExtractionFailed()
 

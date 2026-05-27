@@ -131,6 +131,31 @@ class AdminRepository:
             "interview_sessions": int(interview.scalar() or 0),
         }
 
+    async def get_user_stats_bulk(self, user_ids: list[str]) -> dict[str, dict]:
+        # Agrège les compteurs de toute la page en 4 requêtes au lieu de 4 par user
+        stats = {
+            uid: {"applications": 0, "roadmaps": 0, "coach_sessions": 0, "interview_sessions": 0}
+            for uid in user_ids
+        }
+        if not user_ids:
+            return stats
+
+        for model, key in (
+            (Application, "applications"),
+            (Roadmap, "roadmaps"),
+            (CoachSession, "coach_sessions"),
+            (InterviewSession, "interview_sessions"),
+        ):
+            result = await self.session.execute(
+                select(model.user_id, func.count())
+                .where(model.user_id.in_(user_ids))
+                .group_by(model.user_id)
+            )
+            for uid, count in result.all():
+                stats[str(uid)][key] = int(count)
+
+        return stats
+
     # Stats globales (dashboard)
 
     async def count_users(

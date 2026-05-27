@@ -1,5 +1,9 @@
+import logging
 import os
 import httpx
+
+logger = logging.getLogger(__name__)
+
 
 class JSearchService:
     BASE_URL = "https://jsearch.p.rapidapi.com/search"
@@ -36,13 +40,13 @@ class JSearchService:
                 response.raise_for_status()
                 data = response.json()
                 jobs = data.get("data", [])
-                print(f"Fetched {len(jobs)} jobs for query '{query}' in location '{location}'")
+                logger.info("Fetched %d jobs for query=%s location=%s", len(jobs), query, location)
                 return jobs
             except httpx.HTTPStatusError as e:
-                print(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
+                logger.warning("JSearch HTTP error: status=%s", e.response.status_code)
                 return []
             except httpx.RequestError as e:
-                print(f"An error occurred while requesting: {e}")
+                logger.warning("JSearch request failed: %s", e)
                 return []
             
     async def get_job_descriptions(self, query: str, location: str = "", num_pages: int = 3) -> list[str]:
