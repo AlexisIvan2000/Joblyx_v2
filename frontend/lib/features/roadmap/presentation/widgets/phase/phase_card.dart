@@ -131,7 +131,7 @@ class _PhaseCardState extends State<PhaseCard>
 
   bool get _hasContextMenu => widget.onDeletePhase != null || widget.onEditNotes != null;
 
-  // ── Sous-widgets ────────────────────────────────────────────
+  // Sous widgets
 
   Widget _buildTimeline(ColorScheme cs, int number, bool completed) {
     final color = completed ? Colors.green : cs.primary;
@@ -247,7 +247,7 @@ class _PhaseCardState extends State<PhaseCard>
     );
   }
 
-  // ── Menu contextuel ─────────────────────────────────────────
+  //  Menu contextuel 
 
   void _showContextMenu(BuildContext context, ColorScheme cs, AppLocalizations t, int phaseNumber, String notes) {
     showModalBottomSheet(

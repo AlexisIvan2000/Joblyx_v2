@@ -1,11 +1,11 @@
-"""Tests pour le module services.ai.openai_client."""
+
 
 import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
 
-# ─── TestGenerateRoadmap ────────────────────────────────────────────────
+# TestGenerateRoadmap
 
 class TestGenerateRoadmap:
     """Tests pour generate_roadmap (version non-streaming)."""
@@ -81,7 +81,7 @@ class TestGenerateRoadmap:
                 await generate_roadmap("system", "user")
 
 
-# ─── TestGenerateRoadmapStream ──────────────────────────────────────────
+#  TestGenerateRoadmapStream 
 
 class TestGenerateRoadmapStream:
     """Tests pour generate_roadmap_stream (version streaming SSE)."""

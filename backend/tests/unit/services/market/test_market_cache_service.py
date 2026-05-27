@@ -1,4 +1,4 @@
-"""Tests pour services/market/market_cache_service.py."""
+
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -39,7 +39,7 @@ def service(mock_session, mock_jsearch, mock_extractor):
     return MarketCacheService(mock_session, mock_jsearch, mock_extractor)
 
 
-# ─── _build_predefined_combos ──────────────────────────────────────
+#  _build_predefined_combos
 
 class TestBuildPredefinedCombos:
     def test_returns_cartesian_product(self, service):
@@ -57,7 +57,7 @@ class TestBuildPredefinedCombos:
             assert (city, province) in cities_in_combos
 
 
-# ─── _get_career_combos ────────────────────────────────────────────
+#  _get_career_combos 
 
 class TestGetCareerCombos:
     @pytest.mark.asyncio
@@ -100,7 +100,7 @@ class TestGetCareerCombos:
         assert ("Developer", "Toronto", "ON") in combos
 
 
-# ─── _upsert_cache ─────────────────────────────────────────────────
+#  _upsert_cache 
 
 class TestUpsertCache:
     @pytest.mark.asyncio
@@ -113,7 +113,7 @@ class TestUpsertCache:
         mock_session.execute.assert_called_once()
 
 
-# ─── refresh_cache ──────────────────────────────────────────────────
+#  refresh_cache ─
 
 class TestRefreshCache:
     @pytest.mark.asyncio

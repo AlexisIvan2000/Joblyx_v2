@@ -1,9 +1,3 @@
-"""Prix officiels OpenAI par modèle, en USD pour 1M tokens (input et output séparément).
-
-Source: https://openai.com/api/pricing/ (mise à jour 2026-01).
-À actualiser quand OpenAI change ses prix ou qu'on ajoute un modèle.
-"""
-
 from decimal import Decimal
 
 # Tarifs en USD pour 1 000 000 tokens
@@ -17,9 +11,8 @@ _PRICING_PER_MILLION: dict[str, dict[str, Decimal]] = {
 # Fallback quand un modèle inconnu est utilisé, on facture au tarif gpt-4o pour ne pas sous-estimer
 _FALLBACK = _PRICING_PER_MILLION["gpt-4o"]
 
-
+# Calcule le coût d'un appel OpenAI en USD à partir des compteurs de tokens.
 def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> Decimal:
-    """Calcule le coût d'un appel OpenAI en USD à partir des compteurs de tokens."""
     rates = _PRICING_PER_MILLION.get(model, _FALLBACK)
     cost_input = (Decimal(prompt_tokens) * rates["input"]) / Decimal(1_000_000)
     cost_output = (Decimal(completion_tokens) * rates["output"]) / Decimal(1_000_000)

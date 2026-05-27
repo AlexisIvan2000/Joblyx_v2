@@ -28,7 +28,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from models.db_models import User
 
 
-# ─── User fixture data ───────────────────────────────────────────────
+#  User fixture data 
 
 FAKE_USER_ID = "11111111-1111-1111-1111-111111111111"
 FAKE_PASSWORD_HASH = "$argon2id$v=19$m=65536,t=3,p=4$fakesalt$fakehash"
@@ -111,7 +111,7 @@ def fake_user_with_expired_reset_code():
     )
 
 
-# ─── Mock AuthRepository ─────────────────────────────────────────────
+#  Mock AuthRepository 
 
 @pytest.fixture
 def mock_auth_repo():
@@ -129,7 +129,7 @@ def mock_auth_repo():
     return repo
 
 
-# ─── Mock OtpService ─────────────────────────────────────────────────
+#  Mock OtpService 
 
 @pytest.fixture
 def mock_otp_service():
@@ -140,7 +140,7 @@ def mock_otp_service():
     return svc
 
 
-# ─── Mock RefreshTokenRepository ────────────────────────────────────
+# Mock RefreshTokenRepository 
 
 @pytest.fixture
 def mock_refresh_token_repo():
@@ -152,7 +152,7 @@ def mock_refresh_token_repo():
     return repo
 
 
-# ─── Auth service with mocked deps ───────────────────────────────────
+#  Auth service with mocked deps 
 
 @pytest.fixture
 def auth_service(mock_auth_repo, mock_refresh_token_repo, mock_otp_service):
@@ -160,7 +160,7 @@ def auth_service(mock_auth_repo, mock_refresh_token_repo, mock_otp_service):
     return EmailPasswordAuth(mock_auth_repo, mock_refresh_token_repo, mock_otp_service)
 
 
-# ─── Patch config for security module ─────────────────────────────────
+#  Patch config for security module 
 
 @pytest.fixture(autouse=True)
 def _patch_config(monkeypatch):
@@ -175,7 +175,7 @@ def _patch_config(monkeypatch):
     monkeypatch.setattr("core.security.REFRESH_TOKEN_EXPIRE_DAYS", 30)
 
 
-# ─── FastAPI TestClient ──────────────────────────────────────────────
+# FastAPI TestClient 
 
 @pytest.fixture
 def test_client(mock_auth_repo, mock_refresh_token_repo, mock_otp_service, fake_user_dict):

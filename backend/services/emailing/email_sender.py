@@ -3,9 +3,9 @@ import resend
 from core.config import RESEND_API_KEY, RESEND_FROM_EMAIL, RESEND_FROM_NAME
 from typing import Dict
 
-
+# Convertit un texte brut en HTML safe (escape + paragraphes <p> + <br> intra paragraphe).
 def _plain_text_to_html_paragraphs(text: str) -> str:
-    """Convertit un texte brut en HTML safe (escape + paragraphes <p> + <br> intra paragraphe)."""
+    
     escaped = html.escape(text.strip())
     paragraphs = [p.strip() for p in escaped.split("\n\n") if p.strip()]
     return "".join(

@@ -6,7 +6,7 @@ final _allowedPattern = RegExp(
   unicode: true,
 );
 
-/// Mots-clés IT — au moins un doit être présent.
+/// Mots-clés IT au moins un doit être présent.
 const _itKeywords = {
   'developer', 'développeur', 'développeuse', 'dev', 'programmer', 'programmeur',
   'software', 'logiciel', 'fullstack', 'full-stack', 'full stack',
@@ -37,7 +37,7 @@ const _itKeywords = {
   'consultant', 'consulting',
 };
 
-/// Valide un titre de poste. Retourne null si valide, sinon le message d'erreur.
+
 String? validateJobTitleField(String value, AppLocalizations t) {
   if (value.length > 100) return t.t('onboarding.job_too_long');
   if (!_allowedPattern.hasMatch(value)) return t.t('onboarding.job_invalid_chars');

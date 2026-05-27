@@ -1,5 +1,3 @@
-"""Tests for services/emailing/otp_service.py — OTP generation, rate limiting, email sending."""
-
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch, AsyncMock
 
@@ -19,7 +17,7 @@ def otp_service(mock_auth_repo):
         yield svc
 
 
-# ─── send_verification_otp ───────────────────────────────────────────
+#  send_verification_otp 
 
 class TestSendVerificationOtp:
     @pytest.mark.asyncio
@@ -61,7 +59,7 @@ class TestSendVerificationOtp:
         assert call_data["code_resend_count"] == 1
 
 
-# ─── send_reset_otp ─────────────────────────────────────────────────
+#  send_reset_otp 
 
 class TestSendResetOtp:
     @pytest.mark.asyncio
@@ -75,7 +73,7 @@ class TestSendResetOtp:
         otp_service._mock_email_sender.return_value.send_reset_password_email.assert_called_once()
 
 
-# ─── send_email_change_otp ───────────────────────────────────────────
+#  send_email_change_otp 
 
 class TestSendEmailChangeOtp:
     @pytest.mark.asyncio

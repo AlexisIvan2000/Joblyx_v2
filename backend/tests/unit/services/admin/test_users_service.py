@@ -19,7 +19,7 @@ FOUNDER_EMAIL = "founder@joblyx.com"
 
 @pytest.fixture
 def admin_users_service(monkeypatch):
-    """Service avec tous les repos mockés et ADMIN_EMAIL fixé."""
+    
     # On force ADMIN_EMAIL pour que _is_founder soit déterministe en test
     monkeypatch.setattr(users_service_module, "ADMIN_EMAIL", FOUNDER_EMAIL)
 

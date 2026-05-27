@@ -1,9 +1,6 @@
-# Tests pour repositories/coach_repository.py.
-
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
+from unittest.mock import AsyncMock, MagicMock
 from repositories.coach_repository import CoachRepository
 from tests.conftest import FAKE_USER_ID
 

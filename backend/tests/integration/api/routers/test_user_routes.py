@@ -1,9 +1,6 @@
-"""Tests for api/routers/users.py — user route HTTP layer."""
-
-from unittest.mock import patch, MagicMock
-
 import pytest
 
+from unittest.mock import patch, MagicMock
 from tests.conftest import FAKE_USER_ID, FAKE_OTP_CODE, FAKE_OTP_HASH, _make_user_obj
 
 
@@ -45,7 +42,7 @@ class TestChangePassword:
         assert resp.status_code == 200
 
     def test_invalid_new_password_returns_400(self, test_client):
-        # La politique de mot de passe est validée côté service, le handler renvoie 400
+       
         resp = test_client.post("/users/me/change-password", json={
             "current_password": "old",
             "new_password": "short",
@@ -99,7 +96,7 @@ class TestResendEmailVerification:
 
 class TestSetPassword:
     def test_success_for_linkedin_account(self, test_client, mock_auth_repo):
-        """Un compte LinkedIn sans mot de passe peut en définir un."""
+        
         from app import app
         from api.v1.client.dependencies import get_current_user
 
@@ -118,7 +115,7 @@ class TestSetPassword:
         assert resp.status_code == 200
 
     def test_fails_if_already_has_password(self, test_client, mock_auth_repo, fake_user_dict):
-        """Un compte qui a déjà un mot de passe ne peut pas utiliser set-password."""
+        
         mock_auth_repo.get_user_by_id.return_value = fake_user_dict
         resp = test_client.post("/users/me/set-password", json={"new_password": "Test@123!"})
         assert resp.status_code == 409
@@ -126,7 +123,7 @@ class TestSetPassword:
 
 class TestGetMeHasPassword:
     def test_returns_has_password_field(self, test_client):
-        """Vérifie que GET /users/me retourne le champ has_password."""
+       
         resp = test_client.get("/users/me")
         assert resp.status_code == 200
         data = resp.json()

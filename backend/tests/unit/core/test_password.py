@@ -1,5 +1,3 @@
-"""Tests pour la politique de mot de passe centralisée (core/password.py)."""
-
 import pytest
 
 from core.password import validate_password

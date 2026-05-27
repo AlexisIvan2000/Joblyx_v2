@@ -10,8 +10,7 @@ from models.db.base import Base
 
 
 class AuditLog(Base):
-    """Journal des actions sensibles effectuées par les admins (ban, delete, promote, etc.)."""
-
+    
     __tablename__ = "audit_logs"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -24,10 +23,10 @@ class AuditLog(Base):
         nullable=True,
     )
 
-    # Action effectuée — ex: "user.ban", "user.unban", "user.delete", "user.promote"
+    # Action effectuée  ex: "user.ban", "user.unban", "user.delete", "user.promote"
     action: Mapped[str] = mapped_column(String(50), index=True)
 
-    # Cible de l'action — pour retrouver tous les logs concernant un user, etc.
+    # Cible de l'action pour retrouver tous les logs concernant un user, etc.
     target_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     target_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
 

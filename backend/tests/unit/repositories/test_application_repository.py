@@ -1,11 +1,8 @@
-"""Tests pour repositories/application_repository.py."""
-
 import uuid
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
 from repositories.application_repository import ApplicationRepository
 from models.db_models import Application
 from tests.conftest import FAKE_USER_ID

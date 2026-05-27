@@ -1,10 +1,7 @@
-"""Tests for api/routers/auth.py — auth route HTTP layer."""
+import pytest
 
 from unittest.mock import patch, MagicMock
-
-import pytest
 from fastapi import HTTPException
-
 from tests.conftest import FAKE_USER_ID, FAKE_OTP_CODE, FAKE_OTP_HASH
 
 
@@ -109,7 +106,6 @@ class TestLogoutRoute:
         assert resp.status_code == 200
 
     def test_invalid_token(self, test_client):
-        """Un token invalide doit quand même retourner 200 (logout gracieux)."""
         with patch("services.auth.email_password.Security") as MockSec:
             MockSec.hash_token.return_value = "hashed-invalid"
             resp = test_client.post("/auth/logout", json={"refresh_token": "invalid-token"})

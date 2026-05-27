@@ -41,11 +41,6 @@ class AdminUsersService:
         self.rt_repo = RefreshTokenRepository(session)
 
     def _check_can_modify(self, target, caller_role: str | None) -> None:
-        """Garde-fou commun, exécuté sur toute action mutante visant un user.
-
-        Bloque si la cible est le founder (verrouillage total).
-        Bloque si la cible est super_admin et que l'admin appelant n'est pas super_admin.
-        """
         if _is_founder(target):
             raise CannotModifyFounder()
         if target.role == "super_admin" and caller_role != "super_admin":

@@ -100,7 +100,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
         child: ListView(
           padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 100.h),
           children: [
-            // ── Titre de la phase ──
+            //  Titre de la phase 
             TextFormField(
               controller: _titleCtrl,
               textInputAction: TextInputAction.next,
@@ -116,7 +116,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
             ),
             SizedBox(height: 12.h),
 
-            // ── Durée ──
+            //  Durée 
             TextFormField(
               controller: _weeksCtrl,
               textInputAction: TextInputAction.next,
@@ -137,7 +137,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
             ),
             SizedBox(height: 12.h),
 
-            // ── Objectif (le pourquoi) ──
+            // Objectif (le pourquoi) 
             TextFormField(
               controller: _objectiveCtrl,
               textInputAction: TextInputAction.done,
@@ -151,7 +151,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
             ),
             SizedBox(height: 20.h),
 
-            // ── Skills ──
+            // Skills 
             _SectionHeader(
               icon: Icons.code_rounded,
               label: t.t('dashboard.section_skills'),
@@ -170,7 +170,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
                 )),
             SizedBox(height: 16.h),
 
-            // ── Actions ──
+            //  Actions 
             _SectionHeader(
               icon: Icons.checklist_rounded,
               label: t.t('dashboard.section_actions'),
@@ -189,7 +189,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
                 )),
             SizedBox(height: 16.h),
 
-            // ── Ressources ──
+            //  Ressources 
             _SectionHeader(
               icon: Icons.menu_book_rounded,
               label: t.t('dashboard.section_resources'),
@@ -209,7 +209,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
                 )),
             SizedBox(height: 16.h),
 
-            // ── Certifications ──
+            // Certifications 
             _SectionHeader(
               icon: Icons.verified_rounded,
               label: t.t('dashboard.section_certifications'),
@@ -228,7 +228,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
                 )),
             SizedBox(height: 16.h),
 
-            // ── Projets ──
+            //  Projets 
             _SectionHeader(
               icon: Icons.build_circle_outlined,
               label: t.t('dashboard.section_projects'),
@@ -261,7 +261,7 @@ class _PhaseFormScreenState extends State<PhaseFormScreen> {
   }
 }
 
-// ─── En-tête de section avec bouton "+" ──────────────────────────
+// En-tête de section avec bouton "+" 
 
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
@@ -303,7 +303,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ─── Widget item pour un skill ──────────────────────────────────
+//  Widget item pour un skill 
 
 class _SkillItem extends StatelessWidget {
   final Map<String, dynamic> skill;
@@ -383,7 +383,7 @@ class _SkillItem extends StatelessWidget {
   }
 }
 
-// ─── Widget item pour une action ────────────────────────────────
+//  Widget item pour une action 
 
 class _ActionItem extends StatelessWidget {
   final Map<String, dynamic> action;
@@ -469,7 +469,7 @@ class _ActionItem extends StatelessWidget {
   }
 }
 
-// ─── Widget item pour une ressource ─────────────────────────────
+//  Widget item pour une ressource 
 
 class _ResourceItem extends StatelessWidget {
   final Map<String, dynamic> resource;
@@ -560,7 +560,7 @@ class _ResourceItem extends StatelessWidget {
   }
 }
 
-// ─── Widget item pour une certification ─────────────────────────
+//  Widget item pour une certification 
 
 class _CertItem extends StatelessWidget {
   final Map<String, dynamic> cert;
@@ -620,7 +620,7 @@ class _CertItem extends StatelessWidget {
   }
 }
 
-// ─── Widget item pour un projet ─────────────────────────────────
+//  Widget item pour un projet 
 
 class _ProjectItem extends StatelessWidget {
   final Map<String, dynamic> project;

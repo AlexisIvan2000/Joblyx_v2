@@ -302,7 +302,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-// ─── Widgets privés ──────────────────────────────────────────
+//  Widgets privés 
 
 class _StatBox extends StatelessWidget {
   final String value, label;

@@ -1,9 +1,6 @@
-# Tests for repositories/career_repository.py.
-
-from unittest.mock import AsyncMock
-
 import pytest
 
+from unittest.mock import AsyncMock
 from repositories.career_repository import CareerRepository
 
 
@@ -22,7 +19,7 @@ class TestCareerRepository:
         assert repo.session is mock_session
 
     def test_exposes_expected_methods(self, repo):
-        # Le repo doit exposer toutes les méthodes Career + UserSkill + market cache lecture
+        
         expected_methods = {
             "get_by_user_id",
             "create",

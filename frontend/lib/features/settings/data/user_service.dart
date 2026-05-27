@@ -62,13 +62,12 @@ class UserService {
     await _dio.post('/users/me/resend-email-verification');
   }
 
-  /// Upload une photo de profil (JPEG, PNG ou WebP, max 10 Mo).
+  /// Upload une photo de profil (JPEG, PNG, max 10 Mo).
   Future<Map<String, dynamic>> uploadAvatar(String filePath) async {
     final fileName = filePath.split('/').last;
     final ext = fileName.split('.').last.toLowerCase();
     final mimeType = switch (ext) {
       'png' => 'image/png',
-      'webp' => 'image/webp',
       _ => 'image/jpeg',
     };
 

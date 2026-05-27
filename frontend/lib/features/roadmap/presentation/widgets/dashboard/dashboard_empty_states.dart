@@ -1,9 +1,8 @@
-// États vides du dashboard : EmptyRoadmapCard, EmptyApplicationsCard.
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 
-// ─── CTA quand aucune roadmap n'existe ───────────────────────
+//  CTA quand aucune roadmap n'existe 
 
 class EmptyRoadmapCard extends StatelessWidget {
   final ColorScheme cs;
@@ -52,7 +51,7 @@ class EmptyRoadmapCard extends StatelessWidget {
   }
 }
 
-// ─── CTA quand aucune candidature n'existe ───────────────────
+//  CTA quand aucune candidature n'existe 
 
 class EmptyApplicationsCard extends StatelessWidget {
   final ColorScheme cs;

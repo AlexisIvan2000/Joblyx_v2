@@ -1,5 +1,3 @@
-"""Service principal pour le coach IA — analyse CV vs offre."""
-
 import hashlib
 import json
 from datetime import datetime, timezone, timedelta
@@ -44,7 +42,6 @@ class CoachService:
         self.r2 = R2Service()
 
     async def check_usage(self, user_id: str) -> dict:
-        """Vérifie et retourne l'usage coach de la semaine."""
         usage = await self.repo.get_usage(user_id)
         count = usage["coach_usage_count"]
         reset_at = usage["coach_usage_reset_at"]
@@ -73,13 +70,7 @@ class CoachService:
         company_name: str | None = None,
         language: str = "fr",
     ):
-        """Analyse le CV vs l'offre via GPT en streaming.
-
-        Yield (event_type, data) tuples :
-          ("chunk", text)  — token brut du stream GPT
-          ("done", analysis_dict)  — résultat final parsé
-          ("error", error_msg)  — en cas d'erreur
-        """
+    
         # Vérifier la limite
         usage = await self.check_usage(user_id)
         if usage["remaining"] <= 0:

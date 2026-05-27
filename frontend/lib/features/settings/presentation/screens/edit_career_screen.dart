@@ -67,7 +67,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     super.dispose();
   }
 
-  // ── Chargement des données ──────────────────────────────────
+  //  Chargement des données 
 
   Future<void> _loadData() async {
     final skillsData = await SkillsLoader.load();
@@ -115,7 +115,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     }
   }
 
-  // ── Sauvegarde ──────────────────────────────────────────────
+  // Sauvegarde 
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -150,7 +150,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     }
   }
 
-  // ── Localisation ────────────────────────────────────────────
+  //  Localisation
 
   Future<void> _onLocationChanged(String query) async {
     if (query.trim().length < 2) {
@@ -176,7 +176,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     setState(() { _locationController.clear(); _city = ''; _province = ''; _locationSuggestions = []; _showLocationSuggestions = false; });
   }
 
-  // ── Compétences ─────────────────────────────────────────────
+  //  Compétences 
 
   Future<void> _uploadCv() async {
     final t = AppLocalizations.of(context);
@@ -268,7 +268,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     );
   }
 
-  // ── Build ───────────────────────────────────────────────────
+  //  Build 
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +311,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     );
   }
 
-  // ── Sections du formulaire ──────────────────────────────────
+  // Sections du formulaire 
 
   List<Widget> _buildCareerSection(AppLocalizations t, ColorScheme cs) => [
     _SectionTitle(title: t.t('onboarding.step_career_title')),

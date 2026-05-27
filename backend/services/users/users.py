@@ -62,7 +62,7 @@ class UserService:
         return {"message": "Password changed successfully"}
 
     async def set_password(self, user_id: str, new_password: str):
-        """Définir un mot de passe pour un compte LinkedIn-only."""
+       
         validate_password(new_password)
         db_user = await self.repo.get_user_by_id(user_id)
         if db_user.password_hash:
@@ -164,7 +164,7 @@ class UserService:
         application_repo=None,
         coach_repo=None,
     ):
-        """Supprime le compte après vérification de l'email + nettoie les fichiers R2 associés."""
+        
         db_user = await self.repo.get_user_by_id(user_id)
         if not db_user:
             raise UserNotFound()

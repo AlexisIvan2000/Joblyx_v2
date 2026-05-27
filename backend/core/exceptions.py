@@ -132,6 +132,7 @@ class LinkedInMissingEmail(ValidationError):
 # Mots de passe
 
 class WeakPassword(ValidationError):
+    error_code = "weak_password"
     default_message = "Password must be at least 8 characters with one uppercase, one lowercase and one special character"
 
     def __init__(self, message: str | None = None, *, details: dict | None = None):
@@ -139,22 +140,27 @@ class WeakPassword(ValidationError):
 
 
 class PasswordTooShort(WeakPassword):
+    error_code = "password_too_short"
     default_message = "Password must be at least 8 characters"
 
 
 class PasswordTooLong(WeakPassword):
-    default_message = "Password must not exceed 72 bytes"
+    error_code = "password_too_long"
+    default_message = "Password must not exceed 72 characters"
 
 
 class PasswordMissingUppercase(WeakPassword):
+    error_code = "password_missing_uppercase"
     default_message = "Password must contain at least one uppercase letter"
 
 
 class PasswordMissingLowercase(WeakPassword):
+    error_code = "password_missing_lowercase"
     default_message = "Password must contain at least one lowercase letter"
 
 
 class PasswordMissingSpecial(WeakPassword):
+    error_code = "password_missing_special"
     default_message = "Password must contain at least one special character"
 
 

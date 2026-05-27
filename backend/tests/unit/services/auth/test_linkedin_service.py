@@ -1,4 +1,4 @@
-"""Tests for services/auth/linkedin.py — LinkedIn OAuth business logic."""
+
 
 from unittest.mock import AsyncMock, patch
 
@@ -13,7 +13,7 @@ from services.auth.linkedin import LinkedInAuth
 from tests.conftest import FAKE_USER_ID, _make_user_obj
 
 
-# ─── Fixtures ───────────────────────────────────────────────────────
+#  Fixtures 
 
 FAKE_LINKEDIN_ID = "linkedin_abc123"
 FAKE_LINKEDIN_PROFILE = {
@@ -42,7 +42,7 @@ def _patch_linkedin_api(profile=None):
     )
 
 
-# ─── Cas 1 : Nouveau compte ─────────────────────────────────────────
+#  Cas 1 : Nouveau compte 
 
 class TestLinkedInNewAccount:
     @pytest.mark.asyncio
@@ -85,7 +85,7 @@ class TestLinkedInNewAccount:
         mock_refresh_token_repo.create.assert_called_once()
 
 
-# ─── Cas 2 : Compte existant avec le même email ─────────────────────
+#  Cas 2 : Compte existant avec le même email 
 
 class TestLinkedInLinkExistingAccount:
     @pytest.mark.asyncio
@@ -151,7 +151,7 @@ class TestLinkedInLinkExistingAccount:
         mock_auth_repo.update_verification_status.assert_called_once_with(FAKE_USER_ID)
 
 
-# ─── Cas 3 : Reconnexion (compte déjà lié) ──────────────────────────
+#  Cas 3 : Reconnexion (compte déjà lié) 
 
 class TestLinkedInReconnect:
     @pytest.mark.asyncio
@@ -170,7 +170,7 @@ class TestLinkedInReconnect:
         mock_auth_repo.get_user_by_email.assert_not_called()
 
 
-# ─── Cas d'erreur ────────────────────────────────────────────────────
+#  Cas d'erreur 
 
 class TestLinkedInErrors:
     @pytest.mark.asyncio
@@ -199,7 +199,7 @@ class TestLinkedInErrors:
                 await linkedin_auth.authenticate("bad_code")
 
 
-# ─── Protection login email/password pour compte LinkedIn ────────────
+#  Protection login email/password pour compte LinkedIn 
 
 class TestLinkedInOnlyAccountBlocked:
     @pytest.mark.asyncio

@@ -1,4 +1,4 @@
-# Tests pour services/interview/interview_prompt_builder.py.
+
 
 from services.interview.interview_prompt_builder import (
     build_interview_prompt,

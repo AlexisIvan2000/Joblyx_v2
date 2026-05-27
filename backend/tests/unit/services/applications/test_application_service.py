@@ -1,5 +1,3 @@
-"""Tests pour services/applications/application_service.py."""
-
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

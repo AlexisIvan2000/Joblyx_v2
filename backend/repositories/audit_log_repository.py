@@ -1,5 +1,3 @@
-"""Repository pour les logs d'actions admin (ban, delete, promote, etc.)."""
-
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

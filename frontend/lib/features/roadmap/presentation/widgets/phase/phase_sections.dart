@@ -3,9 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 
-// ═══════════════════════════════════════════════════════════════
+
 // PhaseSectionLabel
-// ═══════════════════════════════════════════════════════════════
+
 
 /// Label de section dans une PhaseCard (ex: "Compétences", "Actions").
 class PhaseSectionLabel extends StatelessWidget {
@@ -31,9 +31,9 @@ class PhaseSectionLabel extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+
 // PhaseActionsList
-// ═══════════════════════════════════════════════════════════════
+
 
 /// Liste des actions à réaliser dans une phase, avec checkbox.
 class PhaseActionsList extends StatelessWidget {
@@ -118,9 +118,9 @@ class PhaseActionsList extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+
 // PhaseResourcesList
-// ═══════════════════════════════════════════════════════════════
+
 
 /// Liste des ressources d'apprentissage d'une phase.
 class PhaseResourcesList extends StatelessWidget {
@@ -195,9 +195,9 @@ class PhaseResourcesList extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+
 // PhaseCertificationsList
-// ═══════════════════════════════════════════════════════════════
+
 
 /// Liste des certifications recommandées dans une phase.
 class PhaseCertificationsList extends StatelessWidget {
@@ -246,9 +246,9 @@ class PhaseCertificationsList extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+
 // PhaseProjectsList
-// ═══════════════════════════════════════════════════════════════
+
 
 /// Liste des projets pratiques d'une phase.
 class PhaseProjectsList extends StatelessWidget {

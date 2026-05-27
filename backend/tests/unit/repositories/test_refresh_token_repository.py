@@ -1,15 +1,8 @@
-"""Tests pour repositories/refresh_token_repository.py — accès aux tokens de rafraîchissement.
-
-Tests unitaires avec mock de AsyncSession pour vérifier que le repository
-appelle les bonnes opérations SQLAlchemy.
-"""
-
 import uuid
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
+from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, MagicMock
 from repositories.refresh_token_repository import RefreshTokenRepository
 from models.db_models import RefreshToken
 from tests.conftest import FAKE_USER_ID
@@ -30,7 +23,7 @@ FAKE_TOKEN_HASH = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a
 FAKE_EXPIRES_AT = datetime.now(timezone.utc) + timedelta(days=30)
 
 
-# ─── create ─────────────────────────────────────────────────────────
+#  create 
 
 class TestCreate:
     @pytest.mark.asyncio
@@ -52,7 +45,7 @@ class TestCreate:
         assert result is added_obj
 
 
-# ─── get_by_token_hash ──────────────────────────────────────────────
+#  get_by_token_hash 
 
 class TestGetByTokenHash:
     @pytest.mark.asyncio
@@ -88,7 +81,7 @@ class TestGetByTokenHash:
         assert result is None
 
 
-# ─── revoke ─────────────────────────────────────────────────────────
+#  revoke 
 
 class TestRevoke:
     @pytest.mark.asyncio
@@ -105,7 +98,7 @@ class TestRevoke:
         mock_session.execute.assert_called_once()
 
 
-# ─── revoke_all_for_user ────────────────────────────────────────────
+#  revoke_all_for_user 
 
 class TestRevokeAllForUser:
     @pytest.mark.asyncio

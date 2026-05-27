@@ -1,5 +1,3 @@
-"""Tests pour api/routers/applications.py."""
-
 import json
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock

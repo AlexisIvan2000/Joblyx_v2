@@ -38,7 +38,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     super.dispose();
   }
 
-  // ── Filtrage local (recherche + statuts + date) ─────────────
+  //  Filtrage local (recherche + statuts + date) 
 
   List<Map<String, dynamic>> _filter(List<Map<String, dynamic>> apps) {
     return apps.where((app) {
@@ -72,7 +72,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     _ => '',
   };
 
-  // ── Actions ─────────────────────────────────────────────────
+  // Actions 
 
   void _openFilters(AppLocalizations t) {
     final tempStatuses = Set<String>.from(_selectedStatuses);
@@ -298,7 +298,7 @@ class _ApplicationsScreenState extends ConsumerState<ApplicationsScreen> {
     }
   }
 
-  // ── Build ───────────────────────────────────────────────────
+  //  Build 
 
   @override
   Widget build(BuildContext context) {

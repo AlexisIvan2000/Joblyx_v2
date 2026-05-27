@@ -1,4 +1,4 @@
-"""Tests pour api/routers/interview.py."""
+
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -12,7 +12,7 @@ FAKE_SESSION_ID = "33333333-3333-3333-3333-333333333333"
 
 
 def _mock_session(**overrides):
-    """Construit un objet session simulé."""
+   
     s = MagicMock()
     s.id = FAKE_SESSION_ID
     s.user_id = FAKE_USER_ID
@@ -33,7 +33,7 @@ def _mock_session(**overrides):
 
 
 def _mock_message(**overrides):
-    """Construit un objet message simulé."""
+  
     m = MagicMock()
     m.id = "44444444-4444-4444-4444-444444444444"
     m.role = "assistant"
@@ -47,7 +47,7 @@ def _mock_message(**overrides):
 
 @pytest.fixture
 def test_client_with_interview(test_client):
-    """Ajoute un mock InterviewService au test_client existant."""
+    
     from app import app
     from api.v1.client.interview import get_interview_service
 
@@ -84,7 +84,7 @@ def test_client_with_interview(test_client):
     del app.dependency_overrides[get_interview_service]
 
 
-# ─── Démarrer un entretien ──────────────────────────────────────
+# Démarrer un entretien 
 
 
 class TestStartSession:
@@ -130,7 +130,7 @@ class TestStartSession:
         assert body["company_name"] == "Google"
 
 
-# ─── Terminer un entretien ──────────────────────────────────────
+#  Terminer un entretien 
 
 
 class TestEndSession:
@@ -148,7 +148,7 @@ class TestEndSession:
         )
 
 
-# ─── Usage ──────────────────────────────────────────────────────
+#  Usage 
 
 
 class TestGetUsage:
@@ -164,7 +164,7 @@ class TestGetUsage:
         assert body["remaining"] == 8
 
 
-# ─── Historique ─────────────────────────────────────────────────
+#  Historique 
 
 
 class TestGetHistory:
@@ -200,7 +200,7 @@ class TestGetHistory:
         assert body[0]["last_message"] == "Bonjour, parlez-moi de vous"
 
 
-# ─── Détail session ────────────────────────────────────────────
+#  Détail session 
 
 
 class TestGetSession:
@@ -238,7 +238,7 @@ class TestGetSession:
         assert resp.status_code == 404
 
 
-# ─── Bilan / Summary ───────────────────────────────────────────
+#  Bilan / Summary 
 
 
 class TestGetSummary:
@@ -275,7 +275,7 @@ class TestGetSummary:
         assert "not completed" in resp.json()["message"].lower()
 
 
-# ─── Suppression d'une session ──────────────────────────────────
+# Suppression d'une session
 
 
 class TestDeleteSession:
@@ -303,7 +303,7 @@ class TestDeleteSession:
         assert resp.status_code == 404
 
 
-# ─── Suppression de toutes les sessions ─────────────────────────
+#  Suppression de toutes les sessions 
 
 
 class TestDeleteAll:

@@ -1,9 +1,9 @@
-// Widgets principaux du dashboard : ProgressCard, ProgressRing, StatCard, CurrentPhaseCard, TipCard.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 
-// ─── Carte de progression globale ────────────────────────────
+//  Carte de progression globale 
 
 class ProgressCard extends StatelessWidget {
   final int actionPercent, completedActions, totalActions;
@@ -49,7 +49,7 @@ class ProgressCard extends StatelessWidget {
   }
 }
 
-// ─── Anneau de progression animé ─────────────────────────────
+// Anneau de progression animé 
 
 class ProgressRing extends StatefulWidget {
   final int percent;
@@ -108,7 +108,7 @@ class _ProgressRingState extends State<ProgressRing> with SingleTickerProviderSt
   }
 }
 
-// ─── Carte de statistique ────────────────────────────────────
+// Carte de statistique 
 
 class StatCard extends StatelessWidget {
   final String value, label, icon;
@@ -144,7 +144,7 @@ class StatCard extends StatelessWidget {
   }
 }
 
-// ─── Carte de la phase en cours ──────────────────────────────
+//  Carte de la phase en cours 
 
 class CurrentPhaseCard extends StatelessWidget {
   final Map<String, dynamic> phase;
@@ -216,7 +216,7 @@ class CurrentPhaseCard extends StatelessWidget {
   }
 }
 
-// ─── Carte conseil du jour ───────────────────────────────────
+//  Carte conseil du jour 
 
 class TipCard extends StatelessWidget {
   final String message;

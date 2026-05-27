@@ -1,5 +1,3 @@
-"""Tests pour services/roadmap/prompt_builder.py."""
-
 import pytest
 from services.roadmap.prompt_builder import build_roadmap_prompt
 

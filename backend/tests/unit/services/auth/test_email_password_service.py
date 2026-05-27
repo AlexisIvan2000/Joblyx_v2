@@ -1,4 +1,4 @@
-"""Tests for services/auth/email_password.py — business logic."""
+
 
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch

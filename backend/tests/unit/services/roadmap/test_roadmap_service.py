@@ -1,5 +1,3 @@
-"""Tests pour services/roadmap/roadmap_service.py."""
-
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 

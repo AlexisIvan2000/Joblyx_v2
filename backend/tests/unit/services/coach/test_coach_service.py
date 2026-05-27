@@ -1,4 +1,4 @@
-# Tests pour services/coach/coach_service.py.
+
 
 from datetime import datetime, timezone, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch

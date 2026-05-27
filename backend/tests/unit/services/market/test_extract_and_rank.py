@@ -1,5 +1,3 @@
-"""Tests pour SpacySkillsExtractor.extract_and_rank."""
-
 from unittest.mock import AsyncMock, patch
 
 import pytest

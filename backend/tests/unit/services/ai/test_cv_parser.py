@@ -1,14 +1,12 @@
-"""Tests pour le module services.ai.cv_parser."""
-
 import json
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
 
-# ─── Helpers ────────────────────────────────────────────────────────────
+#  Helpers
 
 def _mock_fitz_doc(pages_text: list[str]):
-    """Construit un mock fitz.Document avec les pages données."""
+    
     mock_doc = MagicMock()
     mock_pages = []
     for text in pages_text:
@@ -20,7 +18,7 @@ def _mock_fitz_doc(pages_text: list[str]):
     return mock_doc
 
 
-# ─── TestExtractTextFromPdf ─────────────────────────────────────────────
+#  TestExtractTextFromPdf 
 
 class TestExtractTextFromPdf:
     """Tests pour extract_text_from_pdf."""
@@ -73,7 +71,7 @@ class TestExtractTextFromPdf:
             assert result == ""
 
 
-# ─── TestValidateSkills ─────────────────────────────────────────────────
+# TestValidateSkills 
 
 class TestValidateSkills:
     """Tests pour _validate_skills (normalisation et filtrage)."""
@@ -148,7 +146,7 @@ class TestValidateSkills:
         assert _validate_skills([]) == []
 
 
-# ─── TestExtractSkillsFromCv ────────────────────────────────────────────
+#  TestExtractSkillsFromCv 
 
 class TestExtractSkillsFromCv:
     """Tests pour extract_skills_from_cv (appel GPT mocké)."""

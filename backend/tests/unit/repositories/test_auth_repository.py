@@ -1,14 +1,7 @@
-"""Tests for repositories/auth_repository.py — async SQLAlchemy data access.
-
-These are unit tests that mock the AsyncSession to verify the repository
-calls the correct SQLAlchemy operations.
-"""
-
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 
+from unittest.mock import AsyncMock, MagicMock, patch
 from repositories.auth_repository import AuthRepository
 from models.db_models import User
 from tests.conftest import _make_user_obj, FAKE_USER_ID

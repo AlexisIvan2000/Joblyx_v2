@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/constants/application_status.dart';
 
-// ─── Badge coloré du statut d'une candidature ────────────────
+// Badge coloré du statut d'une candidature 
 
 class StatusBadge extends StatelessWidget {
   final String status;
@@ -26,7 +26,7 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
-// ─── Tuile d'une candidature dans la liste du dashboard ──────
+//  Tuile d'une candidature dans la liste du dashboard
 
 class ApplicationTile extends StatelessWidget {
   final Map<String, dynamic> app;

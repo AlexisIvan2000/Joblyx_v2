@@ -32,7 +32,7 @@ class SettingsScreen extends ConsumerWidget {
         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
         child: StaggeredList(
           children: [
-          // ── Général ──────────────────────────────────────────
+          // Général 
           _SectionTitle(label: t.t('settings.section_general')),
           SizedBox(height: 6.h),
 
@@ -58,7 +58,7 @@ class SettingsScreen extends ConsumerWidget {
 
           SizedBox(height: 20.h),
 
-          // ── Légal ────────────────────────────────────────────
+          //  Légal 
           _SectionTitle(label: t.t('settings.section_legal')),
           SizedBox(height: 6.h),
 
@@ -82,7 +82,7 @@ class SettingsScreen extends ConsumerWidget {
 
           SizedBox(height: 20.h),
 
-          // ── Nous contacter ─────────────────────────────────────
+          // Nous contacter 
           _SectionTitle(label: t.t('settings.section_contact')),
           SizedBox(height: 6.h),
 
@@ -109,7 +109,7 @@ class SettingsScreen extends ConsumerWidget {
 
           SizedBox(height: 20.h),
 
-          // ── Déconnexion ──────────────────────────────────────
+          //  Déconnexion 
           _LogoutButton(cs: cs, t: t),
 
           SizedBox(height: 24.h),
@@ -127,7 +127,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  // ── Helpers pour les labels ─────────────────────────────────
+  //  Helpers pour les labels 
 
   String _localeName(String? code, AppLocalizations t) => switch (code) {
         'fr' => t.t('settings.language_fr'),
@@ -141,7 +141,7 @@ class SettingsScreen extends ConsumerWidget {
         _ => t.t('settings.theme_system'),
       };
 
-  // ── Pickers ─────────────────────────────────────────────────
+  // Pickers 
 
   void _showLanguagePicker(BuildContext context, WidgetRef ref, AppLocalizations t, ColorScheme cs, String? current) {
     showModalBottomSheet(
@@ -227,7 +227,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-// ─── Widgets privés ──────────────────────────────────────────
+//  Widgets privés
 
 class _SectionTitle extends StatelessWidget {
   final String label;

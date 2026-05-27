@@ -1,11 +1,8 @@
-"""Tests pour api/routers/coach.py."""
+import pytest
 
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
-
-import pytest
 from fastapi import HTTPException
-
 from tests.conftest import FAKE_USER_ID
 
 
@@ -30,7 +27,7 @@ def _mock_session(**overrides):
 
 @pytest.fixture
 def test_client_with_coach(test_client):
-    """Étend test_client avec un mock du CoachService."""
+    
     from app import app
     from api.v1.client.coach import get_coach_service
 
@@ -53,7 +50,7 @@ def test_client_with_coach(test_client):
     del app.dependency_overrides[get_coach_service]
 
 
-# ─── Historique ──────────────────────────────────────────────────
+#  Historique
 
 
 class TestGetHistory:
@@ -90,7 +87,7 @@ class TestGetHistory:
         assert body[1]["job_title"] == "Data Scientist"
 
 
-# ─── Usage ───────────────────────────────────────────────────────
+#  Usage 
 
 
 class TestGetUsage:
@@ -109,7 +106,7 @@ class TestGetUsage:
         svc.check_usage.assert_called_once_with(str(FAKE_USER_ID))
 
 
-# ─── Détail d'une session ────────────────────────────────────────
+#  Détail d'une session 
 
 
 class TestGetSession:
@@ -138,7 +135,7 @@ class TestGetSession:
         assert resp.status_code == 404
 
 
-# ─── Suppression d'une session ───────────────────────────────────
+#  Suppression d'une session 
 
 
 class TestDeleteSession:
@@ -159,7 +156,7 @@ class TestDeleteSession:
         assert resp.status_code == 404
 
 
-# ─── Suppression de toutes les sessions ──────────────────────────
+#  Suppression de toutes les sessions 
 
 
 class TestDeleteAll:

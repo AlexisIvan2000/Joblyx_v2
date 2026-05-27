@@ -1,9 +1,6 @@
-"""Tests for api/dependencies.py — FastAPI dependency injection."""
-
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 
+from unittest.mock import AsyncMock, MagicMock, patch
 from core.exceptions import InvalidToken
 from tests.conftest import FAKE_USER_ID, _make_user_obj
 

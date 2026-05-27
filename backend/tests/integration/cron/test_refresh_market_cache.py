@@ -1,9 +1,6 @@
-"""Tests pour cron/refresh_market_cache.py."""
-
-from unittest.mock import AsyncMock, patch, MagicMock
-
 import pytest
 
+from unittest.mock import AsyncMock, patch, MagicMock
 from cron.refresh_market_cache import refresh_market_cache
 
 

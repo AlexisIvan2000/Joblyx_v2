@@ -133,7 +133,7 @@ class CoachScoreWidget extends StatelessWidget {
   }
 }
 
-// ─── Section ATS ───────────────────────────────────────────────
+//  Section ATS
 
 class _AtsSection extends StatelessWidget {
   final Map<String, dynamic> ats;
@@ -198,7 +198,7 @@ class _AtsSection extends StatelessWidget {
   }
 }
 
-// ─── Section Structure ─────────────────────────────────────────
+//  Section Structure
 
 class _StructureSection extends StatelessWidget {
   final Map<String, dynamic> structure;
@@ -239,7 +239,7 @@ class _StructureSection extends StatelessWidget {
   }
 }
 
-// ─── Section Expériences ───────────────────────────────────────
+//  Section Expériences 
 
 class _ExperienceSection extends StatelessWidget {
   final List items;
@@ -294,7 +294,7 @@ class _ExperienceSection extends StatelessWidget {
   }
 }
 
-// ─── Section Points forts ──────────────────────────────────────
+//  Section Points forts
 
 class _StrengthsSection extends StatelessWidget {
   final List items;
@@ -330,7 +330,7 @@ class _StrengthsSection extends StatelessWidget {
   }
 }
 
-// ─── Section Recommandations ───────────────────────────────────
+// Section Recommandations 
 
 class _RecommendationsSection extends StatelessWidget {
   final List items;
@@ -402,7 +402,7 @@ class _RecommendationsSection extends StatelessWidget {
   }
 }
 
-// ─── Sections manquantes ───────────────────────────────────────
+//  Sections manquantes 
 
 class _MissingSectionsWidget extends StatelessWidget {
   final List items;
@@ -442,7 +442,7 @@ class _MissingSectionsWidget extends StatelessWidget {
   }
 }
 
-// ─── Widget de section pliable ─────────────────────────────────
+//  Widget de section pliable 
 
 class _SectionTile extends StatelessWidget {
   final String title;

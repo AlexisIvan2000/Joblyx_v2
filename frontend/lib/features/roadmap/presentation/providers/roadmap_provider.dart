@@ -54,7 +54,7 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
 
   RoadmapService get _svc => ref.read(roadmapServiceProvider);
 
-  // ── Parsing progressif du JSON GPT ──────────────────────────
+  // Parsing progressif du JSON GPT 
   int _parsedPhaseCount = 0;
 
   /// Tente d'extraire les phases complètes du buffer JSON accumulé.
@@ -254,7 +254,7 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
     );
   }
 
-  // ─── Phase operations (use phase ID) ──────────────────────────
+  //  Phase operations (use phase ID) ─
 
   Future<void> togglePhaseComplete(String phaseId) async {
     await _svc.togglePhaseComplete(phaseId);

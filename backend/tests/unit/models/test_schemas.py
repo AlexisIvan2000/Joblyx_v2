@@ -1,5 +1,3 @@
-"""Tests for models/schemas.py — Pydantic validation."""
-
 import pytest
 from pydantic import ValidationError
 

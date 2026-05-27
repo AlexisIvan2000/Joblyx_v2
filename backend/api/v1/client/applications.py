@@ -25,7 +25,7 @@ def _to_response(app, cv_url: str | None = None) -> ApplicationResponse:
         updated_at=app.updated_at.isoformat() if app.updated_at else None,
     )
 
-
+# Crée une candidature avec CV optionnel (multipart).
 @router.post("", response_model=ApplicationResponse)
 async def create_application(
     data: str = Form(...),
@@ -33,7 +33,6 @@ async def create_application(
     current_user: User = Depends(get_current_user),
     svc: ApplicationService = Depends(get_application_service),
 ):
-    # "Crée une candidature avec CV optionnel (multipart).
     try:
         body = ApplicationCreate(**json.loads(data))
     except (json.JSONDecodeError, ValueError) as e:

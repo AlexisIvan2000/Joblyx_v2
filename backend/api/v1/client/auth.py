@@ -13,9 +13,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _deep_link_page(deep_link_url: str) -> HTMLResponse:
-    """Retourne une page HTML qui redirige une seule fois vers le deep link,
-    puis affiche un message. Évite que le navigateur re-déclenche le redirect
-    à chaque retour au premier plan."""
     html = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Joblyx</title>
@@ -60,6 +57,7 @@ async def logout(body: RefreshToken, auth: EmailPasswordAuth = Depends(get_auth_
 async def linkedin_login(request: Request, body: LinkedInCallback, auth: LinkedInAuth = Depends(get_linkedin_auth)):
     return await auth.authenticate(body.code)
 
+# Callback OAuth LinkedIn  échange le code et redirige vers l'app avec les tokens.
 @router.get("/linkedin/callback")
 async def linkedin_callback(
     request: Request,
@@ -67,7 +65,7 @@ async def linkedin_callback(
     error: str = Query(None),
     auth: LinkedInAuth = Depends(get_linkedin_auth),
 ):
-    """Callback OAuth LinkedIn — échange le code et redirige vers l'app avec les tokens."""
+    
     logger = logging.getLogger(__name__)
 
     if error or not code:

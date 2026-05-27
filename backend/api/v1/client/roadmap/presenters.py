@@ -1,6 +1,3 @@
-"""Sérialisation des modèles roadmap et phase vers les DTOs de réponse."""
-
-
 def phase_to_dict(phase) -> dict:
     return {
         "id": str(phase.id),

@@ -1,10 +1,7 @@
-"""Tests pour api/routers/roadmap.py."""
+import pytest
 
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
-
-import pytest
-
 from core.exceptions import (
     CareerProfileRequired,
     NoActiveRoadmap,
