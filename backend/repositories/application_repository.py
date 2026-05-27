@@ -45,7 +45,6 @@ class ApplicationRepository:
             .values(**data)
         )
         await self.session.flush()
-        # Expirer le cache pour forcer la relecture depuis la DB
         await self.session.refresh(existing)
         return existing
 
