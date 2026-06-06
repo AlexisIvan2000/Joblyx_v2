@@ -29,7 +29,6 @@ class TestUserCreate:
             last_name="Doe",
             email="john@example.com",
             password="Secure1!x",
-            avatar_url="https://example.com/avatar.png",
         )
         assert u.email == "john@example.com"
 
@@ -40,7 +39,6 @@ class TestUserCreate:
                 last_name="Doe",
                 email="not-an-email",
                 password="Secure1!x",
-                avatar_url="https://example.com/avatar.png",
             )
 
 

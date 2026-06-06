@@ -45,8 +45,6 @@ class EmailPasswordAuth:
             "email": user.email,
             "password_hash": hashed_password,
         }
-        if user.avatar_url:
-            user_data["avatar_url"] = user.avatar_url
 
         new_user = await self.repo.create_user(user_data)
         logger.info("User registered: user_id=%s email=%s", new_user.id, user.email)

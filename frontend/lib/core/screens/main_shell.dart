@@ -9,18 +9,21 @@ class MainShell extends StatefulWidget {
   final int currentIndex;
   final Widget child;
 
-  const MainShell({
-    super.key,
-    required this.currentIndex,
-    required this.child,
-  });
+  const MainShell({super.key, required this.currentIndex, required this.child});
 
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
-  static const _routes = ['/dashboard', '/roadmap', '/applications', '/assistant', '/profile'];
+class _MainShellState extends State<MainShell>
+    with SingleTickerProviderStateMixin {
+  static const _routes = [
+    '/dashboard',
+    '/roadmap',
+    '/applications',
+    '/assistant',
+    '/profile',
+  ];
 
   late final AnimationController _controller;
   Animation<Offset>? _inAnimation;
@@ -29,14 +32,15 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          setState(() => _isAnimating = false);
-        }
-      });
+    _controller =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 250),
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            setState(() => _isAnimating = false);
+          }
+        });
   }
 
   @override
@@ -51,10 +55,13 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
     if (oldWidget.currentIndex != widget.currentIndex) {
       final goingRight = widget.currentIndex > oldWidget.currentIndex;
 
-      _inAnimation = Tween<Offset>(
-        begin: Offset(goingRight ? 1.0 : -1.0, 0.0),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+      _inAnimation =
+          Tween<Offset>(
+            begin: Offset(goingRight ? 1.0 : -1.0, 0.0),
+            end: Offset.zero,
+          ).animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+          );
 
       _isAnimating = true;
       _controller.forward(from: 0.0);
@@ -76,72 +83,128 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
 
     return Scaffold(
       body: body,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          border: Border(top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3))),
-        ),
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            navigationBarTheme: NavigationBarThemeData(
-              iconTheme: WidgetStateProperty.all(IconThemeData(size: 20.sp)),
-              labelTextStyle: WidgetStateProperty.all(TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600)),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 16.h),
+          child: Container(
+            height: 60.h,
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(30.r),
+              border: Border.all(color: cs.outlineVariant),
+              boxShadow: [
+                BoxShadow(
+                  color: cs.shadow.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem(
+                  cs,
+                  0,
+                  Icons.home_outlined,
+                  Icons.home_rounded,
+                  t.t('nav.home'),
+                  keys.navHome,
+                ),
+                _navItem(
+                  cs,
+                  1,
+                  Icons.route_outlined,
+                  Icons.route_rounded,
+                  t.t('nav.roadmap'),
+                  keys.navRoadmap,
+                ),
+                _navItem(
+                  cs,
+                  2,
+                  Icons.work_outline_rounded,
+                  Icons.work_rounded,
+                  t.t('nav.applications'),
+                  keys.navApplications,
+                ),
+                _navItem(
+                  cs,
+                  3,
+                  Icons.auto_awesome_outlined,
+                  Icons.auto_awesome_rounded,
+                  t.t('nav.assistant'),
+                  keys.navAssistant,
+                ),
+                _navItem(
+                  cs,
+                  4,
+                  Icons.person_outline_rounded,
+                  Icons.person_rounded,
+                  t.t('nav.profile'),
+                  keys.navProfile,
+                ),
+              ],
             ),
           ),
-          child: NavigationBar(
-            selectedIndex: widget.currentIndex,
-            onDestinationSelected: (i) {
-              if (i != widget.currentIndex) {
-                context.go(_routes[i]);
-              }
-            },
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            height: 60.h,
-            indicatorColor: cs.primary.withValues(alpha: 0.1),
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.home_outlined),
-                // L'onglet Home est sélectionné sur le dashboard, on cible donc l'icône active
-                selectedIcon: KeyedSubtree(
-                  key: keys.navHome,
-                  child: Icon(Icons.home_rounded, color: cs.primary),
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem(
+    ColorScheme cs,
+    int index,
+    IconData icon,
+    IconData selectedIcon,
+    String label,
+    Key tutorialKey,
+  ) {
+    final selected = widget.currentIndex == index;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        if (index != widget.currentIndex) {
+          context.go(_routes[index]);
+        }
+      },
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: selected
+                ? cs.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              KeyedSubtree(
+                key: tutorialKey,
+                child: Icon(
+                  selected ? selectedIcon : icon,
+                  size: 20.sp,
+                  color: selected ? cs.primary : cs.onSurfaceVariant,
                 ),
-                label: t.t('nav.home'),
               ),
-              NavigationDestination(
-                icon: KeyedSubtree(
-                  key: keys.navRoadmap,
-                  child: const Icon(Icons.route_outlined),
+              if (selected) ...[
+                SizedBox(width: 8.w),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    color: cs.primary,
+                  ),
                 ),
-                selectedIcon: Icon(Icons.route_rounded, color: cs.primary),
-                label: t.t('nav.roadmap'),
-              ),
-              NavigationDestination(
-                icon: KeyedSubtree(
-                  key: keys.navApplications,
-                  child: const Icon(Icons.work_outline_rounded),
-                ),
-                selectedIcon: Icon(Icons.work_rounded, color: cs.primary),
-                label: t.t('nav.applications'),
-              ),
-              NavigationDestination(
-                icon: KeyedSubtree(
-                  key: keys.navAssistant,
-                  child: const Icon(Icons.auto_awesome_outlined),
-                ),
-                selectedIcon: Icon(Icons.auto_awesome_rounded, color: cs.primary),
-                label: t.t('nav.assistant'),
-              ),
-              NavigationDestination(
-                icon: KeyedSubtree(
-                  key: keys.navProfile,
-                  child: const Icon(Icons.person_outline_rounded),
-                ),
-                selectedIcon: Icon(Icons.person_rounded, color: cs.primary),
-                label: t.t('nav.profile'),
-              ),
+              ],
             ],
           ),
         ),

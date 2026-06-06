@@ -6,7 +6,6 @@ class UserCreate(BaseModel):
     last_name: str
     email: EmailStr
     password: str
-    avatar_url: str | None = None
 
 
 class UserLogin(BaseModel):
