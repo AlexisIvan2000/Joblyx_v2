@@ -27,7 +27,11 @@ class _CoachDetailScreenState extends ConsumerState<CoachDetailScreen> {
     try {
       final svc = ref.read(coachServiceProvider);
       final session = await svc.getSession(widget.sessionId);
-      if (mounted) setState(() { _session = session; _isLoading = false; });
+      if (mounted)
+        setState(() {
+          _session = session;
+          _isLoading = false;
+        });
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -39,16 +43,21 @@ class _CoachDetailScreenState extends ConsumerState<CoachDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_session?['job_title'] as String? ?? t.t('assistant.result_title')),
+        title: Text(
+          _session?['job_title'] as String? ?? t.t('assistant.result_title'),
+        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _session == null
-              ? Center(child: Text(t.t('assistant.session_not_found')))
-              : CoachAnalysisView(
-                  analysis: _session!['analysis'] as Map<String, dynamic>? ?? {},
-                  isStreaming: false,
-                ),
+      body: SafeArea(
+        top: false,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _session == null
+            ? Center(child: Text(t.t('assistant.session_not_found')))
+            : CoachAnalysisView(
+                analysis: _session!['analysis'] as Map<String, dynamic>? ?? {},
+                isStreaming: false,
+              ),
+      ),
     );
   }
 }

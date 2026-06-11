@@ -29,172 +29,219 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(t.t('settings.title'))),
       body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 20.h),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        padding: EdgeInsets.fromLTRB(
+          20.w,
+          8.h,
+          20.w,
+          20.h + MediaQuery.paddingOf(context).bottom,
+        ),
         child: StaggeredList(
           children: [
-          // Général 
-          _SectionTitle(label: t.t('settings.section_general')),
-          SizedBox(height: 6.h),
+            // Général
+            _SectionTitle(label: t.t('settings.section_general')),
+            SizedBox(height: 6.h),
 
-          // Langue
-          _MenuItem(
-            icon: Icons.language_rounded,
-            iconColor: const Color(0xFF2563EB),
-            title: t.t('settings.language'),
-            subtitle: _localeName(prefs.localeCode, t),
-            cs: cs,
-            onTap: () => _showLanguagePicker(context, ref, t, cs, prefs.localeCode),
-          ),
-
-          // Thème
-          _MenuItem(
-            icon: Icons.palette_outlined,
-            iconColor: const Color(0xFF7C3AED),
-            title: t.t('settings.theme'),
-            subtitle: _themeName(prefs.themeMode, t),
-            cs: cs,
-            onTap: () => _showThemePicker(context, ref, t, cs, prefs.themeMode),
-          ),
-
-          SizedBox(height: 20.h),
-
-          // Aide
-          _SectionTitle(label: t.t('settings.section_help')),
-          SizedBox(height: 6.h),
-
-          _MenuItem(
-            icon: Icons.school_outlined,
-            iconColor: const Color(0xFF0D9488),
-            title: t.t('settings.replay_tutorial'),
-            subtitle: t.t('settings.replay_tutorial_sub'),
-            cs: cs,
-            onTap: () async {
-              Haptic.medium();
-              await resetTour();
-              if (!context.mounted) return;
-              context.go('/dashboard');
-            },
-          ),
-
-          SizedBox(height: 20.h),
-
-          //  Légal
-          _SectionTitle(label: t.t('settings.section_legal')),
-          SizedBox(height: 6.h),
-
-          _MenuItem(
-            icon: Icons.description_outlined,
-            iconColor: const Color(0xFF059669),
-            title: t.t('settings.terms'),
-            subtitle: 'joblyx.com',
-            cs: cs,
-            onTap: () => launchUrl(Uri.parse(_termsUrl), mode: LaunchMode.externalApplication),
-          ),
-
-          _MenuItem(
-            icon: Icons.shield_outlined,
-            iconColor: const Color(0xFF0891B2),
-            title: t.t('settings.privacy'),
-            subtitle: 'joblyx.com',
-            cs: cs,
-            onTap: () => launchUrl(Uri.parse(_privacyUrl), mode: LaunchMode.externalApplication),
-          ),
-
-          SizedBox(height: 20.h),
-
-          // Nous contacter 
-          _SectionTitle(label: t.t('settings.section_contact')),
-          SizedBox(height: 6.h),
-
-          _MenuItem(
-            icon: Icons.email_outlined,
-            iconColor: const Color(0xFFD97706),
-            title: t.t('settings.contact_email'),
-            subtitle: _supportEmail,
-            cs: cs,
-            onTap: () => launchUrl(
-              Uri(scheme: 'mailto', path: _supportEmail,
-                  queryParameters: {'subject': 'Bug/Suggestion'}),
+            // Langue
+            _MenuItem(
+              icon: Icons.language_rounded,
+              iconColor: const Color(0xFF2563EB),
+              title: t.t('settings.language'),
+              subtitle: _localeName(prefs.localeCode, t),
+              cs: cs,
+              onTap: () =>
+                  _showLanguagePicker(context, ref, t, cs, prefs.localeCode),
             ),
-          ),
 
-          _MenuItem(
-            icon: Icons.business_rounded,
-            iconColor: const Color(0xFF0A66C2),
-            title: 'LinkedIn',
-            subtitle: 'Joblyx',
-            cs: cs,
-            onTap: () => launchUrl(Uri.parse(_linkedinUrl), mode: LaunchMode.externalApplication),
-          ),
-
-          SizedBox(height: 20.h),
-
-          //  Déconnexion 
-          _LogoutButton(cs: cs, t: t),
-
-          SizedBox(height: 24.h),
-
-          // Version
-          Center(
-            child: Text(
-              '${t.t('settings.app_version')} $_appVersion',
-              style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
+            // Thème
+            _MenuItem(
+              icon: Icons.palette_outlined,
+              iconColor: const Color(0xFF7C3AED),
+              title: t.t('settings.theme'),
+              subtitle: _themeName(prefs.themeMode, t),
+              cs: cs,
+              onTap: () =>
+                  _showThemePicker(context, ref, t, cs, prefs.themeMode),
             ),
-          ),
-        ],
+
+            SizedBox(height: 20.h),
+
+            // Aide
+            _SectionTitle(label: t.t('settings.section_help')),
+            SizedBox(height: 6.h),
+
+            _MenuItem(
+              icon: Icons.school_outlined,
+              iconColor: const Color(0xFF0D9488),
+              title: t.t('settings.replay_tutorial'),
+              subtitle: t.t('settings.replay_tutorial_sub'),
+              cs: cs,
+              onTap: () async {
+                Haptic.medium();
+                await resetTour();
+                if (!context.mounted) return;
+                context.go('/dashboard');
+              },
+            ),
+
+            SizedBox(height: 20.h),
+
+            //  Légal
+            _SectionTitle(label: t.t('settings.section_legal')),
+            SizedBox(height: 6.h),
+
+            _MenuItem(
+              icon: Icons.description_outlined,
+              iconColor: const Color(0xFF059669),
+              title: t.t('settings.terms'),
+              subtitle: 'joblyx.com',
+              cs: cs,
+              onTap: () => launchUrl(
+                Uri.parse(_termsUrl),
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
+
+            _MenuItem(
+              icon: Icons.shield_outlined,
+              iconColor: const Color(0xFF0891B2),
+              title: t.t('settings.privacy'),
+              subtitle: 'joblyx.com',
+              cs: cs,
+              onTap: () => launchUrl(
+                Uri.parse(_privacyUrl),
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
+
+            SizedBox(height: 20.h),
+
+            // Nous contacter
+            _SectionTitle(label: t.t('settings.section_contact')),
+            SizedBox(height: 6.h),
+
+            _MenuItem(
+              icon: Icons.email_outlined,
+              iconColor: const Color(0xFFD97706),
+              title: t.t('settings.contact_email'),
+              subtitle: _supportEmail,
+              cs: cs,
+              onTap: () => launchUrl(
+                Uri(
+                  scheme: 'mailto',
+                  path: _supportEmail,
+                  queryParameters: {'subject': 'Bug/Suggestion'},
+                ),
+              ),
+            ),
+
+            _MenuItem(
+              icon: Icons.business_rounded,
+              iconColor: const Color(0xFF0A66C2),
+              title: 'LinkedIn',
+              subtitle: 'Joblyx',
+              cs: cs,
+              onTap: () => launchUrl(
+                Uri.parse(_linkedinUrl),
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
+
+            SizedBox(height: 20.h),
+
+            //  Déconnexion
+            _LogoutButton(cs: cs, t: t),
+
+            SizedBox(height: 24.h),
+
+            // Version
+            Center(
+              child: Text(
+                '${t.t('settings.app_version')} $_appVersion',
+                style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  //  Helpers pour les labels 
+  //  Helpers pour les labels
 
   String _localeName(String? code, AppLocalizations t) => switch (code) {
-        'fr' => t.t('settings.language_fr'),
-        'en' => t.t('settings.language_en'),
-        _ => t.t('settings.language_system'),
-      };
+    'fr' => t.t('settings.language_fr'),
+    'en' => t.t('settings.language_en'),
+    _ => t.t('settings.language_system'),
+  };
 
   String _themeName(ThemeMode mode, AppLocalizations t) => switch (mode) {
-        ThemeMode.light => t.t('settings.theme_light'),
-        ThemeMode.dark => t.t('settings.theme_dark'),
-        _ => t.t('settings.theme_system'),
-      };
+    ThemeMode.light => t.t('settings.theme_light'),
+    ThemeMode.dark => t.t('settings.theme_dark'),
+    _ => t.t('settings.theme_system'),
+  };
 
-  // Pickers 
+  // Pickers
 
-  void _showLanguagePicker(BuildContext context, WidgetRef ref, AppLocalizations t, ColorScheme cs, String? current) {
+  void _showLanguagePicker(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    ColorScheme cs,
+    String? current,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(height: 8.h),
-            Container(width: 40.w, height: 4.h,
-                decoration: BoxDecoration(color: cs.outlineVariant, borderRadius: BorderRadius.circular(2.r))),
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: cs.outlineVariant,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
             SizedBox(height: 16.h),
-            Text(t.t('settings.language'), style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+            Text(
+              t.t('settings.language'),
+              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+            ),
             SizedBox(height: 12.h),
             _RadioOption(
               label: t.t('settings.language_system'),
               selected: current == null,
-              onTap: () { ref.read(preferencesProvider.notifier).setLocale(null); Navigator.pop(ctx); },
+              onTap: () {
+                ref.read(preferencesProvider.notifier).setLocale(null);
+                Navigator.pop(ctx);
+              },
               cs: cs,
             ),
             _RadioOption(
               label: t.t('settings.language_fr'),
               selected: current == 'fr',
-              onTap: () { ref.read(preferencesProvider.notifier).setLocale('fr'); Navigator.pop(ctx); },
+              onTap: () {
+                ref.read(preferencesProvider.notifier).setLocale('fr');
+                Navigator.pop(ctx);
+              },
               cs: cs,
             ),
             _RadioOption(
               label: t.t('settings.language_en'),
               selected: current == 'en',
-              onTap: () { ref.read(preferencesProvider.notifier).setLocale('en'); Navigator.pop(ctx); },
+              onTap: () {
+                ref.read(preferencesProvider.notifier).setLocale('en');
+                Navigator.pop(ctx);
+              },
               cs: cs,
             ),
             SizedBox(height: 12.h),
@@ -204,40 +251,72 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showThemePicker(BuildContext context, WidgetRef ref, AppLocalizations t, ColorScheme cs, ThemeMode current) {
+  void _showThemePicker(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    ColorScheme cs,
+    ThemeMode current,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(height: 8.h),
-            Container(width: 40.w, height: 4.h,
-                decoration: BoxDecoration(color: cs.outlineVariant, borderRadius: BorderRadius.circular(2.r))),
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: cs.outlineVariant,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
             SizedBox(height: 16.h),
-            Text(t.t('settings.theme'), style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+            Text(
+              t.t('settings.theme'),
+              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+            ),
             SizedBox(height: 12.h),
             _RadioOption(
               label: t.t('settings.theme_system'),
               icon: Icons.phone_android_rounded,
               selected: current == ThemeMode.system,
-              onTap: () { ref.read(preferencesProvider.notifier).setThemeMode(ThemeMode.system); Navigator.pop(ctx); },
+              onTap: () {
+                ref
+                    .read(preferencesProvider.notifier)
+                    .setThemeMode(ThemeMode.system);
+                Navigator.pop(ctx);
+              },
               cs: cs,
             ),
             _RadioOption(
               label: t.t('settings.theme_light'),
               icon: Icons.light_mode_rounded,
               selected: current == ThemeMode.light,
-              onTap: () { ref.read(preferencesProvider.notifier).setThemeMode(ThemeMode.light); Navigator.pop(ctx); },
+              onTap: () {
+                ref
+                    .read(preferencesProvider.notifier)
+                    .setThemeMode(ThemeMode.light);
+                Navigator.pop(ctx);
+              },
               cs: cs,
             ),
             _RadioOption(
               label: t.t('settings.theme_dark'),
               icon: Icons.dark_mode_rounded,
               selected: current == ThemeMode.dark,
-              onTap: () { ref.read(preferencesProvider.notifier).setThemeMode(ThemeMode.dark); Navigator.pop(ctx); },
+              onTap: () {
+                ref
+                    .read(preferencesProvider.notifier)
+                    .setThemeMode(ThemeMode.dark);
+                Navigator.pop(ctx);
+              },
               cs: cs,
             ),
             SizedBox(height: 12.h),
@@ -258,9 +337,15 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(left: 4.w, bottom: 2.h),
-      child: Text(label.toUpperCase(),
-          style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 1.2)),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          letterSpacing: 1.2,
+        ),
+      ),
     );
   }
 }
@@ -272,7 +357,14 @@ class _MenuItem extends StatelessWidget {
   final ColorScheme cs;
   final VoidCallback onTap;
 
-  const _MenuItem({required this.icon, this.iconColor, required this.title, required this.subtitle, required this.cs, required this.onTap});
+  const _MenuItem({
+    required this.icon,
+    this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.cs,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +382,8 @@ class _MenuItem extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 40.w, height: 40.w,
+                  width: 40.w,
+                  height: 40.w,
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
@@ -302,14 +395,31 @@ class _MenuItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.onSurface)),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurface,
+                        ),
+                      ),
                       SizedBox(height: 2.h),
-                      Text(subtitle, style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded, size: 20.sp, color: cs.onSurfaceVariant),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20.sp,
+                  color: cs.onSurfaceVariant,
+                ),
               ],
             ),
           ),
@@ -326,16 +436,37 @@ class _RadioOption extends StatelessWidget {
   final VoidCallback onTap;
   final ColorScheme cs;
 
-  const _RadioOption({required this.label, this.icon, required this.selected, required this.onTap, required this.cs});
+  const _RadioOption({
+    required this.label,
+    this.icon,
+    required this.selected,
+    required this.onTap,
+    required this.cs,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: icon != null ? Icon(icon, color: selected ? cs.primary : cs.onSurfaceVariant, size: 22.sp) : null,
-      title: Text(label, style: TextStyle(fontSize: 14.sp, fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-          color: selected ? cs.primary : cs.onSurface)),
-      trailing: Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off,
-          color: selected ? cs.primary : cs.onSurfaceVariant, size: 22.sp),
+      leading: icon != null
+          ? Icon(
+              icon,
+              color: selected ? cs.primary : cs.onSurfaceVariant,
+              size: 22.sp,
+            )
+          : null,
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 14.sp,
+          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          color: selected ? cs.primary : cs.onSurface,
+        ),
+      ),
+      trailing: Icon(
+        selected ? Icons.radio_button_checked : Icons.radio_button_off,
+        color: selected ? cs.primary : cs.onSurfaceVariant,
+        size: 22.sp,
+      ),
       onTap: onTap,
     );
   }
@@ -358,7 +489,10 @@ class _LogoutButton extends ConsumerWidget {
           Haptic.heavy();
           await AuthService().logout();
           debugPrint('[LOGOUT] Tokens cleared');
-          if (!context.mounted) { debugPrint('[LOGOUT] Context not mounted!'); return; }
+          if (!context.mounted) {
+            debugPrint('[LOGOUT] Context not mounted!');
+            return;
+          }
           invalidateUserProviders(ref);
           debugPrint('[LOGOUT] Providers invalidated');
           GoRouter.of(context).go('/first-page');
@@ -375,8 +509,14 @@ class _LogoutButton extends ConsumerWidget {
             children: [
               Icon(Icons.logout_rounded, size: 20.sp, color: cs.error),
               SizedBox(width: 8.w),
-              Text(t.t('profile_screen.logout'),
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: cs.error)),
+              Text(
+                t.t('profile_screen.logout'),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: cs.error,
+                ),
+              ),
             ],
           ),
         ),

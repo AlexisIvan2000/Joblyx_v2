@@ -11,10 +11,12 @@ class InterviewSummaryScreen extends ConsumerStatefulWidget {
   const InterviewSummaryScreen({super.key, required this.sessionId});
 
   @override
-  ConsumerState<InterviewSummaryScreen> createState() => _InterviewSummaryScreenState();
+  ConsumerState<InterviewSummaryScreen> createState() =>
+      _InterviewSummaryScreenState();
 }
 
-class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen> {
+class _InterviewSummaryScreenState
+    extends ConsumerState<InterviewSummaryScreen> {
   Map<String, dynamic>? _session;
   bool _isLoading = true;
 
@@ -28,7 +30,11 @@ class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen>
     try {
       final svc = ref.read(interviewServiceProvider);
       final session = await svc.getSession(widget.sessionId);
-      if (mounted) setState(() { _session = session; _isLoading = false; });
+      if (mounted)
+        setState(() {
+          _session = session;
+          _isLoading = false;
+        });
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -54,7 +60,8 @@ class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen>
     }
 
     final score = _session!['overall_score'] as int? ?? 0;
-    final categoryScores = _session!['category_scores'] as Map<String, dynamic>? ?? {};
+    final categoryScores =
+        _session!['category_scores'] as Map<String, dynamic>? ?? {};
     final summary = _session!['summary'] as String? ?? '';
 
     // Extraire strengths, areas_to_improve, recommendation des messages feedback
@@ -64,8 +71,8 @@ class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen>
     final scoreColor = score >= 70
         ? const Color(0xFF5DCAA5)
         : score >= 40
-            ? const Color(0xFFFFB347)
-            : const Color(0xFFE57373);
+        ? const Color(0xFFFFB347)
+        : const Color(0xFFE57373);
 
     return Scaffold(
       appBar: AppBar(
@@ -79,20 +86,29 @@ class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen>
             }
           },
         ),
-        title: Text(_session!['job_title'] as String? ?? t.t('interview.summary_title')),
+        title: Text(
+          _session!['job_title'] as String? ?? t.t('interview.summary_title'),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: EdgeInsets.fromLTRB(
+          16.w,
+          12.h,
+          16.w,
+          12.h + MediaQuery.paddingOf(context).bottom,
+        ),
         child: Column(
           children: [
             // Score global
             SizedBox(
-              width: 110.w, height: 110.w,
+              width: 110.w,
+              height: 110.w,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   SizedBox(
-                    width: 110.w, height: 110.w,
+                    width: 110.w,
+                    height: 110.w,
                     child: CircularProgressIndicator(
                       value: score / 100,
                       strokeWidth: 10.w,
@@ -104,8 +120,21 @@ class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen>
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('$score', style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.w900, color: scoreColor)),
-                      Text('/100', style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant)),
+                      Text(
+                        '$score',
+                        style: TextStyle(
+                          fontSize: 32.sp,
+                          fontWeight: FontWeight.w900,
+                          color: scoreColor,
+                        ),
+                      ),
+                      Text(
+                        '/100',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -115,11 +144,13 @@ class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen>
 
             // Scores par catégorie
             if (categoryScores.isNotEmpty)
-              ...categoryScores.entries.map((e) => _CategoryBar(
-                    label: _categoryLabel(e.key, t),
-                    score: e.value as int? ?? 0,
-                    cs: cs,
-                  )),
+              ...categoryScores.entries.map(
+                (e) => _CategoryBar(
+                  label: _categoryLabel(e.key, t),
+                  score: e.value as int? ?? 0,
+                  cs: cs,
+                ),
+              ),
             SizedBox(height: 16.h),
 
             // Résumé
@@ -128,8 +159,14 @@ class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen>
                 title: t.t('interview.summary_section'),
                 icon: Icons.summarize_outlined,
                 cs: cs,
-                child: Text(summary,
-                    style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant, height: 1.5)),
+                child: Text(
+                  summary,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: cs.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
               ),
               SizedBox(height: 10.h),
             ],
@@ -137,10 +174,13 @@ class _InterviewSummaryScreenState extends ConsumerState<InterviewSummaryScreen>
             // Boutons
             SizedBox(height: 16.h),
             OutlinedButton.icon(
-              onPressed: () => context.push('/assistant/interview/chat/${widget.sessionId}'),
+              onPressed: () =>
+                  context.push('/assistant/interview/chat/${widget.sessionId}'),
               icon: Icon(Icons.chat_outlined, size: 18.sp),
               label: Text(t.t('interview.view_conversation')),
-              style: OutlinedButton.styleFrom(minimumSize: Size(double.infinity, 44.h)),
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size(double.infinity, 44.h),
+              ),
             ),
             SizedBox(height: 32.h),
           ],
@@ -166,15 +206,19 @@ class _CategoryBar extends StatelessWidget {
   final int score;
   final ColorScheme cs;
 
-  const _CategoryBar({required this.label, required this.score, required this.cs});
+  const _CategoryBar({
+    required this.label,
+    required this.score,
+    required this.cs,
+  });
 
   @override
   Widget build(BuildContext context) {
     final color = score >= 70
         ? const Color(0xFF5DCAA5)
         : score >= 40
-            ? const Color(0xFFFFB347)
-            : const Color(0xFFE57373);
+        ? const Color(0xFFFFB347)
+        : const Color(0xFFE57373);
 
     return Padding(
       padding: EdgeInsets.only(bottom: 10.h),
@@ -182,7 +226,10 @@ class _CategoryBar extends StatelessWidget {
         children: [
           SizedBox(
             width: 110.w,
-            child: Text(label, style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant)),
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
+            ),
           ),
           Expanded(
             child: ClipRRect(
@@ -196,7 +243,14 @@ class _CategoryBar extends StatelessWidget {
             ),
           ),
           SizedBox(width: 8.w),
-          Text('$score', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: cs.onSurface)),
+          Text(
+            '$score',
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w700,
+              color: cs.onSurface,
+            ),
+          ),
         ],
       ),
     );
@@ -225,11 +279,20 @@ class _SectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Icon(icon, size: 18.sp, color: cs.primary),
-              SizedBox(width: 8.w),
-              Text(title, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, color: cs.onSurface)),
-            ]),
+            Row(
+              children: [
+                Icon(icon, size: 18.sp, color: cs.primary),
+                SizedBox(width: 8.w),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface,
+                  ),
+                ),
+              ],
+            ),
             SizedBox(height: 8.h),
             child,
           ],

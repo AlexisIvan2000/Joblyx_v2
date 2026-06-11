@@ -45,35 +45,67 @@ class InterviewListScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.chat_outlined, size: 48.sp, color: cs.onSurfaceVariant),
+                  Icon(
+                    Icons.chat_outlined,
+                    size: 48.sp,
+                    color: cs.onSurfaceVariant,
+                  ),
                   SizedBox(height: 12.h),
-                  Text(t.t('interview.no_sessions'),
-                      style: TextStyle(fontSize: 14.sp, color: cs.onSurfaceVariant)),
+                  Text(
+                    t.t('interview.no_sessions'),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             );
           }
 
           // Séparer in_progress et completed
-          final inProgress = sessions.where((s) => s['status'] == 'in_progress').toList();
-          final completed = sessions.where((s) => s['status'] == 'completed').toList();
+          final inProgress = sessions
+              .where((s) => s['status'] == 'in_progress')
+              .toList();
+          final completed = sessions
+              .where((s) => s['status'] == 'completed')
+              .toList();
 
           return RefreshIndicator(
-            onRefresh: () => ref.read(interviewHistoryProvider.notifier).refresh(),
+            onRefresh: () =>
+                ref.read(interviewHistoryProvider.notifier).refresh(),
             child: ListView(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.fromLTRB(
+                16.w,
+                16.w,
+                16.w,
+                16.w + MediaQuery.paddingOf(context).bottom,
+              ),
               children: [
                 if (inProgress.isNotEmpty) ...[
-                  FadeSlideIn(child: _sectionTitle(t.t('interview.in_progress'), cs)),
+                  FadeSlideIn(
+                    child: _sectionTitle(t.t('interview.in_progress'), cs),
+                  ),
                   SizedBox(height: 8.h),
-                  ...inProgress.asMap().entries.map((e) => FadeSlideIn(
-                        delay: Duration(milliseconds: 60 * (e.key + 1)),
-                        child: _SessionCard(
-                          session: e.value, cs: cs,
-                          onTap: () => context.push('/assistant/interview/chat/${e.value['id']}'),
-                          onDelete: () => _confirmDelete(context, ref, t, cs, e.value['id'] as String),
+                  ...inProgress.asMap().entries.map(
+                    (e) => FadeSlideIn(
+                      delay: Duration(milliseconds: 60 * (e.key + 1)),
+                      child: _SessionCard(
+                        session: e.value,
+                        cs: cs,
+                        onTap: () => context.push(
+                          '/assistant/interview/chat/${e.value['id']}',
                         ),
-                      )),
+                        onDelete: () => _confirmDelete(
+                          context,
+                          ref,
+                          t,
+                          cs,
+                          e.value['id'] as String,
+                        ),
+                      ),
+                    ),
+                  ),
                   SizedBox(height: 16.h),
                 ],
                 if (completed.isNotEmpty) ...[
@@ -82,14 +114,27 @@ class InterviewListScreen extends ConsumerWidget {
                     child: _sectionTitle(t.t('interview.completed'), cs),
                   ),
                   SizedBox(height: 8.h),
-                  ...completed.asMap().entries.map((e) => FadeSlideIn(
-                        delay: Duration(milliseconds: 60 * (inProgress.length + e.key + 2)),
-                        child: _SessionCard(
-                          session: e.value, cs: cs,
-                          onTap: () => context.push('/assistant/interview/summary/${e.value['id']}'),
-                          onDelete: () => _confirmDelete(context, ref, t, cs, e.value['id'] as String),
+                  ...completed.asMap().entries.map(
+                    (e) => FadeSlideIn(
+                      delay: Duration(
+                        milliseconds: 60 * (inProgress.length + e.key + 2),
+                      ),
+                      child: _SessionCard(
+                        session: e.value,
+                        cs: cs,
+                        onTap: () => context.push(
+                          '/assistant/interview/summary/${e.value['id']}',
                         ),
-                      )),
+                        onDelete: () => _confirmDelete(
+                          context,
+                          ref,
+                          t,
+                          cs,
+                          e.value['id'] as String,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -106,12 +151,20 @@ class InterviewListScreen extends ConsumerWidget {
   }
 
   Widget _sectionTitle(String title, ColorScheme cs) {
-    return Text(title,
-        style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, color: cs.onSurfaceVariant));
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 13.sp,
+        fontWeight: FontWeight.w700,
+        color: cs.onSurfaceVariant,
+      ),
+    );
   }
 
   Future<void> _showNewInterviewDialog(
-    BuildContext context, WidgetRef ref, AppLocalizations t,
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
     AsyncValue<Map<String, dynamic>> usageAsync,
   ) async {
     // Vérifier la limite
@@ -125,7 +178,8 @@ class InterviewListScreen extends ConsumerWidget {
       context: context,
       builder: (_) => InterviewFormDialog(
         initialLanguage: ref.read(preferencesProvider).resolveAiLanguage('fr'),
-        onLanguageChanged: (v) => ref.read(preferencesProvider.notifier).setAiLanguage(v),
+        onLanguageChanged: (v) =>
+            ref.read(preferencesProvider.notifier).setAiLanguage(v),
       ),
     );
     if (result == null || !context.mounted) return;
@@ -145,12 +199,14 @@ class InterviewListScreen extends ConsumerWidget {
       // Initialiser le chat avec la première question
       final sessionId = response['session_id'] as String;
       final firstQ = response['first_question'] as Map<String, dynamic>;
-      ref.read(interviewChatProvider.notifier).initWithFirstQuestion(
-        sessionId: sessionId,
-        jobTitle: result['job_title'] as String,
-        firstMessage: firstQ['message'] as String,
-        questionNumber: firstQ['question_number'] as int? ?? 1,
-      );
+      ref
+          .read(interviewChatProvider.notifier)
+          .initWithFirstQuestion(
+            sessionId: sessionId,
+            jobTitle: result['job_title'] as String,
+            firstMessage: firstQ['message'] as String,
+            questionNumber: firstQ['question_number'] as int? ?? 1,
+          );
 
       // Rafraîchir l'historique et l'usage
       ref.invalidate(interviewHistoryProvider);
@@ -168,7 +224,11 @@ class InterviewListScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(
-    BuildContext context, WidgetRef ref, AppLocalizations t, ColorScheme cs, String id,
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    ColorScheme cs,
+    String id,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -177,10 +237,16 @@ class InterviewListScreen extends ConsumerWidget {
         title: Text(t.t('interview.delete_session')),
         content: Text(t.t('interview.delete_confirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.t('settings.cancel'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.t('settings.cancel')),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(t.t('application_detail.delete'), style: TextStyle(color: cs.error)),
+            child: Text(
+              t.t('application_detail.delete'),
+              style: TextStyle(color: cs.error),
+            ),
           ),
         ],
       ),
@@ -188,14 +254,19 @@ class InterviewListScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
     try {
       await ref.read(interviewHistoryProvider.notifier).deleteSession(id);
-      if (context.mounted) AppSnackbar.success(context, t.t('interview.session_deleted'));
+      if (context.mounted)
+        AppSnackbar.success(context, t.t('interview.session_deleted'));
     } catch (_) {
-      if (context.mounted) AppSnackbar.error(context, t.t('interview.delete_error'));
+      if (context.mounted)
+        AppSnackbar.error(context, t.t('interview.delete_error'));
     }
   }
 
   Future<void> _confirmDeleteAll(
-    BuildContext context, WidgetRef ref, AppLocalizations t, ColorScheme cs,
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    ColorScheme cs,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -204,22 +275,34 @@ class InterviewListScreen extends ConsumerWidget {
         title: Text(t.t('interview.delete_all')),
         content: Text(t.t('interview.delete_all_confirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.t('settings.cancel'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.t('settings.cancel')),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(t.t('application_detail.delete'), style: TextStyle(color: cs.error)),
+            child: Text(
+              t.t('application_detail.delete'),
+              style: TextStyle(color: cs.error),
+            ),
           ),
         ],
       ),
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      final count = await ref.read(interviewHistoryProvider.notifier).deleteAll();
+      final count = await ref
+          .read(interviewHistoryProvider.notifier)
+          .deleteAll();
       if (context.mounted) {
-        AppSnackbar.success(context, t.t('interview.all_deleted').replaceAll('{count}', '$count'));
+        AppSnackbar.success(
+          context,
+          t.t('interview.all_deleted').replaceAll('{count}', '$count'),
+        );
       }
     } catch (_) {
-      if (context.mounted) AppSnackbar.error(context, t.t('interview.delete_error'));
+      if (context.mounted)
+        AppSnackbar.error(context, t.t('interview.delete_error'));
     }
   }
 }
@@ -250,17 +333,18 @@ class _SessionCard extends StatelessWidget {
     if (createdAt.isNotEmpty) {
       final date = DateTime.tryParse(createdAt);
       if (date != null) {
-        dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+        dateStr =
+            '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
       }
     }
 
     final scoreColor = isInProgress
         ? cs.primary
         : (score ?? 0) >= 70
-            ? const Color(0xFF5DCAA5)
-            : (score ?? 0) >= 40
-                ? const Color(0xFFFFB347)
-                : const Color(0xFFE57373);
+        ? const Color(0xFF5DCAA5)
+        : (score ?? 0) >= 40
+        ? const Color(0xFFFFB347)
+        : const Color(0xFFE57373);
 
     final t = AppLocalizations.of(context);
 
@@ -276,17 +360,28 @@ class _SessionCard extends StatelessWidget {
             children: [
               // Score ou badge "En cours"
               Container(
-                width: 44.w, height: 44.w,
+                width: 44.w,
+                height: 44.w,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isInProgress ? cs.primary.withValues(alpha: 0.1) : null,
-                  border: isInProgress ? null : Border.all(color: scoreColor, width: 2.5),
+                  color: isInProgress
+                      ? cs.primary.withValues(alpha: 0.1)
+                      : null,
+                  border: isInProgress
+                      ? null
+                      : Border.all(color: scoreColor, width: 2.5),
                 ),
                 child: Center(
                   child: isInProgress
                       ? Icon(Icons.chat_rounded, size: 20.sp, color: cs.primary)
-                      : Text('${score ?? 0}',
-                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w800, color: scoreColor)),
+                      : Text(
+                          '${score ?? 0}',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w800,
+                            color: scoreColor,
+                          ),
+                        ),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -298,39 +393,77 @@ class _SessionCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(jobTitle,
-                              style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: cs.onSurface),
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            jobTitle,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         if (isInProgress)
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 6.w,
+                              vertical: 2.h,
+                            ),
                             decoration: BoxDecoration(
                               color: cs.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6.r),
                             ),
-                            child: Text(t.t('interview.in_progress_badge'),
-                                style: TextStyle(fontSize: 9.sp, fontWeight: FontWeight.w700, color: cs.primary)),
+                            child: Text(
+                              t.t('interview.in_progress_badge'),
+                              style: TextStyle(
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w700,
+                                color: cs.primary,
+                              ),
+                            ),
                           ),
                         if (dateStr.isNotEmpty && !isInProgress)
-                          Text(dateStr, style: TextStyle(fontSize: 11.sp, color: cs.onSurfaceVariant)),
+                          Text(
+                            dateStr,
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
                       ],
                     ),
                     if (company.isNotEmpty)
-                      Text(company,
-                          style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(
+                        company,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     if (lastMsg.isNotEmpty)
-                      Text(lastMsg,
-                          style: TextStyle(fontSize: 11.sp, color: cs.onSurfaceVariant),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(
+                        lastMsg,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                   ],
                 ),
               ),
               // Bouton supprimer
               IconButton(
                 onPressed: onDelete,
-                icon: Icon(Icons.delete_outline_rounded, size: 18.sp, color: cs.outlineVariant),
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18.sp,
+                  color: cs.outlineVariant,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(minWidth: 36.w, minHeight: 36.h),
               ),

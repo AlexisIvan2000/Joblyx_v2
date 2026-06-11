@@ -36,8 +36,10 @@ class CoachHistoryScreen extends ConsumerWidget {
       body: historyAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => Center(
-          child: Text(t.t('assistant.analyze_error'),
-              style: TextStyle(color: cs.onSurfaceVariant)),
+          child: Text(
+            t.t('assistant.analyze_error'),
+            style: TextStyle(color: cs.onSurfaceVariant),
+          ),
         ),
         data: (sessions) {
           if (sessions.isEmpty) {
@@ -45,10 +47,19 @@ class CoachHistoryScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history_rounded, size: 48.sp, color: cs.onSurfaceVariant),
+                  Icon(
+                    Icons.history_rounded,
+                    size: 48.sp,
+                    color: cs.onSurfaceVariant,
+                  ),
                   SizedBox(height: 12.h),
-                  Text(t.t('assistant.no_history'),
-                      style: TextStyle(fontSize: 14.sp, color: cs.onSurfaceVariant)),
+                  Text(
+                    t.t('assistant.no_history'),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             );
@@ -56,7 +67,12 @@ class CoachHistoryScreen extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () => ref.read(coachHistoryProvider.notifier).refresh(),
             child: ListView.separated(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.fromLTRB(
+                16.w,
+                16.w,
+                16.w,
+                16.w + MediaQuery.paddingOf(context).bottom,
+              ),
               itemCount: sessions.length,
               separatorBuilder: (_, _) => SizedBox(height: 8.h),
               itemBuilder: (context, index) {
@@ -65,7 +81,8 @@ class CoachHistoryScreen extends ConsumerWidget {
                   session: s,
                   cs: cs,
                   onTap: () => context.push('/assistant/coach/${s['id']}'),
-                  onDelete: () => _confirmDelete(context, ref, t, cs, s['id'] as String),
+                  onDelete: () =>
+                      _confirmDelete(context, ref, t, cs, s['id'] as String),
                 );
               },
             ),
@@ -76,7 +93,11 @@ class CoachHistoryScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(
-    BuildContext context, WidgetRef ref, AppLocalizations t, ColorScheme cs, String id,
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    ColorScheme cs,
+    String id,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -91,8 +112,10 @@ class CoachHistoryScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(t.t('application_detail.delete'),
-                style: TextStyle(color: cs.error)),
+            child: Text(
+              t.t('application_detail.delete'),
+              style: TextStyle(color: cs.error),
+            ),
           ),
         ],
       ),
@@ -100,14 +123,19 @@ class CoachHistoryScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
     try {
       await ref.read(coachHistoryProvider.notifier).deleteSession(id);
-      if (context.mounted) AppSnackbar.success(context, t.t('assistant.session_deleted'));
+      if (context.mounted)
+        AppSnackbar.success(context, t.t('assistant.session_deleted'));
     } catch (_) {
-      if (context.mounted) AppSnackbar.error(context, t.t('assistant.delete_error'));
+      if (context.mounted)
+        AppSnackbar.error(context, t.t('assistant.delete_error'));
     }
   }
 
   Future<void> _confirmDeleteAll(
-    BuildContext context, WidgetRef ref, AppLocalizations t, ColorScheme cs,
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    ColorScheme cs,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -122,8 +150,10 @@ class CoachHistoryScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(t.t('application_detail.delete'),
-                style: TextStyle(color: cs.error)),
+            child: Text(
+              t.t('application_detail.delete'),
+              style: TextStyle(color: cs.error),
+            ),
           ),
         ],
       ),
@@ -132,11 +162,14 @@ class CoachHistoryScreen extends ConsumerWidget {
     try {
       final count = await ref.read(coachHistoryProvider.notifier).deleteAll();
       if (context.mounted) {
-        AppSnackbar.success(context,
-            t.t('assistant.all_deleted').replaceAll('{count}', '$count'));
+        AppSnackbar.success(
+          context,
+          t.t('assistant.all_deleted').replaceAll('{count}', '$count'),
+        );
       }
     } catch (_) {
-      if (context.mounted) AppSnackbar.error(context, t.t('assistant.delete_error'));
+      if (context.mounted)
+        AppSnackbar.error(context, t.t('assistant.delete_error'));
     }
   }
 }
@@ -165,15 +198,16 @@ class _HistoryCard extends StatelessWidget {
     if (createdAt.isNotEmpty) {
       final date = DateTime.tryParse(createdAt);
       if (date != null) {
-        dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+        dateStr =
+            '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
       }
     }
 
     final scoreColor = score >= 70
         ? const Color(0xFF5DCAA5)
         : score >= 40
-            ? const Color(0xFFFFB347)
-            : const Color(0xFFE57373);
+        ? const Color(0xFFFFB347)
+        : const Color(0xFFE57373);
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
@@ -186,14 +220,21 @@ class _HistoryCard extends StatelessWidget {
             children: [
               // Score circulaire
               Container(
-                width: 40.w, height: 40.w,
+                width: 40.w,
+                height: 40.w,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: scoreColor, width: 2.5),
                 ),
                 child: Center(
-                  child: Text('$score',
-                      style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w800, color: scoreColor)),
+                  child: Text(
+                    '$score',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: scoreColor,
+                    ),
+                  ),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -203,23 +244,45 @@ class _HistoryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (jobTitle.isNotEmpty)
-                      Text(jobTitle,
-                          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: cs.onSurface),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(
+                        jobTitle,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     if (company.isNotEmpty)
-                      Text(company,
-                          style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(
+                        company,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     if (dateStr.isNotEmpty)
-                      Text(dateStr,
-                          style: TextStyle(fontSize: 11.sp, color: cs.onSurfaceVariant)),
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
                   ],
                 ),
               ),
               // Bouton supprimer
               IconButton(
                 onPressed: onDelete,
-                icon: Icon(Icons.delete_outline_rounded, size: 18.sp, color: cs.outlineVariant),
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18.sp,
+                  color: cs.outlineVariant,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(minWidth: 36.w, minHeight: 36.h),
               ),
