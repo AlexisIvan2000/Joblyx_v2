@@ -76,7 +76,8 @@ class _ApplicationDetailScreenState
           .delete(widget.applicationId);
       if (mounted) Navigator.pop(context);
     } catch (_) {
-      if (mounted) AppSnackbar.error(context, t.t('applications_screen.delete_error'));
+      if (mounted)
+        AppSnackbar.error(context, t.t('applications_screen.delete_error'));
     }
   }
 
@@ -99,7 +100,8 @@ class _ApplicationDetailScreenState
         initialCompanyName: app['company_name'] as String?,
         initialJobDescription: app['job_description'] as String?,
         initialLanguage: ref.read(preferencesProvider).resolveAiLanguage('fr'),
-        onLanguageChanged: (v) => ref.read(preferencesProvider.notifier).setAiLanguage(v),
+        onLanguageChanged: (v) =>
+            ref.read(preferencesProvider.notifier).setAiLanguage(v),
       ),
     );
     if (result == null || !mounted) return;
@@ -118,12 +120,14 @@ class _ApplicationDetailScreenState
 
       final sessionId = response['session_id'] as String;
       final firstQ = response['first_question'] as Map<String, dynamic>;
-      ref.read(interviewChatProvider.notifier).initWithFirstQuestion(
-        sessionId: sessionId,
-        jobTitle: result['job_title'] as String,
-        firstMessage: firstQ['message'] as String,
-        questionNumber: firstQ['question_number'] as int? ?? 1,
-      );
+      ref
+          .read(interviewChatProvider.notifier)
+          .initWithFirstQuestion(
+            sessionId: sessionId,
+            jobTitle: result['job_title'] as String,
+            firstMessage: firstQ['message'] as String,
+            questionNumber: firstQ['question_number'] as int? ?? 1,
+          );
 
       ref.invalidate(interviewHistoryProvider);
       ref.invalidate(interviewUsageProvider);
@@ -191,7 +195,12 @@ class _ApplicationDetailScreenState
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
-          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 32.h),
+          padding: EdgeInsets.fromLTRB(
+            20.w,
+            12.h,
+            20.w,
+            32.h + MediaQuery.paddingOf(context).bottom,
+          ),
           children: [
             // Header: avatar + company + badge
             Row(
@@ -301,7 +310,10 @@ class _ApplicationDetailScreenState
             if (isInterview) ...[
               SizedBox(height: 24.h),
               FilledButton(
-                onPressed: () { Haptic.medium(); _startInterview(t); },
+                onPressed: () {
+                  Haptic.medium();
+                  _startInterview(t);
+                },
                 style: FilledButton.styleFrom(
                   minimumSize: Size(double.infinity, 48.h),
                 ),
@@ -323,7 +335,10 @@ class _ApplicationDetailScreenState
             // Delete button
             SizedBox(height: 24.h),
             OutlinedButton.icon(
-              onPressed: () { Haptic.heavy(); _delete(t); },
+              onPressed: () {
+                Haptic.heavy();
+                _delete(t);
+              },
               icon: Icon(
                 Icons.delete_outline_rounded,
                 size: 18.sp,

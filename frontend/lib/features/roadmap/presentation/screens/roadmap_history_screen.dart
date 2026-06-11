@@ -90,8 +90,10 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
             ),
             ListTile(
               leading: Icon(Icons.delete_outline_rounded, color: cs.error),
-              title: Text(t.t('dashboard.history_delete'),
-                  style: TextStyle(color: cs.error)),
+              title: Text(
+                t.t('dashboard.history_delete'),
+                style: TextStyle(color: cs.error),
+              ),
               onTap: () {
                 Navigator.of(context).pop();
                 _confirmDelete(id);
@@ -160,8 +162,10 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(t.t('application_detail.delete'),
-                style: TextStyle(color: cs.error)),
+            child: Text(
+              t.t('application_detail.delete'),
+              style: TextStyle(color: cs.error),
+            ),
           ),
         ],
       ),
@@ -199,8 +203,10 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(t.t('application_detail.delete'),
-                style: TextStyle(color: cs.error)),
+            child: Text(
+              t.t('application_detail.delete'),
+              style: TextStyle(color: cs.error),
+            ),
           ),
         ],
       ),
@@ -210,8 +216,10 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
     try {
       final count = await ref.read(roadmapServiceProvider).deleteAllArchived();
       if (mounted) {
-        AppSnackbar.success(context,
-            t.t('dashboard.history_deleted_all').replaceAll('{count}', '$count'));
+        AppSnackbar.success(
+          context,
+          t.t('dashboard.history_deleted_all').replaceAll('{count}', '$count'),
+        );
         _loadHistory();
       }
     } catch (_) {
@@ -241,56 +249,66 @@ class _RoadmapHistoryScreenState extends ConsumerState<RoadmapHistoryScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline_rounded,
-                          size: 48.sp, color: cs.error),
-                      SizedBox(height: 12.h),
-                      FilledButton(
-                        onPressed: _loadHistory,
-                        child: Text(t.t('settings.retry')),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: 48.sp,
+                    color: cs.error,
                   ),
-                )
-              : _history == null || _history!.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.history_rounded,
-                              size: 48.sp, color: cs.onSurfaceVariant),
-                          SizedBox(height: 12.h),
-                          Text(
-                            t.t('dashboard.history_empty'),
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: cs.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadHistory,
-                      child: ListView.separated(
-                        padding: EdgeInsets.all(16.w),
-                        itemCount: _history!.length,
-                        separatorBuilder: (_, _) => SizedBox(height: 10.h),
-                        itemBuilder: (context, index) {
-                          final item =
-                              _history![index] as Map<String, dynamic>;
-                          return _HistoryCard(
-                            item: item,
-                            cs: cs,
-                            t: t,
-                            onTap: () => _showOptions(item),
-                          );
-                        },
-                      ),
+                  SizedBox(height: 12.h),
+                  FilledButton(
+                    onPressed: _loadHistory,
+                    child: Text(t.t('settings.retry')),
+                  ),
+                ],
+              ),
+            )
+          : _history == null || _history!.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.history_rounded,
+                    size: 48.sp,
+                    color: cs.onSurfaceVariant,
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    t.t('dashboard.history_empty'),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: cs.onSurfaceVariant,
                     ),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadHistory,
+              child: ListView.separated(
+                padding: EdgeInsets.fromLTRB(
+                  16.w,
+                  16.w,
+                  16.w,
+                  16.w + MediaQuery.paddingOf(context).bottom,
+                ),
+                itemCount: _history!.length,
+                separatorBuilder: (_, _) => SizedBox(height: 10.h),
+                itemBuilder: (context, index) {
+                  final item = _history![index] as Map<String, dynamic>;
+                  return _HistoryCard(
+                    item: item,
+                    cs: cs,
+                    t: t,
+                    onTap: () => _showOptions(item),
+                  );
+                },
+              ),
+            ),
     );
   }
 }
@@ -337,9 +355,7 @@ class _HistoryCard extends StatelessWidget {
     }
 
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -351,8 +367,11 @@ class _HistoryCard extends StatelessWidget {
               // En-tête : date + chevron
               Row(
                 children: [
-                  Icon(Icons.calendar_today_rounded,
-                      size: 14.sp, color: cs.onSurfaceVariant),
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 14.sp,
+                    color: cs.onSurfaceVariant,
+                  ),
                   SizedBox(width: 6.w),
                   if (dateStr.isNotEmpty)
                     Text(
@@ -363,51 +382,56 @@ class _HistoryCard extends StatelessWidget {
                       ),
                     ),
                   const Spacer(),
-                  Icon(Icons.chevron_right_rounded,
-                      size: 20.sp, color: cs.onSurfaceVariant),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20.sp,
+                    color: cs.onSurfaceVariant,
+                  ),
                 ],
               ),
               SizedBox(height: 10.h),
 
               // Titres des phases
               if (phaseTitles.isNotEmpty) ...[
-                ...phaseTitles.asMap().entries.map((e) => Padding(
-                      padding: EdgeInsets.only(bottom: 3.h),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 18.w,
-                            height: 18.w,
-                            decoration: BoxDecoration(
-                              color: cs.primary.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                '${e.key + 1}',
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: cs.primary,
-                                ),
-                              ),
-                            ),
+                ...phaseTitles.asMap().entries.map(
+                  (e) => Padding(
+                    padding: EdgeInsets.only(bottom: 3.h),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 18.w,
+                          height: 18.w,
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
                           ),
-                          SizedBox(width: 8.w),
-                          Expanded(
+                          child: Center(
                             child: Text(
-                              e.value,
+                              '${e.key + 1}',
                               style: TextStyle(
-                                fontSize: 12.sp,
-                                color: cs.onSurface,
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w700,
+                                color: cs.primary,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ],
-                      ),
-                    )),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            e.value,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: cs.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 if (phaseCount > 3)
                   Padding(
                     padding: EdgeInsets.only(left: 26.w),

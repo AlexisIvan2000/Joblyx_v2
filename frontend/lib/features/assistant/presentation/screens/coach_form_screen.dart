@@ -73,13 +73,19 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
       context.push('/assistant/coach/result');
 
       // Lancer l'analyse, la boucle SSE vit dans le notifier
-      await ref.read(coachAnalysisProvider.notifier).analyze(
-        cvPath: _cvFile!.path!,
-        jobDescription: _descriptionController.text.trim(),
-        jobTitle: _jobTitleController.text.trim().isEmpty ? null : _jobTitleController.text.trim(),
-        companyName: _companyController.text.trim().isEmpty ? null : _companyController.text.trim(),
-        language: _language,
-      );
+      await ref
+          .read(coachAnalysisProvider.notifier)
+          .analyze(
+            cvPath: _cvFile!.path!,
+            jobDescription: _descriptionController.text.trim(),
+            jobTitle: _jobTitleController.text.trim().isEmpty
+                ? null
+                : _jobTitleController.text.trim(),
+            companyName: _companyController.text.trim().isEmpty
+                ? null
+                : _companyController.text.trim(),
+            language: _language,
+          );
       // Reset le formulaire seulement si l'analyse a abouti
       if (mounted && ref.read(coachAnalysisProvider).status == 'done') {
         _resetForm();
@@ -107,14 +113,22 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          padding: EdgeInsets.fromLTRB(
+            20.w,
+            16.h,
+            20.w,
+            16.h + MediaQuery.paddingOf(context).bottom,
+          ),
           children: [
             // Usage restant
             usageAsync.when(
               data: (usage) {
                 final remaining = usage['remaining'] as int? ?? 0;
                 return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 10.h,
+                  ),
                   decoration: BoxDecoration(
                     color: remaining > 0
                         ? cs.primary.withValues(alpha: 0.08)
@@ -124,13 +138,17 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        remaining > 0 ? Icons.info_outline_rounded : Icons.warning_amber_rounded,
+                        remaining > 0
+                            ? Icons.info_outline_rounded
+                            : Icons.warning_amber_rounded,
                         size: 18.sp,
                         color: remaining > 0 ? cs.primary : cs.error,
                       ),
                       SizedBox(width: 8.w),
                       Text(
-                        t.t('assistant.remaining_analyses').replaceAll('{count}', '$remaining'),
+                        t
+                            .t('assistant.remaining_analyses')
+                            .replaceAll('{count}', '$remaining'),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
@@ -160,12 +178,16 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
                         ? cs.primary.withValues(alpha: 0.5)
                         : cs.outlineVariant.withValues(alpha: 0.5),
                   ),
-                  color: _cvFile != null ? cs.primary.withValues(alpha: 0.06) : null,
+                  color: _cvFile != null
+                      ? cs.primary.withValues(alpha: 0.06)
+                      : null,
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      _cvFile != null ? Icons.picture_as_pdf_rounded : Icons.upload_file_rounded,
+                      _cvFile != null
+                          ? Icons.picture_as_pdf_rounded
+                          : Icons.upload_file_rounded,
                       size: 22.sp,
                       color: _cvFile != null ? cs.primary : cs.onSurfaceVariant,
                     ),
@@ -175,8 +197,12 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
                         _cvFile?.name ?? t.t('assistant.cv_pick'),
                         style: TextStyle(
                           fontSize: 13.sp,
-                          fontWeight: _cvFile != null ? FontWeight.w600 : FontWeight.w400,
-                          color: _cvFile != null ? cs.onSurface : cs.onSurfaceVariant,
+                          fontWeight: _cvFile != null
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          color: _cvFile != null
+                              ? cs.onSurface
+                              : cs.onSurfaceVariant,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -185,7 +211,11 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
                     if (_cvFile != null)
                       GestureDetector(
                         onTap: () => setState(() => _cvFile = null),
-                        child: Icon(Icons.close_rounded, size: 18.sp, color: cs.onSurfaceVariant),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 18.sp,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                   ],
                 ),
@@ -201,7 +231,9 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
               maxLines: 6,
               textInputAction: TextInputAction.next,
               decoration: _deco(t.t('assistant.job_desc_hint'), cs),
-              validator: (v) => v == null || v.trim().isEmpty ? t.t('assistant.job_desc_required') : null,
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? t.t('assistant.job_desc_required')
+                  : null,
             ),
             SizedBox(height: 16.h),
 
@@ -213,7 +245,8 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
               textInputAction: TextInputAction.next,
               decoration: _deco(t.t('assistant.job_title_hint'), cs),
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return t.t('assistant.job_title_required');
+                if (v == null || v.trim().isEmpty)
+                  return t.t('assistant.job_title_required');
                 return validateJobTitleField(v.trim(), t);
               },
             ),
@@ -237,8 +270,14 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
               onTap: () => FocusScope.of(context).unfocus(),
               decoration: _deco('', cs),
               items: [
-                DropdownMenuItem(value: 'fr', child: Text(t.t('onboarding.language_fr'))),
-                DropdownMenuItem(value: 'en', child: Text(t.t('onboarding.language_en'))),
+                DropdownMenuItem(
+                  value: 'fr',
+                  child: Text(t.t('onboarding.language_fr')),
+                ),
+                DropdownMenuItem(
+                  value: 'en',
+                  child: Text(t.t('onboarding.language_en')),
+                ),
               ],
               onChanged: (v) {
                 setState(() => _language = v!);
@@ -250,9 +289,18 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
             // Bouton analyser
             FilledButton(
               onPressed: _cvFile != null && !_isAnalyzing ? _analyze : null,
-              style: FilledButton.styleFrom(minimumSize: Size(double.infinity, 48.h)),
+              style: FilledButton.styleFrom(
+                minimumSize: Size(double.infinity, 48.h),
+              ),
               child: _isAnalyzing
-                  ? SizedBox(width: 20.w, height: 20.w, child: CircularProgressIndicator(strokeWidth: 2, color: cs.onPrimary))
+                  ? SizedBox(
+                      width: 20.w,
+                      height: 20.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: cs.onPrimary,
+                      ),
+                    )
                   : Text(t.t('assistant.analyze_button')),
             ),
             SizedBox(height: 32.h),
@@ -263,7 +311,14 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
   }
 
   Widget _label(String text, ColorScheme cs) {
-    return Text(text, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: cs.onSurface));
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 13.sp,
+        fontWeight: FontWeight.w600,
+        color: cs.onSurface,
+      ),
+    );
   }
 
   InputDecoration _deco(String hint, ColorScheme cs) {
@@ -271,9 +326,18 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
       hintText: hint,
       hintStyle: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
       contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide(color: cs.outlineVariant)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide(color: cs.primary, width: 1.5)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: BorderSide(color: cs.outlineVariant),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        borderSide: BorderSide(color: cs.primary, width: 1.5),
+      ),
     );
   }
 }

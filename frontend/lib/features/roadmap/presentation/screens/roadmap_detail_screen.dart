@@ -103,24 +103,30 @@ class _RoadmapDetailScreenState extends ConsumerState<RoadmapDetailScreen> {
             ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline_rounded,
-                          size: 48.sp, color: cs.error),
-                      SizedBox(height: 12.h),
-                      FilledButton(
-                        onPressed: _load,
-                        child: Text(t.t('settings.retry')),
-                      ),
-                    ],
-                  ),
-                )
-              : _buildContent(cs, t),
+      body: SafeArea(
+        top: false,
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 48.sp,
+                      color: cs.error,
+                    ),
+                    SizedBox(height: 12.h),
+                    FilledButton(
+                      onPressed: _load,
+                      child: Text(t.t('settings.retry')),
+                    ),
+                  ],
+                ),
+              )
+            : _buildContent(cs, t),
+      ),
     );
   }
 
@@ -140,8 +146,9 @@ class _RoadmapDetailScreenState extends ConsumerState<RoadmapDetailScreen> {
     }
 
     return ListView(
-      physics:
-          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       children: [
         // Date de création
@@ -150,15 +157,15 @@ class _RoadmapDetailScreenState extends ConsumerState<RoadmapDetailScreen> {
             padding: EdgeInsets.only(bottom: 8.h),
             child: Row(
               children: [
-                Icon(Icons.calendar_today_rounded,
-                    size: 14.sp, color: cs.onSurfaceVariant),
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 14.sp,
+                  color: cs.onSurfaceVariant,
+                ),
                 SizedBox(width: 6.w),
                 Text(
                   '${t.t('dashboard.history_created')} $dateStr',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: cs.onSurfaceVariant,
-                  ),
+                  style: TextStyle(fontSize: 12.sp, color: cs.onSurfaceVariant),
                 ),
               ],
             ),

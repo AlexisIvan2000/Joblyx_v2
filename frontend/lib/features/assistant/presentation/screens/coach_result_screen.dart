@@ -32,11 +32,16 @@ class _CoachResultScreenState extends ConsumerState<CoachResultScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(t.t('assistant.result_title'))),
-      body: _buildBody(context, cs, t, state),
+      body: SafeArea(top: false, child: _buildBody(context, cs, t, state)),
     );
   }
 
-  Widget _buildBody(BuildContext context, ColorScheme cs, AppLocalizations t, CoachAnalysisState state) {
+  Widget _buildBody(
+    BuildContext context,
+    ColorScheme cs,
+    AppLocalizations t,
+    CoachAnalysisState state,
+  ) {
     if (state.status == 'error') {
       return Center(
         child: Column(
@@ -44,8 +49,10 @@ class _CoachResultScreenState extends ConsumerState<CoachResultScreen> {
           children: [
             Icon(Icons.error_outline_rounded, size: 48.sp, color: cs.error),
             SizedBox(height: 12.h),
-            Text(t.t('assistant.analyze_error'),
-                style: TextStyle(fontSize: 14.sp, color: cs.onSurfaceVariant)),
+            Text(
+              t.t('assistant.analyze_error'),
+              style: TextStyle(fontSize: 14.sp, color: cs.onSurfaceVariant),
+            ),
           ],
         ),
       );
@@ -64,9 +71,14 @@ class _CoachResultScreenState extends ConsumerState<CoachResultScreen> {
     return const Center(child: CircularProgressIndicator());
   }
 
-  Widget _buildStreaming(ColorScheme cs, AppLocalizations t, CoachAnalysisState state) {
+  Widget _buildStreaming(
+    ColorScheme cs,
+    AppLocalizations t,
+    CoachAnalysisState state,
+  ) {
     final analysis = state.analysis;
-    final hasScore = analysis != null && analysis.containsKey('compatibility_score');
+    final hasScore =
+        analysis != null && analysis.containsKey('compatibility_score');
 
     return ListView(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
@@ -76,17 +88,27 @@ class _CoachResultScreenState extends ConsumerState<CoachResultScreen> {
           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
           child: Column(
             children: [
-              Text(t.t('assistant.analyzing_title'),
-                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: cs.onSurface),
-                  textAlign: TextAlign.center),
+              Text(
+                t.t('assistant.analyzing_title'),
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
               SizedBox(height: 6.h),
-              Text(t.t('assistant.analyzing_subtitle'),
-                  style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
-                  textAlign: TextAlign.center),
+              Text(
+                t.t('assistant.analyzing_subtitle'),
+                style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant),
+                textAlign: TextAlign.center,
+              ),
               SizedBox(height: 12.h),
               SizedBox(
                 width: 180.w,
-                child: LinearProgressIndicator(borderRadius: BorderRadius.circular(4.r)),
+                child: LinearProgressIndicator(
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
               ),
             ],
           ),
@@ -102,7 +124,11 @@ class _CoachResultScreenState extends ConsumerState<CoachResultScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Text(
                 analysis['summary'] as String? ?? '',
-                style: TextStyle(fontSize: 13.sp, color: cs.onSurfaceVariant, height: 1.5),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: cs.onSurfaceVariant,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -118,7 +144,9 @@ class _CoachResultScreenState extends ConsumerState<CoachResultScreen> {
             decoration: BoxDecoration(
               color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             child: SingleChildScrollView(
               reverse: true,
@@ -151,7 +179,8 @@ class _CoachResultScreenState extends ConsumerState<CoachResultScreen> {
     return Center(
       child: ShimmerLoading(
         child: Container(
-          width: 100.w, height: 100.w,
+          width: 100.w,
+          height: 100.w,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: cs.surfaceContainerHighest,
@@ -162,17 +191,21 @@ class _CoachResultScreenState extends ConsumerState<CoachResultScreen> {
   }
 
   List<Widget> _shimmerCards(ColorScheme cs, int count) {
-    return List.generate(count, (i) => Padding(
-      padding: EdgeInsets.only(bottom: 10.h),
-      child: ShimmerLoading(
-        child: Container(
-          height: 56.h, width: double.infinity,
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12.r),
+    return List.generate(
+      count,
+      (i) => Padding(
+        padding: EdgeInsets.only(bottom: 10.h),
+        child: ShimmerLoading(
+          child: Container(
+            height: 56.h,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 }
