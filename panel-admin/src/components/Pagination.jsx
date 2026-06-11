@@ -1,4 +1,4 @@
-// Pagination simple avec affichage compact (Prev / 1 ... 5 6 7 ... 42 / Next)
+import { useEffect } from 'react';
 
 function getPages(currentPage, totalPages) {
   if (totalPages <= 7) {
@@ -19,6 +19,11 @@ export default function Pagination({ page, pageSize, total, onChange }) {
   const pages = getPages(page, totalPages);
   const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, total);
+
+  // Si la page courante dépasse le total (ex: dernier item supprimé), on recale
+  useEffect(() => {
+    if (page > totalPages) onChange(totalPages);
+  }, [page, totalPages, onChange]);
 
   if (totalPages <= 1) {
     return (

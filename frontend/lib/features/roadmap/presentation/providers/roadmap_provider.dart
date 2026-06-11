@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/roadmap/data/roadmap_service.dart';
 
@@ -54,7 +55,10 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
 
   RoadmapService get _svc => ref.read(roadmapServiceProvider);
 
-  // ── Parsing progressif du JSON GPT ──────────────────────────
+  // Annule la génération SSE en cours si une nouvelle démarre
+  CancelToken? _genCancelToken;
+
+  // Parsing progressif du JSON GPT
   int _parsedPhaseCount = 0;
 
   /// Tente d'extraire les phases complètes du buffer JSON accumulé.
@@ -161,7 +165,9 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
     }
   }
 
-  Stream<Map<String, dynamic>> generateWithAI({
+  /// Génère la roadmap par IA. La boucle SSE vit dans le notifier, l'écran
+  /// observe l'état, ainsi un écran détruit ne pilote plus le flux.
+  Future<void> generateWithAI({
     required String level,
     required int yearsExperience,
     required List<String> targetJobs,
@@ -170,77 +176,78 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
     required String language,
     String? previousField,
     required List<Map<String, String>> skills,
-  }) async* {
-    _parsedPhaseCount = 0;
-    state = state.copyWith(
-      generationStatus: 'generating', isLoading: false,
-      streamingText: '', streamingPhases: [],
+  }) async {
+    final cancelToken = _newGenToken();
+    await _runGeneration(
+      _svc.generateWithAI(
+        level: level,
+        yearsExperience: yearsExperience,
+        targetJobs: targetJobs,
+        city: city,
+        province: province,
+        language: language,
+        previousField: previousField,
+        skills: skills,
+        cancelToken: cancelToken,
+      ),
+      cancelToken,
     );
-
-    await for (final event in _svc.generateWithAI(
-      level: level,
-      yearsExperience: yearsExperience,
-      targetJobs: targetJobs,
-      city: city,
-      province: province,
-      language: language,
-      previousField: previousField,
-      skills: skills,
-    )) {
-      yield event;
-
-      final eventType = event['event'] as String;
-      if (eventType == 'chunk') {
-        _handleStreamEvent(event);
-      } else if (eventType == 'complete') {
-        await loadRoadmap();
-        state = state.copyWith(
-          generationStatus: 'ready',
-          hasRoadmap: true,
-          streamingText: '',
-          streamingPhases: [],
-        );
-        ref.invalidate(regenerationStatusProvider);
-      } else if (eventType == 'error') {
-        state = state.copyWith(
-          generationStatus: 'error',
-          streamingText: '',
-          streamingPhases: [],
-        );
-      }
-    }
   }
 
   /// Régénère la roadmap avec les données carrière existantes.
-  Stream<Map<String, dynamic>> regenerate() async* {
+  Future<void> regenerate() async {
+    final cancelToken = _newGenToken();
+    await _runGeneration(_svc.regenerate(cancelToken: cancelToken), cancelToken);
+  }
+
+  // Annule la génération précédente éventuelle et fournit un nouveau token
+  CancelToken _newGenToken() {
+    _genCancelToken?.cancel();
+    final token = CancelToken();
+    _genCancelToken = token;
+    return token;
+  }
+
+  /// Boucle SSE commune aux deux générations.
+  Future<void> _runGeneration(
+      Stream<Map<String, dynamic>> events, CancelToken cancelToken) async {
     _parsedPhaseCount = 0;
     state = state.copyWith(
       generationStatus: 'generating', isLoading: false,
       streamingText: '', streamingPhases: [],
     );
 
-    await for (final event in _svc.regenerate()) {
-      yield event;
-
-      final eventType = event['event'] as String;
-      if (eventType == 'chunk') {
-        _handleStreamEvent(event);
-      } else if (eventType == 'complete') {
-        await loadRoadmap();
-        state = state.copyWith(
-          generationStatus: 'ready',
-          hasRoadmap: true,
-          streamingText: '',
-          streamingPhases: [],
-        );
-        ref.invalidate(regenerationStatusProvider);
-      } else if (eventType == 'error') {
-        state = state.copyWith(
-          generationStatus: 'error',
-          streamingText: '',
-          streamingPhases: [],
-        );
+    try {
+      await for (final event in events) {
+        final eventType = event['event'] as String;
+        if (eventType == 'chunk') {
+          _handleStreamEvent(event);
+        } else if (eventType == 'complete') {
+          await loadRoadmap();
+          state = state.copyWith(
+            generationStatus: 'ready',
+            hasRoadmap: true,
+            streamingText: '',
+            streamingPhases: [],
+          );
+          ref.invalidate(regenerationStatusProvider);
+        } else if (eventType == 'error') {
+          state = state.copyWith(
+            generationStatus: 'error',
+            streamingText: '',
+            streamingPhases: [],
+          );
+        }
       }
+    } on DioException catch (e) {
+      // Annulation volontaire : pas une erreur
+      if (CancelToken.isCancel(e)) return;
+      state = state.copyWith(
+        generationStatus: 'error', streamingText: '', streamingPhases: [],
+      );
+      rethrow;
+    } finally {
+      if (identical(_genCancelToken, cancelToken)) _genCancelToken = null;
     }
   }
 
@@ -254,7 +261,7 @@ class RoadmapNotifier extends Notifier<RoadmapState> {
     );
   }
 
-  // ─── Phase operations (use phase ID) ──────────────────────────
+  // Phase operations (use phase ID)
 
   Future<void> togglePhaseComplete(String phaseId) async {
     await _svc.togglePhaseComplete(phaseId);

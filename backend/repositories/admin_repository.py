@@ -1,7 +1,4 @@
-"""Repository pour les endpoints /v1/admin/* — accès cross-domain (users + stats agrégées)."""
-
 from datetime import datetime, timedelta, timezone
-
 from sqlalchemy import desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +18,7 @@ class AdminRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    # Users CRUD admin
+   
 
     async def list_users(
         self,
@@ -69,9 +66,10 @@ class AdminRepository:
         )
         await self.session.flush()
         return await self.get_user(user_id)
-
+    
+    # Active ou désactive un compte  quand on désactive, garde la trace (timestamp + reason)
     async def set_user_status(self, user_id: str, is_active: bool, reason: str | None = None) -> User | None:
-        # Active ou désactive un compte — quand on désactive, garde la trace (timestamp + reason)
+        
         values: dict = {"is_active": is_active}
         if is_active:
             values["deactivated_at"] = None
@@ -85,18 +83,20 @@ class AdminRepository:
         )
         await self.session.flush()
         return await self.get_user(user_id)
-
+    
+    # Trim string vide en NULL pour rester cohérent en base
     async def update_admin_notes(self, user_id: str, notes: str | None) -> User | None:
-        # Trim string vide en NULL pour rester cohérent en base
+      
         value = notes if notes else None
         await self.session.execute(
             update(User).where(User.id == user_id).values(admin_notes=value)
         )
         await self.session.flush()
         return await self.get_user(user_id)
-
+    
+    # Reset les compteurs d'usage IA utile en support si un user a un problème
     async def reset_user_limits(self, user_id: str) -> None:
-        # Reset les compteurs d'usage IA — utile en support si un user a un problème
+        
         await self.session.execute(
             update(User).where(User.id == user_id).values(
                 coach_usage_count=0,
@@ -130,6 +130,32 @@ class AdminRepository:
             "coach_sessions": int(coach.scalar() or 0),
             "interview_sessions": int(interview.scalar() or 0),
         }
+    
+    # Agrège les compteurs de toute la page en 4 requêtes au lieu de 4 par user
+    async def get_user_stats_bulk(self, user_ids: list[str]) -> dict[str, dict]:
+        
+        stats = {
+            uid: {"applications": 0, "roadmaps": 0, "coach_sessions": 0, "interview_sessions": 0}
+            for uid in user_ids
+        }
+        if not user_ids:
+            return stats
+
+        for model, key in (
+            (Application, "applications"),
+            (Roadmap, "roadmaps"),
+            (CoachSession, "coach_sessions"),
+            (InterviewSession, "interview_sessions"),
+        ):
+            result = await self.session.execute(
+                select(model.user_id, func.count())
+                .where(model.user_id.in_(user_ids))
+                .group_by(model.user_id)
+            )
+            for uid, count in result.all():
+                stats[str(uid)][key] = int(count)
+
+        return stats
 
     # Stats globales (dashboard)
 
@@ -149,9 +175,9 @@ class AdminRepository:
             query = query.where(User.is_verified == verified)
         result = await self.session.execute(query)
         return int(result.scalar() or 0)
-
+    
+     # Compte les users dont l'updated_at est postérieur à `since` (approximation de "actifs")
     async def count_active_users_since(self, since: datetime) -> int:
-        # Compte les users dont l'updated_at est postérieur à `since` (approximation de "actifs")
         result = await self.session.execute(
             select(func.count()).select_from(User).where(User.updated_at >= since)
         )
@@ -175,13 +201,14 @@ class AdminRepository:
     async def count_roadmaps(self) -> int:
         result = await self.session.execute(select(func.count()).select_from(Roadmap))
         return int(result.scalar() or 0)
-
+    
+    # Roadmap manuelle = TOUTES ses phases ont custom=true
+    # On compte les roadmaps qui n'ont AUCUNE phase non-custom
     async def count_manual_roadmaps(self) -> int:
-        # Roadmap manuelle = TOUTES ses phases ont custom=true
-        # On compte les roadmaps qui n'ont AUCUNE phase non-custom
+        
         subquery_has_ai_phase = (
             select(RoadmapPhase.roadmap_id)
-            .where(RoadmapPhase.custom == False)  # noqa: E712
+            .where(RoadmapPhase.custom == False)  
             .subquery()
         )
         result = await self.session.execute(
@@ -190,7 +217,8 @@ class AdminRepository:
             )
         )
         return int(result.scalar() or 0)
-
+    
+     # Roadmap IA = au moins une phase non-custom (générée par GPT)
     async def count_ai_roadmaps(self) -> int:
         # Roadmap IA = au moins une phase non-custom (générée par GPT)
         total = await self.count_roadmaps()

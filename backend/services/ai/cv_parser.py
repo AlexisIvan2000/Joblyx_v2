@@ -1,9 +1,9 @@
 import json
-import fitz  # PyMuPDF
 from pathlib import Path
 from core.config import OPENAI_MODEL_FAST
 from services.ai.openai_client import tracked_completion, tracked_completion_stream
 from services.utils.text_cleaner import clean_cv_text
+from services.utils.pdf import extract_text_from_pdf
 
 # Charger le référentiel de skills une seule fois
 _SKILLS_PATH = Path(__file__).resolve().parent.parent.parent / "models" / "data" / "skills.json"
@@ -42,16 +42,6 @@ _SYSTEM_PROMPT = (
     "estimate proficiency from context, max 20 skills.\n"
     f"Reference (category:skill1,skill2|...):\n{_CATEGORIES_COMPACT}"
 )
-
-# Extrait le texte d'un PDF via PyMuPDF.
-def extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    text = ""
-    for page in doc:
-        text += page.get_text()
-    doc.close()
-    return text.strip()
 
 # Normalise et valide les skills contre le référentiel.
 def _validate_skills(raw_skills: list[dict]) -> list[dict]:

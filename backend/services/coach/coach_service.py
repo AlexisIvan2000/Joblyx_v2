@@ -1,10 +1,7 @@
-"""Service principal pour le coach IA — analyse CV vs offre."""
-
 import hashlib
 import json
 from datetime import datetime, timezone, timedelta
 
-import fitz  # PyMuPDF
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import OPENAI_MODEL_FAST
@@ -18,17 +15,10 @@ from services.ai.openai_client import tracked_completion_stream
 from services.coach.coach_prompt_builder import build_coach_prompt
 from services.storage.r2_service import R2Service
 from services.utils.text_cleaner import clean_cv_text
+from services.utils.pdf import extract_text_from_pdf
 
 WEEKLY_LIMIT = 3
 
-
-def _extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    text = ""
-    for page in doc:
-        text += page.get_text()
-    doc.close()
-    return text.strip()
 
 # Retourne le prochain lundi à minuit UTC.
 def _get_next_monday() -> datetime:
@@ -52,7 +42,6 @@ class CoachService:
         self.r2 = R2Service()
 
     async def check_usage(self, user_id: str) -> dict:
-        """Vérifie et retourne l'usage coach de la semaine."""
         usage = await self.repo.get_usage(user_id)
         count = usage["coach_usage_count"]
         reset_at = usage["coach_usage_reset_at"]
@@ -81,13 +70,7 @@ class CoachService:
         company_name: str | None = None,
         language: str = "fr",
     ):
-        """Analyse le CV vs l'offre via GPT en streaming.
-
-        Yield (event_type, data) tuples :
-          ("chunk", text)  — token brut du stream GPT
-          ("done", analysis_dict)  — résultat final parsé
-          ("error", error_msg)  — en cas d'erreur
-        """
+    
         # Vérifier la limite
         usage = await self.check_usage(user_id)
         if usage["remaining"] <= 0:
@@ -96,7 +79,7 @@ class CoachService:
             )
 
         # Extraire et nettoyer le texte du CV
-        cv_text = clean_cv_text(_extract_text_from_pdf(cv_bytes))
+        cv_text = clean_cv_text(extract_text_from_pdf(cv_bytes))
         if not cv_text:
             raise CvTextExtractionFailed()
 
@@ -107,6 +90,12 @@ class CoachService:
         if cached and cached.analysis:
             yield ("done", cached.analysis)
             return
+
+        # Réserve un créneau atomiquement avant l'appel GPT, le cache reste gratuit
+        if not await self.repo.try_consume_usage(user_id, WEEKLY_LIMIT):
+            raise CoachWeeklyLimitReached(
+                details={"remaining": 0, "resets_at": usage["resets_at"]},
+            )
 
         # Upload le CV sur R2
         cv_file_key = await self.r2.upload_cv(user_id, cv_bytes, cv_filename)
@@ -157,8 +146,6 @@ class CoachService:
             "language": language,
         })
 
-        # Incrémenter le compteur d'usage
-        await self.repo.increment_usage(user_id)
         await self.session.commit()
 
         yield ("done", analysis)

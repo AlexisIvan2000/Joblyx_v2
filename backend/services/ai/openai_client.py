@@ -22,7 +22,7 @@ async def tracked_completion(
     messages: list[dict],
     **openai_kwargs: Any,
 ):
-    """Wrapper non-stream qui capture l'usage après la réponse et le persiste."""
+   # Wrapper non-stream qui capture l'usage après la réponse et le persiste.
     response = await client.chat.completions.create(
         model=model,
         messages=messages,

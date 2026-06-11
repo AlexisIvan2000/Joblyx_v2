@@ -1,5 +1,3 @@
-"""Validation des titres de poste — restreint aux métiers IT."""
-
 import re
 
 from core.exceptions import (
@@ -60,7 +58,7 @@ _MAX_LENGTH = 100
 
 
 def validate_job_title(title: str) -> str:
-    """Valide et nettoie un titre de poste IT — raise une exception métier si invalide."""
+    
     if not title or not title.strip():
         raise JobTitleRequired()
 
@@ -81,5 +79,5 @@ def validate_job_title(title: str) -> str:
 
 
 def validate_job_titles(titles: list[str]) -> list[str]:
-    """Valide une liste de titres de poste (pour les target_jobs du roadmap)."""
+    
     return [validate_job_title(t) for t in titles]

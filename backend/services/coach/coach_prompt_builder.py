@@ -1,5 +1,3 @@
-"""Construit les prompts pour l'analyse coach IA."""
-
 _LANG_INSTRUCTIONS = {
     "fr": "Réponds en français.",
     "en": "Respond in English.",

@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react';
+import Modal from './Modal';
 import '../styles/components/button.css';
 
-// Modale de confirmation pour actions destructives ou sensibles
-// props:
-// - isOpen, title, message
-// - confirmLabel, confirmVariant ('danger' | 'primary')
-// - withReasonInput (bool) affiche un input pour saisir une raison
-// - onConfirm(reason?) : appelé au clic — peut être async
-// - onCancel : fermeture
 
 export default function ConfirmDialog({
   isOpen,
@@ -45,32 +39,30 @@ export default function ConfirmDialog({
   const confirmClass = confirmVariant === 'danger' ? 'btn-danger-solid' : 'btn-primary';
 
   return (
-    <div className="dialog-backdrop" onClick={onCancel}>
-      <div className="dialog" onClick={(e) => e.stopPropagation()}>
-        <h3 className="dialog-title">{title}</h3>
-        <p className="dialog-message">{message}</p>
+    <Modal onClose={onCancel} labelledBy="confirm-dialog-title">
+      <h3 className="dialog-title" id="confirm-dialog-title">{title}</h3>
+      <p className="dialog-message">{message}</p>
 
-        {withReasonInput && (
-          <input
-            type="text"
-            className="dialog-input"
-            placeholder={reasonPlaceholder}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            disabled={isLoading}
-            autoFocus
-          />
-        )}
+      {withReasonInput && (
+        <input
+          type="text"
+          className="dialog-input"
+          placeholder={reasonPlaceholder}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          disabled={isLoading}
+          autoFocus
+        />
+      )}
 
-        <div className="dialog-actions">
-          <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={isLoading}>
-            Annuler
-          </button>
-          <button type="button" className={`btn ${confirmClass}`} onClick={handleConfirm} disabled={isLoading}>
-            {isLoading ? 'Patientez…' : confirmLabel}
-          </button>
-        </div>
+      <div className="dialog-actions">
+        <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={isLoading}>
+          Annuler
+        </button>
+        <button type="button" className={`btn ${confirmClass}`} onClick={handleConfirm} disabled={isLoading}>
+          {isLoading ? 'Patientez…' : confirmLabel}
+        </button>
       </div>
-    </div>
+    </Modal>
   );
 }

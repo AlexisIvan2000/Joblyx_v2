@@ -1,11 +1,10 @@
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 from models.schemas import UserCreate, UserLogin
 from core.security import Security
+from core.password import validate_password
 from core.exceptions import (
-    WeakPassword,
     EmailAlreadyRegistered,
     InvalidCredentials,
     LinkedInOnlyAccount,
@@ -24,7 +23,6 @@ from services.emailing.otp_service import OtpService
 from datetime import datetime, timedelta, timezone
 
 MAX_VERIFICATION_ATTEMPTS = 5
-_PASSWORD_SPECIAL = re.compile(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''')
 
 
 class EmailPasswordAuth:
@@ -34,9 +32,7 @@ class EmailPasswordAuth:
         self.otp_svc = otp_service
 
     async def register_user(self, user: UserCreate):
-        # Validation mot de passe côté serveur
-        if len(user.password) < 8 or not _PASSWORD_SPECIAL.search(user.password):
-            raise WeakPassword()
+        validate_password(user.password)
 
         if await self.repo.get_user_by_email(user.email):
             raise EmailAlreadyRegistered()
@@ -49,8 +45,6 @@ class EmailPasswordAuth:
             "email": user.email,
             "password_hash": hashed_password,
         }
-        if user.avatar_url:
-            user_data["avatar_url"] = user.avatar_url
 
         new_user = await self.repo.create_user(user_data)
         logger.info("User registered: user_id=%s email=%s", new_user.id, user.email)
@@ -88,7 +82,8 @@ class EmailPasswordAuth:
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "role": db_user.role,
         }
 
     async def verify_email(self, email: str, code: str):
@@ -122,7 +117,8 @@ class EmailPasswordAuth:
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "role": db_user.role,
         }
 
     async def resend_verification_email(self, email: str):
@@ -167,7 +163,8 @@ class EmailPasswordAuth:
         return {
             "access_token": new_access_token,
             "refresh_token": new_refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "role": role,
         }
 
     async def logout_user(self, refresh_token: str):

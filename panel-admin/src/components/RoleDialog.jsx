@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
+import Modal from './Modal';
 import '../styles/components/button.css';
 
 // Seuls user et admin sont assignables, super_admin reste unique (founder)
@@ -43,10 +44,9 @@ export default function RoleDialog({ isOpen, currentRole, userName, onConfirm, o
   const isPromotion = currentRole === 'user' && selectedRole === 'admin';
 
   return (
-    <div className="dialog-backdrop" onClick={onCancel}>
-      <div className="dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-        <h3 className="dialog-title">Modifier le rôle</h3>
-        <p className="dialog-message">
+    <Modal onClose={onCancel} labelledBy="role-dialog-title" style={{ maxWidth: 520 }}>
+      <h3 className="dialog-title" id="role-dialog-title">Modifier le rôle</h3>
+      <p className="dialog-message">
           Choisis le nouveau rôle pour <strong>{userName}</strong>. Le changement prend effet à la prochaine connexion de l'utilisateur (ou à son prochain refresh de token).
         </p>
 
@@ -106,7 +106,6 @@ export default function RoleDialog({ isOpen, currentRole, userName, onConfirm, o
             {isLoading ? 'Mise à jour…' : 'Appliquer'}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

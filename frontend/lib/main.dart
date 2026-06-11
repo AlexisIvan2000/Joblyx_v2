@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:frontend/core/router/app_router.dart';
 import 'package:frontend/core/theme/theme_color.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/features/settings/presentation/providers/preferences_provider.dart';
@@ -42,8 +41,6 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
-
-  GoogleFonts.config.allowRuntimeFetching = true;
 
   runApp(const ProviderScope(child: MainApp()));
 }

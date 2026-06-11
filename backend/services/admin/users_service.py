@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import ADMIN_EMAIL
 from core.exceptions import (
-    CannotModifyAdmin,
     CannotModifyFounder,
+    CannotModifySuperAdmin,
     CannotPromoteToSuperAdmin,
     ExternalServiceError,
     UserNotFound,
@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 _ALLOWED_ROLES = ("user", "admin", "super_admin")
 _ASSIGNABLE_ROLES = ("user", "admin")  # super_admin reste unique, non assignable via l'UI
+# Rang de privilège, sert à détecter une rétrogradation (perte de droits)
+_ROLE_RANK = {"user": 0, "admin": 1, "super_admin": 2}
 
 
 def _is_founder(user) -> bool:
@@ -40,16 +42,13 @@ class AdminUsersService:
         self.auth_repo = AuthRepository(session)
         self.rt_repo = RefreshTokenRepository(session)
 
-    def _check_can_modify(self, target, caller_role: str | None) -> None:
-        """Garde-fou commun, exécuté sur toute action mutante visant un user.
-
-        Bloque si la cible est le founder (verrouillage total).
-        Bloque si la cible est super_admin et que l'admin appelant n'est pas super_admin.
-        """
+    def _check_can_modify(self, target, caller_role: str | None = None) -> None:
+        # Founder et super_admin sont immuables via l'API, quel que soit l'appelant
+        # (récupération uniquement par SQL direct). caller_role conservé pour la signature.
         if _is_founder(target):
             raise CannotModifyFounder()
-        if target.role == "super_admin" and caller_role != "super_admin":
-            raise CannotModifyAdmin()
+        if target.role == "super_admin":
+            raise CannotModifySuperAdmin()
 
     async def list_users(
         self,
@@ -67,11 +66,9 @@ class AdminUsersService:
             role=role, is_active=is_active, verified=verified, search=search,
         )
 
-        # Une query stats par user (acceptable jusqu'à ~50 users par page)
-        users_with_stats = []
-        for u in users:
-            stats = await self.admin_repo.get_user_stats(str(u.id))
-            users_with_stats.append({"user": u, "stats": stats})
+        # Stats agrégées en lot pour éviter le N+1 sur la page
+        stats_by_id = await self.admin_repo.get_user_stats_bulk([str(u.id) for u in users])
+        users_with_stats = [{"user": u, "stats": stats_by_id[str(u.id)]} for u in users]
 
         return {
             "users": users_with_stats,
@@ -147,9 +144,8 @@ class AdminUsersService:
         if not target:
             raise UserNotFound()
 
-        # Founder verrouillé : aucun changement de rôle possible, même par lui-même
-        if _is_founder(target):
-            raise CannotModifyFounder()
+        # Founder et super_admin verrouillés : leur rôle ne change jamais via l'API
+        self._check_can_modify(target)
 
         # Empêche un super_admin de se rétrograder lui-même par accident
         if admin_id and str(target.id) == admin_id:
@@ -157,6 +153,10 @@ class AdminUsersService:
 
         previous_role = target.role
         updated_user = await self.admin_repo.update_user_role(user_id, new_role)
+
+        # Rétrogradation (perte de privilèges) : on révoque les refresh tokens pour forcer une reconnexion
+        if _ROLE_RANK.get(new_role, 0) < _ROLE_RANK.get(previous_role, 0):
+            await self.rt_repo.revoke_all_for_user(user_id)
 
         await self.audit_repo.create(
             admin_id=admin_id,
@@ -235,7 +235,7 @@ class AdminUsersService:
 
         # Envoi Resend, en cas d'erreur on remonte un 502 et on n'écrit PAS d'audit log
         try:
-            EmailSender().send_admin_email(target.email, subject, body)
+            await EmailSender().send_admin_email(target.email, subject, body)
         except Exception as exc:
             logger.error("Resend send_admin_email failed: admin=%s target=%s error=%s", admin_id, user_id, exc)
             raise ExternalServiceError("Failed to send email") from exc

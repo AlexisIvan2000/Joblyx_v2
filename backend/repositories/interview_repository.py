@@ -1,7 +1,4 @@
-"""Repository pour les sessions d'entretien simulé."""
-
 from datetime import datetime, timezone
-
 from sqlalchemy import select, delete, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -13,7 +10,7 @@ class InterviewRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    # ─── Sessions ────────────────────────────────────────────────
+    #  Sessions 
 
     async def create_session(self, data: dict) -> InterviewSession:
         session = InterviewSession(**data)
@@ -70,7 +67,7 @@ class InterviewRepository:
             await self.session.flush()
         return count
 
-    # ─── Messages ────────────────────────────────────────────────
+    #  Messages 
 
     async def create_message(self, data: dict) -> InterviewMessage:
         msg = InterviewMessage(**data)
@@ -95,7 +92,7 @@ class InterviewRepository:
         )
         return result.scalar() or 0
 
-    # ─── Usage tracking ──────────────────────────────────────────
+    #  Usage tracking 
 
     async def get_usage(self, user_id: str) -> dict:
         result = await self.session.execute(
@@ -111,13 +108,15 @@ class InterviewRepository:
             "interview_usage_reset_at": row[1],
         }
 
-    async def increment_usage(self, user_id: str) -> None:
-        await self.session.execute(
+    async def try_consume_usage(self, user_id: str, limit: int) -> bool:
+        # Réserve un créneau de façon atomique, échoue si la limite est déjà atteinte
+        result = await self.session.execute(
             update(User)
-            .where(User.id == user_id)
+            .where(User.id == user_id, User.interview_usage_count < limit)
             .values(interview_usage_count=User.interview_usage_count + 1)
         )
         await self.session.flush()
+        return result.rowcount > 0
 
     async def reset_usage(self, user_id: str, reset_at: datetime) -> None:
         await self.session.execute(

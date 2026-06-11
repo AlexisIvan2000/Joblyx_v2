@@ -1,5 +1,3 @@
-// Endpoints du dashboard admin (/v1/admin/*)
-
 import { apiClient } from './client';
 
 // Dashboard stats

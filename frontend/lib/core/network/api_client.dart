@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
 
-const String _baseUrl = 'https://api.joblyx.com'; 
+const String _baseUrl = 'https://api.joblyx.com/v1';
 
 /// Callback appelé quand la session expire (refresh token invalide).
 /// Permet au niveau app de rediriger vers le login.
@@ -50,14 +50,12 @@ class ApiClient {
         handler.next(options);
       },
       onError: (error, handler) async {
-        // Si 401, pas un endpoint exempt, et pas déjà un retry → tenter le refresh
         final isRetry = error.requestOptions.extra['_retried'] == true;
         if (error.response?.statusCode == 401 &&
             !_noRefreshPaths.contains(error.requestOptions.path) &&
             !isRetry) {
           final refreshed = await _refreshWithLock();
           if (refreshed) {
-            // Relancer la requête une seule fois avec le nouveau token
             final token = await _storage.getAccessToken();
             error.requestOptions.headers['Authorization'] = 'Bearer $token';
             error.requestOptions.extra['_retried'] = true;
@@ -68,7 +66,6 @@ class ApiClient {
               return handler.reject(e);
             }
           }
-          // Refresh échoué → session expirée
           return handler.reject(error);
         }
         if (kDebugMode) {
@@ -79,10 +76,9 @@ class ApiClient {
     ));
   }
 
-  /// Refresh avec lock : le premier appel fait le refresh,
-  /// les appels concurrents attendent le même résultat.
+  
   Future<bool> _refreshWithLock() async {
-    // Si un refresh est déjà en cours, attendre son résultat
+   
     if (_refreshCompleter != null) {
       return _refreshCompleter!.future;
     }
@@ -105,7 +101,7 @@ class ApiClient {
     if (refreshToken == null) return false;
 
     try {
-      // Dio séparé pour éviter les interceptors récursifs
+      
       final freshDio = Dio(BaseOptions(
         baseUrl: _baseUrl,
         headers: {'Content-Type': 'application/json'},
@@ -119,7 +115,7 @@ class ApiClient {
       );
       return true;
     } catch (_) {
-      // Refresh échoué → nettoyer les tokens et notifier
+      
       await _storage.clearTokens();
       onSessionExpired?.call();
       return false;

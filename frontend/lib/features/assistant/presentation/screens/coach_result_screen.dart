@@ -7,11 +7,25 @@ import 'package:frontend/features/assistant/presentation/providers/coach_provide
 import 'package:frontend/features/assistant/presentation/widgets/coach_sections.dart';
 
 /// Écran résultat coach IA — affiché pendant et après le streaming.
-class CoachResultScreen extends ConsumerWidget {
+class CoachResultScreen extends ConsumerStatefulWidget {
   const CoachResultScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CoachResultScreen> createState() => _CoachResultScreenState();
+}
+
+class _CoachResultScreenState extends ConsumerState<CoachResultScreen> {
+  @override
+  void dispose() {
+    // Annule le streaming si l'utilisateur quitte avant la fin, pour ne pas gaspiller de tokens
+    if (ref.read(coachAnalysisProvider).status == 'analyzing') {
+      ref.read(coachAnalysisProvider.notifier).cancel();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final state = ref.watch(coachAnalysisProvider);

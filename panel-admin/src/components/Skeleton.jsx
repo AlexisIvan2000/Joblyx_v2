@@ -1,9 +1,5 @@
 import '../styles/components/skeleton.css';
 
-// Skeleton primitif avec shimmer, dimensions custom
-// width, height : px ou string CSS, default 100% / 1em
-// rounded : 'sm' | '' | 'lg' | 'pill' | 'full'
-
 export default function Skeleton({ width = '100%', height = '1em', rounded = '', className = '', style = {} }) {
   return (
     <span

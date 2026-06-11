@@ -1,11 +1,14 @@
+import asyncio
 import html
-import resend
-from core.config import RESEND_API_KEY, RESEND_FROM_EMAIL, RESEND_FROM_NAME
+from functools import partial
 from typing import Dict
 
+import resend
+from core.config import RESEND_API_KEY, RESEND_FROM_EMAIL, RESEND_FROM_NAME
 
+# Convertit un texte brut en HTML safe (escape + paragraphes <p> + <br> intra paragraphe).
 def _plain_text_to_html_paragraphs(text: str) -> str:
-    """Convertit un texte brut en HTML safe (escape + paragraphes <p> + <br> intra paragraphe)."""
+    
     escaped = html.escape(text.strip())
     paragraphs = [p.strip() for p in escaped.split("\n\n") if p.strip()]
     return "".join(
@@ -19,7 +22,14 @@ class EmailSender:
     def __init__(self):
         resend.api_key = RESEND_API_KEY
 
-    def send_verification_email(self, to: str, code: str) -> Dict:
+   
+    async def _send(self, params: Dict) -> Dict:
+        return await asyncio.get_event_loop().run_in_executor(
+            None,
+            partial(resend.Emails.send, params),
+        )
+
+    async def send_verification_email(self, to: str, code: str) -> Dict:
         subject = "Email verification"
         html = f"""
                 <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -39,10 +49,9 @@ class EmailSender:
             "subject": subject,
             "html": html
         }
-        response = resend.Emails.send(params)
-        return response
+        return await self._send(params)
 
-    def send_reset_password_email(self, to: str, code: str) -> Dict:
+    async def send_reset_password_email(self, to: str, code: str) -> Dict:
         subject = "Password reset"
         html = f"""
                 <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -62,11 +71,9 @@ class EmailSender:
             "subject": subject,
             "html": html
         }
-        response = resend.Emails.send(params)
-        return response
+        return await self._send(params)
 
-    def send_admin_email(self, to: str, subject: str, body_text: str) -> Dict:
-        """Envoie un email custom écrit par un admin, texte brut converti en HTML."""
+    async def send_admin_email(self, to: str, subject: str, body_text: str) -> Dict:
         body_html = _plain_text_to_html_paragraphs(body_text)
         html_template = f"""
                 <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; color: #333;">
@@ -85,10 +92,9 @@ class EmailSender:
             "subject": subject,
             "html": html_template,
         }
-        response = resend.Emails.send(params)
-        return response
+        return await self._send(params)
 
-    def send_email_change_email(self, to: str, code: str) -> Dict:
+    async def send_email_change_email(self, to: str, code: str) -> Dict:
         subject = "Email change verification"
         html = f"""
                 <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -108,5 +114,4 @@ class EmailSender:
             "subject": subject,
             "html": html
         }
-        response = resend.Emails.send(params)
-        return response
+        return await self._send(params)

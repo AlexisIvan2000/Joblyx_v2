@@ -77,7 +77,7 @@ Widget _testApp(Widget child) {
 }
 
 void main() {
-  // ── LoginForm ──
+  //  LoginForm 
 
   group('LoginForm - Rendu des champs', () {
     testWidgets('affiche les champs email et mot de passe', (tester) async {
@@ -334,7 +334,7 @@ void main() {
     });
   });
 
-  // ── ForgotPasswordDialog ──
+  // ForgotPasswordDialog 
 
   group('ForgotPasswordDialog - Rendu initial', () {
     testWidgets('affiche le champ email initialement', (tester) async {

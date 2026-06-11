@@ -60,7 +60,7 @@ class InterviewHistoryNotifier
   }
 }
 
-// ─── Chat (state pour le WebSocket) ─────────────────────────────
+// Chat (state pour le WebSocket) 
 
 class ChatMessage {
   final String role; // 'assistant' | 'user'
@@ -158,7 +158,7 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
 
   bool get _canUpdate => _active;
 
-  // ─── Init ─────────────────────────────────────────────────────
+  //  Init 
 
   void initWithFirstQuestion({
     required String sessionId,
@@ -204,7 +204,7 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
     );
   }
 
-  // ─── WebSocket ────────────────────────────────────────────────
+  // WebSocket 
 
   void connectWebSocket(String token) {
     // Fermer toute connexion existante
@@ -269,7 +269,7 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
     }
   }
 
-  // ─── Envoi de message ─────────────────────────────────────────
+  //  Envoi de message 
 
   void sendMessage(String text) {
     if (text.trim().isEmpty || state.isAiTyping) return;
@@ -324,7 +324,7 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
     }
   }
 
-  // ─── Handlers WebSocket ───────────────────────────────────────
+  //  Handlers WebSocket
 
   void _handleWebSocketMessage(String raw) {
     if (!_canUpdate) return;
@@ -421,7 +421,7 @@ class InterviewChatNotifier extends Notifier<InterviewChatState> {
     ref.invalidate(interviewUsageProvider);
   }
 
-  // ─── Cleanup ──────────────────────────────────────────────────
+  //  Cleanup 
 
   void _cancelResponseTimer() {
     _responseTimer?.cancel();

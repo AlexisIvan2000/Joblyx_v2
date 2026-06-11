@@ -1,11 +1,8 @@
 import logging
-import re
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 from core.exceptions import (
-    PasswordTooShort,
-    PasswordMissingSpecial,
     LinkedInOnlyAccount,
     IncorrectCurrentPassword,
     IncorrectPassword,
@@ -23,23 +20,16 @@ from core.exceptions import (
     EmailAlreadyInUse,
     UserNotFound,
     NoFieldsToUpdate,
+    CannotDeleteSuperAdmin,
 )
 from core.security import Security
+from core.password import validate_password
 from models.schemas import UpdateProfile
 from repositories.auth_repository import AuthRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
 from services.emailing.otp_service import OtpService
 
 MAX_VERIFICATION_ATTEMPTS = 5
-_PASSWORD_SPECIAL = re.compile(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''')
-
-
-def _validate_password(password: str) -> None:
-    # Valide la force du mot de passe — raise une exception métier si trop faible
-    if len(password) < 8:
-        raise PasswordTooShort()
-    if not _PASSWORD_SPECIAL.search(password):
-        raise PasswordMissingSpecial()
 
 
 class UserService:
@@ -56,7 +46,7 @@ class UserService:
         return {"message": "Profile updated successfully"}
 
     async def change_password(self, user_id: str, current_password: str, new_password: str):
-        _validate_password(new_password)
+        validate_password(new_password)
         db_user = await self.repo.get_user_by_id(user_id)
         if not db_user.password_hash:
             raise LinkedInOnlyAccount()
@@ -73,8 +63,8 @@ class UserService:
         return {"message": "Password changed successfully"}
 
     async def set_password(self, user_id: str, new_password: str):
-        """Définir un mot de passe pour un compte LinkedIn-only."""
-        _validate_password(new_password)
+       
+        validate_password(new_password)
         db_user = await self.repo.get_user_by_id(user_id)
         if db_user.password_hash:
             raise PasswordAlreadySet()
@@ -93,7 +83,7 @@ class UserService:
         return {"message": "If this email is registered, a reset code has been sent"}
 
     async def reset_password(self, email: str, code: str, new_password: str):
-        _validate_password(new_password)
+        validate_password(new_password)
         db_user = await self.repo.get_user_by_email(email)
         if not db_user or not db_user.reset_code_hash:
             raise InvalidOrExpiredResetCode()
@@ -175,10 +165,14 @@ class UserService:
         application_repo=None,
         coach_repo=None,
     ):
-        """Supprime le compte après vérification de l'email + nettoie les fichiers R2 associés."""
+        
         db_user = await self.repo.get_user_by_id(user_id)
         if not db_user:
             raise UserNotFound()
+
+        # Le super_admin est unique et ne peut jamais être supprimé, même par lui-même
+        if db_user.role == "super_admin":
+            raise CannotDeleteSuperAdmin()
 
         if db_user.email != email_confirmation:
             raise EmailMismatch()

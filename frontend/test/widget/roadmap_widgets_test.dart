@@ -263,7 +263,7 @@ void main() {
   });
 }
 
-// ── Helpers ────────────────────────────────────────────────────
+// Helpers 
 
 /// Reproduit la logique de parsing progressif du provider.
 List<Map<String, dynamic>> _extractPhases(String buffer) {
@@ -305,7 +305,7 @@ List<Map<String, dynamic>> _extractPhases(String buffer) {
   return phases;
 }
 
-// ── Widgets de test ────────────────────────────────────────────
+// Widgets de test
 
 class _CongratsCard extends StatelessWidget {
   final ColorScheme cs;

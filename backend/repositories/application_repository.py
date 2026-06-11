@@ -34,7 +34,7 @@ class ApplicationRepository:
         return list(result.scalars().all())
 
     async def update(self, app_id: str, user_id: str, data: dict) -> Application | None:
-        # Vérifier que la candidature appartient à l'utilisateur
+      
         existing = await self.get_by_id(app_id, user_id)
         if not existing:
             return None
@@ -45,7 +45,6 @@ class ApplicationRepository:
             .values(**data)
         )
         await self.session.flush()
-        # Expirer le cache pour forcer la relecture depuis la DB
         await self.session.refresh(existing)
         return existing
 

@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ExternalLink } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { listSentryIssues } from '../api/admin';
-import { getErrorMessage } from '../api/errors';
+import { getErrorMessage, parseApiError } from '../api/errors';
 import LoadingSpinner from '../components/LoadingSpinner';
 import LiveIndicator from '../components/LiveIndicator';
 import Badge from '../components/Badge';
@@ -30,7 +30,6 @@ export default function ErrorsPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('is:unresolved');
   const [environment, setEnvironment] = useState('');
-  const [isConfigured, setIsConfigured] = useState(true);
 
   const fetchIssues = useCallback(() => listSentryIssues({
     query: query || undefined,
@@ -44,21 +43,12 @@ export default function ErrorsPage() {
     { interval: 20000 },
   );
 
-  // Détecte le cas "Sentry non configuré côté backend"
-  useEffect(() => {
-    if (rawError?.response?.data?.error === 'sentry_not_configured') {
-      setIsConfigured(false);
-    } else {
-      setIsConfigured(true);
-    }
-  }, [rawError]);
-
   const issues = data?.issues || [];
-  const error = rawError && rawError?.response?.data?.error !== 'sentry_not_configured'
-    ? getErrorMessage(rawError)
-    : null;
+  // Cas "Sentry non configuré côté backend", dérivé du format d'erreur normalisé
+  const sentryNotConfigured = parseApiError(rawError).error === 'sentry_not_configured';
+  const error = rawError && !sentryNotConfigured ? getErrorMessage(rawError) : null;
 
-  if (!isConfigured) {
+  if (sentryNotConfigured) {
     return (
       <div className="errors-not-configured">
         <strong>Sentry n'est pas configuré sur ce backend.</strong>

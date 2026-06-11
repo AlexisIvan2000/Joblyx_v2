@@ -31,14 +31,15 @@ class OtpService:
             "last_code_sent_at": now,
             "code_resend_count": new_resend_count,
         })
-        self.email_sender.send_verification_email(email, code=otp_code)
+        
+        await self.email_sender.send_verification_email(email, code=otp_code)
 
     async def send_reset_otp(self, email: str):
         otp_code = Security.generate_otp_code()
         code_hash = Security.hash_token(otp_code)
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)
         await self.repo.save_reset_code(email, code_hash, expires_at)
-        self.email_sender.send_reset_password_email(email, code=otp_code)
+        await self.email_sender.send_reset_password_email(email, code=otp_code)
 
     async def send_email_change_otp(self, pending_email: str, user_id: str, db_user=None):
         if db_user:
@@ -58,7 +59,7 @@ class OtpService:
             "last_code_sent_at": now,
             "code_resend_count": new_resend_count,
         })
-        self.email_sender.send_email_change_email(pending_email, code=otp_code)
+        await self.email_sender.send_email_change_email(pending_email, code=otp_code)
 
     @staticmethod
     def _check_resend_rate_limit(db_user):

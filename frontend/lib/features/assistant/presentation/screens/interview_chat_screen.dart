@@ -328,7 +328,7 @@ class _InterviewChatScreenState extends ConsumerState<InterviewChatScreen> {
   }
 }
 
-// ─── Bulle de chat ─────────────────────────────────────────────
+//  Bulle de chat 
 
 class _ChatBubble extends StatefulWidget {
   final ChatMessage message;
@@ -439,7 +439,7 @@ class _ChatBubbleState extends State<_ChatBubble> {
   }
 }
 
-// ─── Typing indicator ──────────────────────────────────────────
+//  Typing indicator 
 
 class _TypingIndicator extends StatefulWidget {
   final ColorScheme cs;

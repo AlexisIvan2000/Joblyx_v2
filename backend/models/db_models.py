@@ -1,4 +1,4 @@
-from models.db import (  # noqa: F401
+from models.db import (  
     Application,
     AuditLog,
     Base,

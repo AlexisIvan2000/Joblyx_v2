@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 
-// ═══════════════════════════════════════════════════════════════
+
 // AddPhaseDialog
-// ═══════════════════════════════════════════════════════════════
+
 
 /// Dialog pour ajouter une phase custom au roadmap.
 class AddPhaseDialog extends StatefulWidget {
@@ -128,9 +128,9 @@ class _AddPhaseDialogState extends State<AddPhaseDialog> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+
 // EditNotesDialog
-// ═══════════════════════════════════════════════════════════════
+
 
 /// Dialog pour modifier les notes d'une phase.
 class EditNotesDialog extends StatefulWidget {
@@ -197,7 +197,7 @@ class _EditNotesDialogState extends State<EditNotesDialog> {
             ),
             SizedBox(height: 20.h),
 
-            // Bouton sauvegarder — retourne le texte saisi au parent
+            // Bouton sauvegarder retourne le texte saisi au parent
             FilledButton(
               onPressed: () => Navigator.of(context).pop(_ctrl.text.trim()),
               child: Text(t.t('settings.save')),

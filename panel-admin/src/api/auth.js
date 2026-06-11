@@ -1,5 +1,3 @@
-// Endpoints d'authentification login, logout, refresh, get_me
-
 import { apiClient } from './client';
 import { tokenStorage } from '../utils/storage';
 

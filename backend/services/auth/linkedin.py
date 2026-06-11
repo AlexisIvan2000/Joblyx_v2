@@ -1,11 +1,8 @@
-"""Service d'authentification via LinkedIn OAuth 2.0."""
-
 import logging
 import httpx
 
 logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta, timezone
-
 from core.config import LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, LINKEDIN_REDIRECT_URI
 from core.exceptions import (
     LinkedInMissingEmail,
@@ -29,13 +26,7 @@ class LinkedInAuth:
         self.rt_repo = refresh_token_repo
 
     async def authenticate(self, code: str) -> dict:
-        """Échange le code OAuth contre un token LinkedIn, récupère le profil,
-        puis gère les 3 cas (nouveau compte, liaison, reconnexion)."""
-
-        # Échanger le code contre un access token LinkedIn
         linkedin_token = await self._exchange_code(code)
-
-        # Récupérer le profil LinkedIn
         profile = await self._get_profile(linkedin_token)
         linkedin_id = profile["sub"]
         email = profile.get("email")
@@ -46,13 +37,13 @@ class LinkedInAuth:
         if not email:
             raise LinkedInMissingEmail()
 
-        # Cas 3 — Compte déjà lié par linkedin_id
+        # Cas 3 : Compte déjà lié par linkedin_id
         db_user = await self.repo.get_user_by_linkedin_id(linkedin_id)
         if db_user:
             logger.info("LinkedIn login (reconnect): user_id=%s email=%s", db_user.id, email)
             return await self._issue_tokens(str(db_user.id))
 
-        # Cas 2 — Compte existant avec le même email
+        # Cas 2 : Compte existant avec le même email
         db_user = await self.repo.get_user_by_email(email)
         if db_user:
             logger.info("LinkedIn login (link existing): user_id=%s email=%s", db_user.id, email)
@@ -70,7 +61,7 @@ class LinkedInAuth:
                 await self.repo.update_verification_status(str(db_user.id))
             return await self._issue_tokens(str(db_user.id))
 
-        # Cas 1 — Nouveau compte
+        # Cas 1 : Nouveau compte
         logger.info("LinkedIn login (new account): email=%s linkedin_id=%s", email, linkedin_id)
         new_user = await self.repo.create_user({
             "first_name": first_name,
@@ -82,9 +73,9 @@ class LinkedInAuth:
             "avatar_url": avatar_url,
         })
         return await self._issue_tokens(str(new_user.id))
-
+    
+    # Échange le code d'autorisation contre un access token LinkedIn.
     async def _exchange_code(self, code: str) -> str:
-        """Échange le code d'autorisation contre un access token LinkedIn."""
         async with httpx.AsyncClient() as client:
             response = await client.post(_TOKEN_URL, data={
                 "grant_type": "authorization_code",
@@ -100,9 +91,9 @@ class LinkedInAuth:
 
         data = response.json()
         return data["access_token"]
-
+    
+    # Récupère le profil utilisateur via l'API LinkedIn userinfo.
     async def _get_profile(self, access_token: str) -> dict:
-        """Récupère le profil utilisateur via l'API LinkedIn userinfo."""
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 _USERINFO_URL,
@@ -113,9 +104,9 @@ class LinkedInAuth:
             raise LinkedInProfileFetchFailed()
 
         return response.json()
-
+    
+    # Génère les tokens JWT (access + refresh).
     async def _issue_tokens(self, user_id: str) -> dict:
-        """Génère les tokens JWT (access + refresh)."""
         # Re-fetch pour récupérer le role et vérifier que le compte est actif
         db_user = await self.repo.get_user_by_id(user_id)
         if db_user and not db_user.is_active:
@@ -133,4 +124,5 @@ class LinkedInAuth:
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
+            "role": role,
         }

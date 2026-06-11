@@ -1,5 +1,3 @@
-"""Repository pour les sessions coach IA."""
-
 from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +9,6 @@ class CoachRepository:
         self.session = session
 
     async def find_cached(self, user_id: str, cv_hash: str, job_desc_hash: str) -> CoachSession | None:
-        """Cherche une analyse existante avec les mêmes CV et offre."""
         result = await self.session.execute(
             select(CoachSession).where(
                 CoachSession.user_id == user_id,
@@ -81,7 +78,7 @@ class CoachRepository:
         await self.session.flush()
         return keys
 
-    # ─── Usage tracking ──────────────────────────────────────────
+    # Usage tracking 
 
     async def get_usage(self, user_id: str) -> dict:
         result = await self.session.execute(
@@ -97,13 +94,15 @@ class CoachRepository:
             "coach_usage_reset_at": row[1],
         }
 
-    async def increment_usage(self, user_id: str) -> None:
-        await self.session.execute(
+    async def try_consume_usage(self, user_id: str, limit: int) -> bool:
+        # Réserve un créneau de façon atomique, échoue si la limite est déjà atteinte
+        result = await self.session.execute(
             update(User)
-            .where(User.id == user_id)
+            .where(User.id == user_id, User.coach_usage_count < limit)
             .values(coach_usage_count=User.coach_usage_count + 1)
         )
         await self.session.flush()
+        return result.rowcount > 0
 
     async def reset_usage(self, user_id: str, reset_at) -> None:
         await self.session.execute(

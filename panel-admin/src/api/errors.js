@@ -1,6 +1,3 @@
-// Parse une erreur axios (DioException équivalent) en un objet normalisé
-// Le backend renvoie { error, message, details } depuis le commit DomainError
-
 export function parseApiError(axiosError) {
   const response = axiosError?.response;
   const data = response?.data;

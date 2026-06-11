@@ -1,12 +1,10 @@
-"""Nettoyage du texte CV avant envoi à GPT pour réduire les tokens."""
-
 import re
 
 _MAX_CV_LENGTH = 8000
 
 
 def clean_cv_text(raw_text: str) -> str:
-    """Nettoie le texte extrait d'un CV PDF pour minimiser les tokens GPT."""
+    
     if not raw_text:
         return ""
 

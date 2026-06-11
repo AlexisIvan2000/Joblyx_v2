@@ -4,7 +4,7 @@ def build_roadmap_prompt(
     market_data: list[dict] | None,
     completed_data: dict | None = None,
 ) -> tuple[str, str]:
-    """Construit (system_prompt, user_prompt) pour GPT-4o."""
+    
     lang = career.get("language", "fr")
     lang_instruction = "Réponds en français." if lang == "fr" else (
         "Reply in English." if lang == "en" else

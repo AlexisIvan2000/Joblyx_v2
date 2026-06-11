@@ -9,9 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.config import OPENAI_MODEL_FAST
 from core.exceptions import (
     InterviewDailyLimitReached,
+    InvalidToken,
     SessionAlreadyCompleted,
     SessionNotFound,
 )
+from core.security import Security
 from repositories.interview_repository import InterviewRepository
 from services.ai.openai_client import tracked_completion, tracked_completion_stream
 from services.utils.text_cleaner import clean_cv_text
@@ -29,14 +31,14 @@ FEEDBACK_DELIMITER = "<<<FEEDBACK_JSON>>>"
 
 
 def _get_tomorrow_midnight() -> datetime:
-    """Retourne demain à minuit UTC."""
+    
     now = datetime.now(timezone.utc)
     tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     return tomorrow
 
 
 def _get_today_midnight() -> datetime:
-    """Retourne aujourd'hui à minuit UTC."""
+  
     now = datetime.now(timezone.utc)
     return now.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -46,7 +48,22 @@ class InterviewService:
         self.session = session
         self.repo = InterviewRepository(session)
 
-    # ─── Usage ───────────────────────────────────────────────────
+    async def authorize_websocket(self, session_id: str, token: str) -> str:
+        # Valide le token et l'état de la session, retourne l'user_id du candidat
+        payload = Security.decode_token(token)
+        if not payload or payload.get("type") != "access":
+            raise InvalidToken()
+        user_id = payload.get("sub")
+        if not user_id:
+            raise InvalidToken()
+        interview = await self.repo.get_session_by_id(session_id, user_id)
+        if not interview:
+            raise SessionNotFound()
+        if interview.status != "in_progress":
+            raise SessionAlreadyCompleted()
+        return user_id
+
+    #  Usage 
 
     async def check_usage(self, user_id: str) -> dict:
         usage = await self.repo.get_usage(user_id)
@@ -81,6 +98,13 @@ class InterviewService:
         # Vérifier la limite
         usage = await self.check_usage(user_id)
         if usage["remaining"] <= 0:
+            raise InterviewDailyLimitReached(
+                f"Daily interview session limit reached ({DAILY_LIMIT} per day)",
+                details={"remaining": 0, "resets_at": usage["resets_at"]},
+            )
+
+        # Réserve un créneau atomiquement avant l'appel GPT
+        if not await self.repo.try_consume_usage(user_id, DAILY_LIMIT):
             raise InterviewDailyLimitReached(
                 f"Daily interview session limit reached ({DAILY_LIMIT} per day)",
                 details={"remaining": 0, "resets_at": usage["resets_at"]},
@@ -127,8 +151,6 @@ class InterviewService:
             "position": 1,
         })
 
-        # Incrémenter l'usage
-        await self.repo.increment_usage(user_id)
         await self.session.commit()
 
         return {
@@ -148,14 +170,6 @@ class InterviewService:
         user_id: str,
         user_message: str,
     ):
-        """Yield des tuples (event_type, data) pour le streaming WebSocket.
-
-        Events:
-          ("stream", text_chunk) — texte à streamer dans le chat
-          ("stream_end", None) — fin du texte
-          ("feedback", feedback_dict) — feedback + metadata
-          ("error", error_msg) — erreur
-        """
         # Validations
         if not user_message or not user_message.strip():
             yield ("error", "Message vide")
@@ -322,9 +336,7 @@ class InterviewService:
         await self.session.commit()
 
     # Terminer en avance 
-
     async def end_session_early(self, session_id: str, user_id: str) -> dict:
-        """Force la fin de l'entretien. Envoie 'Avez-vous des questions ?' puis clôture."""
         interview = await self.repo.get_session_by_id(session_id, user_id)
         if not interview:
             raise SessionNotFound()
@@ -445,11 +457,7 @@ _WINDOW_SIZE = 10  # Nombre de messages récents à garder
 
 
 def _build_windowed_history(messages: list) -> list[dict]:
-    """Construit un historique tronqué pour économiser les tokens.
-
-    Garde les 2 premiers messages (intro) + les N derniers.
-    Résume les messages du milieu en une ligne.
-    """
+    
     if len(messages) <= _WINDOW_SIZE + 2:
         # Pas besoin de tronquer
         return [{"role": m.role, "content": m.content} for m in messages]

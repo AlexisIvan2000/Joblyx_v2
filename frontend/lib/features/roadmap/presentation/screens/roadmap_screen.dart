@@ -147,10 +147,7 @@ class RoadmapScreen extends ConsumerWidget {
 
     try {
       final notifier = ref.read(roadmapProvider.notifier);
-      await for (final event in notifier.regenerate()) {
-        final eventType = event['event'] as String;
-        if (eventType == 'error') break;
-      }
+      await notifier.regenerate();
     } catch (_) {
       if (!context.mounted) return;
       AppSnackbar.error(context, t.t('dashboard.error_title'));

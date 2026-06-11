@@ -32,6 +32,7 @@ class RoadmapService {
     required String language,
     String? previousField,
     required List<Map<String, String>> skills,
+    CancelToken? cancelToken,
   }) async* {
     final response = await _dio.post(
       '/roadmap/generate',
@@ -46,6 +47,7 @@ class RoadmapService {
         if (previousField != null) 'previous_field': previousField,
         'skills': skills,
       },
+      cancelToken: cancelToken,
       options: Options(
         responseType: ResponseType.stream,
         headers: {'Accept': 'text/event-stream'},
@@ -89,9 +91,10 @@ class RoadmapService {
 
   /// Regenerates a roadmap using existing career data (no form needed).
   /// Returns SSE events as maps.
-  Stream<Map<String, dynamic>> regenerate() async* {
+  Stream<Map<String, dynamic>> regenerate({CancelToken? cancelToken}) async* {
     final response = await _dio.post(
       '/roadmap/regenerate',
+      cancelToken: cancelToken,
       options: Options(
         responseType: ResponseType.stream,
         headers: {'Accept': 'text/event-stream'},
@@ -156,7 +159,7 @@ class RoadmapService {
 
   /// Extrait les skills d'un CV via SSE streaming.
   /// Yield des events : {event: "status"|"chunk"|"skills"|"complete"|"error", data: {...}}
-  Stream<Map<String, dynamic>> extractSkillsStream(String filePath) async* {
+  Stream<Map<String, dynamic>> extractSkillsStream(String filePath, {CancelToken? cancelToken}) async* {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
         filePath,
@@ -166,6 +169,7 @@ class RoadmapService {
     final response = await _dio.post(
       '/roadmap/extract-skills',
       data: formData,
+      cancelToken: cancelToken,
       options: Options(
         responseType: ResponseType.stream,
         headers: {'Accept': 'text/event-stream'},
@@ -242,7 +246,7 @@ class RoadmapService {
     return response.data as Map<String, dynamic>;
   }
 
-  // ─── Phase endpoints (use phase ID) ───────────────────────────
+  // Phase endpoints (use phase ID)
 
   Future<Map<String, dynamic>> addPhase(Map<String, dynamic> phase) async {
     final response = await _dio.post('/roadmap/phases', data: phase);

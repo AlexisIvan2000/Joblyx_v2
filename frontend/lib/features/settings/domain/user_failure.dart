@@ -1,4 +1,14 @@
 class UserFailure {
+  // Backend `error` code vers clé i18n, prioritaire sur le texte
+  static const _codeMap = {
+    'weak_password': 'settings_error.weak_password',
+    'password_too_short': 'settings_error.password_too_short',
+    'password_too_long': 'settings_error.password_too_long',
+    'password_missing_uppercase': 'settings_error.password_missing_uppercase',
+    'password_missing_lowercase': 'settings_error.password_missing_lowercase',
+    'password_missing_special': 'settings_error.password_missing_special',
+  };
+
   static const _map = {
     'Current password is incorrect': 'settings_error.wrong_password',
     'Invalid password': 'settings_error.invalid_password',
@@ -25,7 +35,10 @@ class UserFailure {
     500: 'settings_error.server_error',
   };
 
-  static String resolve(String? detail, {int? statusCode}) {
+  static String resolve(String? detail, {String? code, int? statusCode}) {
+    if (code != null && _codeMap.containsKey(code)) {
+      return _codeMap[code]!;
+    }
     if (detail != null && _map.containsKey(detail)) {
       return _map[detail]!;
     }

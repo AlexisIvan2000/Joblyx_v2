@@ -1,10 +1,5 @@
 import '../styles/components/table.css';
 
-// Table générique avec en-tête + rangées cliquables + état vide
-// columns : [{ key, label, render?(row) }]
-// rows    : liste d'objets
-// onRowClick(row) : optionnel  rend les lignes cliquables
-
 export default function DataTable({ columns, rows, onRowClick, emptyMessage = 'Aucun résultat' }) {
   if (!rows || rows.length === 0) {
     return (

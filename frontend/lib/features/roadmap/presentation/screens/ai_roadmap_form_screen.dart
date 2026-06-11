@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +50,7 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
   List<String> _allSkillNames = [];
   final List<SkillChipData> _selectedSkills = [];
   bool _isUploadingCv = false;
+  CancelToken? _extractCancelToken;
   final _skillSearchController = TextEditingController();
   final _skillSearchFocusNode = FocusNode();
 
@@ -127,6 +129,7 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
     _mapboxService.dispose();
     _skillSearchController.dispose();
     _skillSearchFocusNode.dispose();
+    _extractCancelToken?.cancel();
     for (final c in _jobControllers) {
       c.dispose();
     }
@@ -197,7 +200,7 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
       context.go('/roadmap');
 
       final notifier = ref.read(roadmapProvider.notifier);
-      await for (final event in notifier.generateWithAI(
+      await notifier.generateWithAI(
         level: _level,
         yearsExperience: int.tryParse(_yearsController.text) ?? 0,
         targetJobs: targetJobs,
@@ -208,10 +211,7 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
             ? _previousFieldController.text.trim()
             : null,
         skills: skills,
-      )) {
-        final eventType = event['event'] as String;
-        if (eventType == 'error') break;
-      }
+      );
     } catch (e) {
       if (!mounted) return;
       AppSnackbar.error(context, t.t('onboarding.error'));
@@ -239,12 +239,14 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
     if (file.path == null) return;
 
     setState(() => _isUploadingCv = true);
+    final cancelToken = CancelToken();
+    _extractCancelToken = cancelToken;
 
     try {
       final svc = ref.read(roadmapServiceProvider);
       int added = 0;
 
-      await for (final event in svc.extractSkillsStream(file.path!)) {
+      await for (final event in svc.extractSkillsStream(file.path!, cancelToken: cancelToken)) {
         if (!mounted) return;
         final eventType = event['event'] as String;
         final data = event['data'] as Map<String, dynamic>;
@@ -275,11 +277,17 @@ class _AIRoadmapFormScreenState extends ConsumerState<AIRoadmapFormScreen> {
           t.t('onboarding.skills_extracted').replaceAll('{count}', '$added'),
         );
       }
+    } on DioException catch (e) {
+      // Annulation volontaire (l'utilisateur a quitté) : pas une erreur
+      if (CancelToken.isCancel(e)) return;
+      if (!mounted) return;
+      AppSnackbar.error(context, t.t('onboarding.upload_cv_error'));
     } catch (e, st) {
       debugPrint('extractSkillsStream error: $e\n$st');
       if (!mounted) return;
       AppSnackbar.error(context, t.t('onboarding.upload_cv_error'));
     } finally {
+      if (identical(_extractCancelToken, cancelToken)) _extractCancelToken = null;
       if (mounted) setState(() => _isUploadingCv = false);
     }
   }

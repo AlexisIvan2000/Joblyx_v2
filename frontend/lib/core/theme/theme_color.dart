@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ThemeColor {
   // Couleurs du design system Joblyx
@@ -23,7 +22,7 @@ class ThemeColor {
       brightness: Brightness.light,
     ),
     scaffoldBackgroundColor: const Color(0xFFF5F7F8),
-    textTheme: GoogleFonts.plusJakartaSansTextTheme(),
+    fontFamily: 'Geist',
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFFF5F7F8),
       elevation: 0,
@@ -85,7 +84,7 @@ class ThemeColor {
       brightness: Brightness.dark,
     ),
     scaffoldBackgroundColor: const Color(0xFF0F172A),
-    textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
+    fontFamily: 'Geist',
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFF0F172A),
       elevation: 0,

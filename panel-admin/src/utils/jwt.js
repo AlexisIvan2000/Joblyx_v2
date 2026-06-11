@@ -1,6 +1,3 @@
-// Decode un JWT sans vérifier la signature — utilisé uniquement pour extraire role/exp côté client
-// La sécurité est assurée par le backend qui valide à chaque requête
-
 export function decodeJwt(token) {
   if (!token) return null;
   try {

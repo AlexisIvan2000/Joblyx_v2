@@ -1,10 +1,3 @@
-"""Tracker des appels OpenAI : persiste un log par appel avec tokens et coût réel.
-
-Utilisé via les wrappers de openai_client.py. Best effort : un échec d'écriture ne casse
-jamais le flux métier (on log et on continue), mais on conserve le coût même si la
-transaction métier rollback (commit dédié sur une nouvelle session).
-"""
-
 import logging
 from typing import Any
 
@@ -18,9 +11,8 @@ logger = logging.getLogger(__name__)
 # du service appelant (les tokens sont déjà facturés par OpenAI, on doit les enregistrer)
 _TrackerSession = AsyncSessionLocal
 
-
+# Extrait (prompt_tokens, completion_tokens, total_tokens) depuis un objet usage OpenAI.
 def _extract_usage(usage_obj: Any) -> tuple[int, int, int]:
-    """Extrait (prompt_tokens, completion_tokens, total_tokens) depuis un objet usage OpenAI."""
     if usage_obj is None:
         return (0, 0, 0)
     prompt = getattr(usage_obj, "prompt_tokens", 0) or 0
@@ -28,7 +20,7 @@ def _extract_usage(usage_obj: Any) -> tuple[int, int, int]:
     total = getattr(usage_obj, "total_tokens", 0) or (prompt + completion)
     return (int(prompt), int(completion), int(total))
 
-
+# Persiste un log d'appel OpenAI dans sa propre transaction, best effort.
 async def track_usage(
     *,
     user_id: str | None,
@@ -36,7 +28,6 @@ async def track_usage(
     model: str,
     usage: Any,
 ) -> None:
-    """Persiste un log d'appel OpenAI dans sa propre transaction, best effort."""
     prompt, completion, total = _extract_usage(usage)
     if total == 0:
         # Pas d'usage à logger, ne pas créer de row vide

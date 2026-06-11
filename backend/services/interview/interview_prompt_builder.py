@@ -1,5 +1,3 @@
-"""Construit le system prompt pour le simulateur d'entretien."""
-
 _LANG_INSTRUCTIONS = {
     "fr": "Réponds en français.",
     "en": "Respond in English.",
@@ -77,7 +75,7 @@ def build_interview_prompt(
     cv_text: str | None = None,
     language: str = "fr",
 ) -> str:
-    """Retourne le system prompt pour l'entretien."""
+  
     lang_instruction = _LANG_INSTRUCTIONS.get(language, _LANG_INSTRUCTIONS["fr"])
     company_clause = f" chez {company_name}" if company_name else ""
     job_desc_clause = f"Poste :\n{job_description}" if job_description else ""
@@ -96,6 +94,6 @@ def build_interview_prompt(
 
 
 def build_summary_prompt(language: str = "fr") -> str:
-    """Retourne le prompt pour le bilan."""
+    
     lang_instruction = _LANG_INSTRUCTIONS.get(language, _LANG_INSTRUCTIONS["fr"])
     return _SUMMARY_PROMPT.format(lang_instruction=lang_instruction)

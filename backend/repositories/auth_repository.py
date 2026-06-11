@@ -77,7 +77,6 @@ class AuthRepository:
         await self.session.flush()
 
     async def delete_user(self, user_id: str) -> None:
-        """Supprime le user — les FK CASCADE suppriment toutes les données liées."""
         user = await self.get_user_by_id(user_id)
         if user:
             await self.session.delete(user)

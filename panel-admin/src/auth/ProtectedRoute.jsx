@@ -1,5 +1,3 @@
-// Wrapper de route  redirige vers /login si pas authentifié, affiche un loader pendant le check
-
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 

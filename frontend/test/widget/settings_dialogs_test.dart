@@ -66,9 +66,9 @@ Future<void> _tapSave(WidgetTester tester) async {
 }
 
 void main() {
-  // ────────────────────────────────────────────────────────────────────────────
+  
   // ChangePasswordDialog
-  // ────────────────────────────────────────────────────────────────────────────
+ 
   group('ChangePasswordDialog', () {
     testWidgets('affiche les 3 champs mot de passe', (tester) async {
       await tester.pumpWidget(_testApp(const ChangePasswordDialog()));
@@ -91,8 +91,8 @@ void main() {
       await tester.pumpWidget(_testApp(const ChangePasswordDialog()));
       await tester.pumpAndSettle();
 
-      // 2 icônes visibility_off (current + new), confirm n'en a pas
-      expect(find.byIcon(Icons.visibility_off_rounded), findsNWidgets(2));
+      // Champs masqués au départ : œil ouvert (appuie pour révéler), sur current + new
+      expect(find.byIcon(Icons.visibility_rounded), findsNWidgets(2));
     });
 
     testWidgets('valide le mot de passe actuel vide', (tester) async {
@@ -164,9 +164,8 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────────────────────────────
   // SetPasswordDialog
-  // ────────────────────────────────────────────────────────────────────────────
+
   group('SetPasswordDialog', () {
     testWidgets('affiche 2 champs (nouveau + confirmer) sans mot de passe actuel',
         (tester) async {
@@ -225,9 +224,9 @@ void main() {
     });
   });
 
-  // ────────────────────────────────────────────────────────────────────────────
+ 
   // ChangeEmailDialog
-  // ────────────────────────────────────────────────────────────────────────────
+
   group('ChangeEmailDialog', () {
     testWidgets('affiche les champs email et mot de passe initialement',
         (tester) async {

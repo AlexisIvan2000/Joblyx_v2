@@ -1,4 +1,3 @@
-// En-tête de section avec titre et lien d'action optionnel.
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 

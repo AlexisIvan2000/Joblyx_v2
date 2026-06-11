@@ -17,6 +17,7 @@ class CoachService {
     String? jobTitle,
     String? companyName,
     String language = 'fr',
+    CancelToken? cancelToken,
   }) async* {
     final formData = FormData.fromMap({
       'cv_file': await MultipartFile.fromFile(
@@ -34,6 +35,7 @@ class CoachService {
     final response = await _dio.post(
       '/assistant/coach/analyze',
       data: formData,
+      cancelToken: cancelToken,
       options: Options(
         responseType: ResponseType.stream,
         headers: {'Accept': 'text/event-stream'},

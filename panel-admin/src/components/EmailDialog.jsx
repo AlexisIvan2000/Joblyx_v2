@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Mail } from 'lucide-react';
+import Modal from './Modal';
 import '../styles/components/button.css';
 import '../styles/components/email-dialog.css';
 
-// Modale d'envoi d'email custom à un user depuis le panel admin
-// props:
-// - isOpen, userEmail, userName
-// - onConfirm({ subject, body }) : appelé au clic, peut être async
-// - onCancel : fermeture
 
 const SUBJECT_MAX = 200;
 const BODY_MAX = 10000;
@@ -41,10 +37,9 @@ export default function EmailDialog({ isOpen, userEmail, userName, onConfirm, on
   }
 
   return (
-    <div className="dialog-backdrop" onClick={onCancel}>
-      <div className="dialog email-dialog" onClick={(e) => e.stopPropagation()}>
-        <div className="email-dialog-header">
-          <h3 className="dialog-title">
+    <Modal onClose={onCancel} labelledBy="email-dialog-title" className="email-dialog">
+      <div className="email-dialog-header">
+        <h3 className="dialog-title" id="email-dialog-title">
             <Mail size={18} strokeWidth={2.25} style={{ verticalAlign: '-3px', marginRight: 6 }} />
             Envoyer un email
           </h3>
@@ -92,7 +87,6 @@ export default function EmailDialog({ isOpen, userEmail, userName, onConfirm, on
             {isLoading ? 'Envoi…' : 'Envoyer'}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

@@ -183,7 +183,7 @@ void main() {
   });
 }
 
-// ── Widgets de test ──────────────────────────────────────────
+//  Widgets de test
 
 class _ChatBubbleTest extends StatelessWidget {
   final String message;

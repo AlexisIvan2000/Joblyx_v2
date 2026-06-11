@@ -8,7 +8,9 @@
     },
 
     "home": {
-        "greeting": "Bonjour",
+        "greeting_morning": "Bonjour",
+        "greeting_afternoon": "Bonjour",
+        "greeting_evening": "Bonsoir",
         "progress_title": "PROGRESSION ROADMAP",
         "actions_label": "actions",
         "skills_acquired": "skills acquis",
@@ -29,6 +31,28 @@
         "empty_applications_title": "Aucune candidature pour le moment",
         "empty_applications_subtitle": "Commencez à suivre vos candidatures pour ne rien manquer.",
         "add_application": "Ajouter une candidature"
+    },
+
+    "tutorial": {
+        "nav_home_title": "Accueil",
+        "nav_home_desc": "Votre tableau de bord : progression, statistiques et raccourcis.",
+        "nav_roadmap_title": "Roadmap",
+        "nav_roadmap_desc": "Votre plan de carrière personnalisé, étape par étape.",
+        "nav_applications_title": "Candidatures",
+        "nav_applications_desc": "Suivez vos candidatures et leur statut.",
+        "nav_assistant_title": "Assistant IA",
+        "nav_assistant_desc": "Analyse de CV et entretiens simulés par l'IA.",
+        "nav_profile_title": "Profil",
+        "nav_profile_desc": "Vos informations, compétences et paramètres.",
+        "stats_title": "Vos statistiques",
+        "stats_desc": "Candidatures actives, entretiens et régénérations en un coup d'œil.",
+        "roadmap_title": "Votre roadmap",
+        "roadmap_desc": "Créez et suivez votre plan de carrière personnalisé.",
+        "phase_title": "Phase en cours",
+        "phase_desc": "L'étape sur laquelle vous concentrer maintenant.",
+        "next": "Suivant",
+        "skip": "Passer",
+        "finish": "Terminer"
     },
 
     "applications_screen": {
@@ -161,7 +185,7 @@
         "email_required": "L'email est requis",
         "email_invalid": "Veuillez entrer un email valide",
         "no_password": "Le mot de passe est requis",
-        "invalid_password": "Le mot de passe doit comporter au moins 8 caractères\net contenir au moins un caractère spécial"
+        "invalid_password": "Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule et un caractère spécial"
 
     },
 
@@ -180,9 +204,8 @@
         "email_required": "L'email est requis",
         "email_invalid": "Veuillez entrer un email valide",
         "no_password": "Le mot de passe est requis",
-        "invalid_password": "Le mot de passe doit comporter au moins 8 caractères\net contenir au moins un caractère spécial"
-
-
+        "invalid_password": "Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule et un caractère spécial",
+        "password_hint": "Min. 8 caractères, une majuscule, une minuscule et un caractère spécial"
     },
 
     "verify_email": {
@@ -212,6 +235,12 @@
         "wrong_current_password": "Le mot de passe actuel est incorrect",
         "same_password": "Le nouveau mot de passe doit être différent de l'actuel",
         "invalid_password": "Mot de passe invalide",
+        "weak_password": "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un caractère spécial",
+        "password_too_short": "Le mot de passe doit contenir au moins 8 caractères",
+        "password_too_long": "Le mot de passe ne doit pas dépasser 72 caractères",
+        "password_missing_uppercase": "Le mot de passe doit contenir au moins une majuscule",
+        "password_missing_lowercase": "Le mot de passe doit contenir au moins une minuscule",
+        "password_missing_special": "Le mot de passe doit contenir au moins un caractère spécial",
         "session_expired": "Votre session a expiré. Veuillez vous reconnecter",
         "user_not_found": "Utilisateur introuvable",
         "no_fields_to_update": "Aucun champ à mettre à jour",
@@ -229,7 +258,10 @@
         "account_banned": "Votre compte a été désactivé. Contactez le support",
         "email_mismatch": "L'email ne correspond pas à votre compte",
         "password_already_set": "Ce compte a déjà un mot de passe",
-        "conflict": "Cette action entre en conflit avec l'état actuel"
+        "conflict": "Cette action entre en conflit avec l'état actuel",
+        "admin_only_title": "Compte administrateur",
+        "admin_only": "Ce compte est réservé à l'administration. Utilisez le panel admin pour vous connecter.",
+        "admin_only_action": "OK"
     },
 
     "onboarding": {
@@ -551,7 +583,7 @@
         "code_invalid": "Le code doit contenir 6 chiffres",
         "new_password": "Nouveau mot de passe",
         "password_required": "Le mot de passe est requis",
-        "password_weak": "Au moins 8 caractères avec un caractère spécial",
+        "password_weak": "Min. 8 caractères, une majuscule, une minuscule et un caractère spécial",
         "reset_button": "Réinitialiser",
         "resend_code": "Renvoyer le code",
         "success": "Mot de passe réinitialisé avec succès. Vous pouvez vous connecter."
@@ -572,7 +604,7 @@
         "current_password": "Mot de passe actuel",
         "new_password": "Nouveau mot de passe",
         "confirm_password": "Confirmer le nouveau mot de passe",
-        "password_rules": "Min. 8 caractères avec un caractère spécial",
+        "password_rules": "Min. 8 caractères, une majuscule, une minuscule et un caractère spécial",
         "passwords_mismatch": "Les mots de passe ne correspondent pas",
         "password_changed": "Mot de passe modifié avec succès",
         "set_password": "Définir un mot de passe",
@@ -605,6 +637,9 @@
         "theme_light": "Clair",
         "theme_dark": "Sombre",
         "theme_system": "Système",
+        "section_help": "Aide",
+        "replay_tutorial": "Revoir le tutoriel",
+        "replay_tutorial_sub": "Redécouvrez les fonctionnalités de l'app",
         "section_legal": "Légal",
         "terms": "Conditions d'utilisation",
         "privacy": "Politique de confidentialité",
@@ -622,6 +657,12 @@
     "settings_error": {
         "wrong_password": "Le mot de passe actuel est incorrect",
         "invalid_password": "Format de mot de passe invalide",
+        "weak_password": "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un caractère spécial",
+        "password_too_short": "Le mot de passe doit contenir au moins 8 caractères",
+        "password_too_long": "Le mot de passe ne doit pas dépasser 72 caractères",
+        "password_missing_uppercase": "Le mot de passe doit contenir au moins une majuscule",
+        "password_missing_lowercase": "Le mot de passe doit contenir au moins une minuscule",
+        "password_missing_special": "Le mot de passe doit contenir au moins un caractère spécial",
         "email_taken": "Cet email est déjà utilisé",
         "no_pending_change": "Aucun changement d'email en attente",
         "no_change_code": "Aucun code de vérification trouvé",

@@ -1,5 +1,3 @@
-// Gère le thème light/dark avec persistence localStorage + détection préférence système
-
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'joblyx_admin_theme';

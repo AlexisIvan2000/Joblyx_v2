@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 
-// Anime une valeur numérique de 0 (ou previous) vers target via requestAnimationFrame
-// duration en ms, easing par défaut easeOutQuart pour un effet premium
-
 const DEFAULT_EASING = (t) => 1 - Math.pow(1 - t, 4);
 
 export function useCountUp(target, { duration = 900, easing = DEFAULT_EASING } = {}) {

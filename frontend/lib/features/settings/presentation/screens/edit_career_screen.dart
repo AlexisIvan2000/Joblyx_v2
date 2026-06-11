@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isUploadingCv = false;
+  CancelToken? _extractCancelToken;
 
   // Champs carrière
   String _level = 'junior';
@@ -61,13 +63,14 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     _mapboxService.dispose();
     _skillSearchController.dispose();
     _skillSearchFocusNode.dispose();
+    _extractCancelToken?.cancel();
     for (final c in _jobControllers) {
       c.dispose();
     }
     super.dispose();
   }
 
-  // ── Chargement des données ──────────────────────────────────
+  //  Chargement des données 
 
   Future<void> _loadData() async {
     final skillsData = await SkillsLoader.load();
@@ -115,7 +118,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     }
   }
 
-  // ── Sauvegarde ──────────────────────────────────────────────
+  // Sauvegarde 
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -150,7 +153,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     }
   }
 
-  // ── Localisation ────────────────────────────────────────────
+  //  Localisation
 
   Future<void> _onLocationChanged(String query) async {
     if (query.trim().length < 2) {
@@ -176,7 +179,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     setState(() { _locationController.clear(); _city = ''; _province = ''; _locationSuggestions = []; _showLocationSuggestions = false; });
   }
 
-  // ── Compétences ─────────────────────────────────────────────
+  //  Compétences 
 
   Future<void> _uploadCv() async {
     final t = AppLocalizations.of(context);
@@ -189,11 +192,13 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     if (result == null || result.files.isEmpty || result.files.first.path == null) return;
 
     setState(() => _isUploadingCv = true);
+    final cancelToken = CancelToken();
+    _extractCancelToken = cancelToken;
     try {
       final svc = ref.read(roadmapServiceProvider);
       int added = 0;
 
-      await for (final event in svc.extractSkillsStream(result.files.first.path!)) {
+      await for (final event in svc.extractSkillsStream(result.files.first.path!, cancelToken: cancelToken)) {
         if (!mounted) return;
         final eventType = event['event'] as String;
         final data = event['data'] as Map<String, dynamic>;
@@ -218,9 +223,14 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
       if (added > 0) {
         AppSnackbar.success(context, t.t('onboarding.skills_extracted').replaceAll('{count}', '$added'));
       }
+    } on DioException catch (e) {
+      // Annulation volontaire (l'utilisateur a quitté) : pas une erreur
+      if (CancelToken.isCancel(e)) return;
+      if (mounted) AppSnackbar.error(context, t.t('onboarding.upload_cv_error'));
     } catch (_) {
       if (mounted) AppSnackbar.error(context, t.t('onboarding.upload_cv_error'));
     } finally {
+      if (identical(_extractCancelToken, cancelToken)) _extractCancelToken = null;
       if (mounted) setState(() => _isUploadingCv = false);
     }
   }
@@ -268,7 +278,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     );
   }
 
-  // ── Build ───────────────────────────────────────────────────
+  //  Build 
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +321,7 @@ class _EditCareerScreenState extends ConsumerState<EditCareerScreen> {
     );
   }
 
-  // ── Sections du formulaire ──────────────────────────────────
+  // Sections du formulaire 
 
   List<Widget> _buildCareerSection(AppLocalizations t, ColorScheme cs) => [
     _SectionTitle(title: t.t('onboarding.step_career_title')),

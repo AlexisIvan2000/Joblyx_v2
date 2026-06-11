@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/widgets/app_snackbar.dart';
 import 'package:frontend/features/authentication/data/auth_service.dart';
+import 'package:frontend/core/utils/password_validator.dart';
 
 /// Affiche le dialog forgot password et retourne true si le mot de passe a été réinitialisé.
 Future<bool> showForgotPasswordDialog(BuildContext context, {String? initialEmail}) async {
@@ -24,7 +25,6 @@ class _ForgotPasswordDialog extends StatefulWidget {
 
 class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
   static final _emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-  static final _passwordRegex = RegExp(r'''[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~]''');
 
   final _authService = AuthService();
   final _emailController = TextEditingController();
@@ -178,7 +178,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
               prefixIcon: Icon(Icons.lock_outline, size: 20.sp),
               suffixIcon: IconButton(
                 icon: Icon(
-                  _isPasswordVisible ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                  _isPasswordVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                   size: 20.sp,
                 ),
                 onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
@@ -186,7 +186,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
             ),
             validator: (v) {
               if (v == null || v.isEmpty) return t.t('forgot_password.password_required');
-              if (v.length < 8 || !_passwordRegex.hasMatch(v)) return t.t('forgot_password.password_weak');
+              if (!isStrongPassword(v)) return t.t('forgot_password.password_weak');
               return null;
             },
           ),
