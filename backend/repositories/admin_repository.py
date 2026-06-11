@@ -18,7 +18,7 @@ class AdminRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    # Users CRUD admin
+   
 
     async def list_users(
         self,
