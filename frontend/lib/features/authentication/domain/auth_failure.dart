@@ -4,8 +4,8 @@ class AuthFailure {
 
   const AuthFailure(this.key, {this.statusCode});
 
-  /// Backend `error` code → i18n key. Stable, insensible au texte du message.
   static const _codeMap = {
+    'disposable_email': 'auth_error.disposable_email',
     'weak_password': 'auth_error.weak_password',
     'password_too_short': 'auth_error.password_too_short',
     'password_too_long': 'auth_error.password_too_long',
@@ -14,9 +14,7 @@ class AuthFailure {
     'password_missing_special': 'auth_error.password_missing_special',
   };
 
-  /// Backend `message`/`detail` string → i18n key.
   static const _map = {
-    // Register
     'Email already registered': 'auth_error.email_already_registered',
 
     // Login
@@ -64,7 +62,7 @@ class AuthFailure {
     'No fields to update': 'auth_error.no_fields_to_update',
   };
 
-  /// Fallback by HTTP status code.
+ 
   static const _statusFallback = {
     400: 'auth_error.bad_request',
     401: 'auth_error.unauthorized',
@@ -74,9 +72,8 @@ class AuthFailure {
     500: 'auth_error.server_error',
   };
 
-  /// Resolves a backend error code + detail + statusCode into an i18n key.
+  
   static String resolve(String? detail, {String? code, int? statusCode}) {
-    // Priorité au code stable, le texte reste un fallback transitoire
     if (code != null && _codeMap.containsKey(code)) {
       return _codeMap[code]!;
     }

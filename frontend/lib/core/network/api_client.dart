@@ -3,10 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
 
-const String _baseUrl = 'https://api.joblyx.com/v1';
+const String _baseUrl = 'http://10.0.2.2:8000/v1';
 
-/// Callback appelé quand la session expire (refresh token invalide).
-/// Permet au niveau app de rediriger vers le login.
 typedef OnSessionExpired = void Function();
 
 class ApiClient {
@@ -16,13 +14,13 @@ class ApiClient {
   late final Dio dio;
   final _storage = AuthStorage();
 
-  /// Callback externe pour gérer l'expiration de session.
+
   OnSessionExpired? onSessionExpired;
 
-  // Lock pour éviter les refresh concurrents
+ 
   Completer<bool>? _refreshCompleter;
 
-  // Endpoints exemptés du refresh automatique
+  
   static const _noRefreshPaths = [
     '/auth/login',
     '/auth/register',

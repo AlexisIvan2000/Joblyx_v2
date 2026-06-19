@@ -1,5 +1,3 @@
-"""Service principal pour le simulateur d'entretien IA."""
-
 import json
 import logging
 from datetime import datetime, timezone, timedelta
@@ -15,19 +13,19 @@ from core.exceptions import (
 )
 from core.security import Security
 from repositories.interview_repository import InterviewRepository
-from services.ai.openai_client import tracked_completion, tracked_completion_stream
+from services.ai.openai_client import tracked_completion
 from services.utils.text_cleaner import clean_cv_text
 from services.interview.interview_prompt_builder import (
     build_interview_prompt,
     build_summary_prompt,
 )
+from services.interview.interview_stream import parse_response, stream_assistant_reply
 
 logger = logging.getLogger(__name__)
 
 DAILY_LIMIT = 2
 MAX_QUESTIONS = 15
 MAX_MESSAGE_LENGTH = 2000
-FEEDBACK_DELIMITER = "<<<FEEDBACK_JSON>>>"
 
 
 def _get_tomorrow_midnight() -> datetime:
@@ -140,7 +138,7 @@ class InterviewService:
         )
 
         raw_content = response.choices[0].message.content or ""
-        message_text, feedback_data = _parse_response(raw_content)
+        message_text, feedback_data = parse_response(raw_content)
 
         # Sauvegarder le message assistant
         await self.repo.create_message({
@@ -233,69 +231,15 @@ class InterviewService:
                 "content": "C'est la dernière question. Remercie le candidat et clôture l'entretien. question_type=closing, question_number=15."
             })
 
-        # Appeler GPT en streaming, usage tracké via le wrapper
-        # full_text accumule le message COMPLET pour la sauvegarde en base
-        # accumulated est le buffer de streaming (trimé après chaque envoi)
-        full_text = ""
-        accumulated = ""
-        streaming_text = True
-
-        async for chunk in tracked_completion_stream(
-            user_id=user_id,
-            feature="interview_turn",
-            model=OPENAI_MODEL_FAST,
-            messages=gpt_messages,
-            temperature=0.7,
-            max_tokens=500,
+        full_message = None
+        feedback_data = None
+        async for kind, payload in stream_assistant_reply(
+            user_id, gpt_messages, real_question_count + 1
         ):
-            delta = chunk.choices[0].delta
-            if delta.content:
-                full_text += delta.content
-                accumulated += delta.content
-
-                if streaming_text:
-                    # Vérifier si le délimiteur est arrivé
-                    if FEEDBACK_DELIMITER in full_text:
-                        # Envoyer le texte restant avant le délimiteur
-                        remaining = accumulated.split(FEEDBACK_DELIMITER, 1)[0]
-                        if remaining:
-                            yield ("stream", remaining)
-                        streaming_text = False
-                    else:
-                        # Streamer le texte (mais garder un buffer pour ne pas couper le délimiteur)
-                        safe_end = len(accumulated) - len(FEEDBACK_DELIMITER)
-                        if safe_end > 0:
-                            to_send = accumulated[:safe_end]
-                            if to_send:
-                                yield ("stream", to_send)
-                                accumulated = accumulated[safe_end:]
-
-        # Traitement final — utiliser full_text pour extraire le message complet
-        if FEEDBACK_DELIMITER in full_text:
-            parts = full_text.split(FEEDBACK_DELIMITER, 1)
-            full_message = parts[0].rstrip()
-
-            # Envoyer le texte encore dans le buffer si nécessaire
-            if streaming_text and accumulated:
-                remaining = accumulated.split(FEEDBACK_DELIMITER, 1)[0]
-                if remaining:
-                    yield ("stream", remaining)
-
-            yield ("stream_end", None)
-
-            # Parser le feedback JSON
-            feedback_raw = parts[1].strip()
-            try:
-                feedback_data = json.loads(feedback_raw)
-            except json.JSONDecodeError:
-                feedback_data = {"feedback": None, "question_type": "unknown", "question_number": real_question_count + 1, "counts_as_question": True}
-        else:
-            # Pas de délimiteur trouvé — envoyer tout le texte restant
-            if accumulated:
-                yield ("stream", accumulated)
-            yield ("stream_end", None)
-            full_message = full_text.rstrip()
-            feedback_data = {"feedback": None, "question_type": "unknown", "question_number": real_question_count + 1, "counts_as_question": True}
+            if kind == "reply":
+                full_message, feedback_data = payload
+            else:
+                yield kind, payload
 
         logger.info("Saving message: %d chars for session %s", len(full_message), session_id)
 
@@ -335,7 +279,7 @@ class InterviewService:
 
         await self.session.commit()
 
-    # Terminer en avance 
+    # Terminer en avance
     async def end_session_early(self, session_id: str, user_id: str) -> dict:
         interview = await self.repo.get_session_by_id(session_id, user_id)
         if not interview:
@@ -368,7 +312,7 @@ class InterviewService:
         )
 
         raw_content = response.choices[0].message.content or ""
-        message_text, feedback_data = _parse_response(raw_content)
+        message_text, feedback_data = parse_response(raw_content)
 
         position = len(messages) + 1
         await self.repo.create_message({
@@ -483,15 +427,3 @@ def _build_windowed_history(messages: list) -> list[dict]:
 
     result.extend({"role": m.role, "content": m.content} for m in recent)
     return result
-
-# Parse la réponse GPT en séparant le texte et le feedback JSON.
-def _parse_response(raw: str) -> tuple[str, dict | None]:
-    if FEEDBACK_DELIMITER in raw:
-        parts = raw.split(FEEDBACK_DELIMITER, 1)
-        message_text = parts[0].rstrip()
-        try:
-            feedback_data = json.loads(parts[1].strip())
-        except json.JSONDecodeError:
-            feedback_data = None
-        return message_text, feedback_data
-    return raw, None

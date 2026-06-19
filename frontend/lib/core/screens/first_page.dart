@@ -36,24 +36,22 @@ class _FirstPageState extends State<FirstPage> {
   late final AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSub;
   bool _isLoading = false;
-  /// Statique pour persister entre les instances (logout recrée le widget)
+  
   static bool _linkHandled = false;
 
   @override
   void initState() {
     super.initState();
     _appLinks = AppLinks();
-    // Écouter les liens entrants quand l'app est déjà ouverte
+   
     _linkSub = _appLinks.uriLinkStream.listen(_handleDeepLink);
-    // Vérifier si l'app a été ouverte via un deep link (cold start ou resume)
+    
     _checkInitialLink();
   }
 
   Future<void> _checkInitialLink() async {
     try {
       final uri = await _appLinks.getInitialLink();
-      // Ne traiter que si c'est un vrai callback LinkedIn frais
-      // (pas un intent recyclé après logout)
       if (uri != null && !_linkHandled) {
         final hasTokens = await AuthStorage().hasTokens();
         if (!hasTokens) _handleDeepLink(uri);
@@ -85,7 +83,6 @@ class _FirstPageState extends State<FirstPage> {
     final refreshToken = uri.queryParameters['refresh_token'];
     if (accessToken == null || refreshToken == null) return;
 
-    // Le super_admin est réservé au panel admin : on ne stocke aucun token
     if (isSuperAdminToken(accessToken)) {
       if (mounted) await showAdminOnlyDialog(context);
       if (mounted) setState(() => _isLoading = false);

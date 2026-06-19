@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/core/l10n/app_localizations.dart';
 import 'package:frontend/core/tutorial/tutorial_keys.dart';
 
-/// Shell avec bottom navigation pour les 4 onglets principaux.
 class MainShell extends StatefulWidget {
   final int currentIndex;
   final Widget child;

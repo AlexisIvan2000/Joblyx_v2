@@ -32,7 +32,6 @@ def test_client_with_coach(test_client):
     from api.v1.client.coach import get_coach_service
 
     coach_svc = AsyncMock()
-    # Valeurs par défaut raisonnables
     coach_svc.get_history.return_value = []
     coach_svc.check_usage.return_value = {
         "used": 2, "limit": 10, "remaining": 8,
@@ -48,9 +47,6 @@ def test_client_with_coach(test_client):
     test_client._mock_coach_svc = coach_svc
     yield test_client
     del app.dependency_overrides[get_coach_service]
-
-
-#  Historique
 
 
 class TestGetHistory:
@@ -87,9 +83,6 @@ class TestGetHistory:
         assert body[1]["job_title"] == "Data Scientist"
 
 
-#  Usage 
-
-
 class TestGetUsage:
     def test_returns_usage_dict(self, test_client_with_coach):
         svc = test_client_with_coach._mock_coach_svc
@@ -104,9 +97,6 @@ class TestGetUsage:
         assert body["limit"] == 10
         assert body["remaining"] == 7
         svc.check_usage.assert_called_once_with(str(FAKE_USER_ID))
-
-
-#  Détail d'une session 
 
 
 class TestGetSession:
@@ -135,9 +125,6 @@ class TestGetSession:
         assert resp.status_code == 404
 
 
-#  Suppression d'une session 
-
-
 class TestDeleteSession:
     def test_deletes_session(self, test_client_with_coach):
         svc = test_client_with_coach._mock_coach_svc
@@ -154,9 +141,6 @@ class TestDeleteSession:
 
         resp = test_client_with_coach.delete(f"/assistant/coach/{FAKE_SESSION_ID}")
         assert resp.status_code == 404
-
-
-#  Suppression de toutes les sessions 
 
 
 class TestDeleteAll:

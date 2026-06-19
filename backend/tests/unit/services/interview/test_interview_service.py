@@ -10,10 +10,9 @@ from services.interview.interview_service import (
     InterviewService,
     _get_tomorrow_midnight,
     _get_today_midnight,
-    _parse_response,
     DAILY_LIMIT,
-    FEEDBACK_DELIMITER,
 )
+from services.interview.interview_stream import parse_response, FEEDBACK_DELIMITER
 from tests.conftest import FAKE_USER_ID
 
 
@@ -45,26 +44,26 @@ class TestHelpers:
 class TestParseResponse:
     def test_parses_with_delimiter(self):
         raw = 'Bonjour, parlons de vous.\n<<<FEEDBACK_JSON>>>\n{"feedback": null, "question_type": "introduction", "question_number": 1}'
-        text, feedback = _parse_response(raw)
+        text, feedback = parse_response(raw)
         assert text == "Bonjour, parlons de vous."
         assert feedback["question_type"] == "introduction"
         assert feedback["question_number"] == 1
 
     def test_parses_without_delimiter(self):
         raw = "Just some text"
-        text, feedback = _parse_response(raw)
+        text, feedback = parse_response(raw)
         assert text == "Just some text"
         assert feedback is None
 
     def test_parses_with_feedback_score(self):
         raw = 'Bonne réponse ! Question suivante.\n<<<FEEDBACK_JSON>>>\n{"feedback": {"score": 8, "good": "bien", "improve": "plus"}, "question_type": "technical", "question_number": 3}'
-        text, feedback = _parse_response(raw)
+        text, feedback = parse_response(raw)
         assert "Bonne réponse" in text
         assert feedback["feedback"]["score"] == 8
 
     def test_handles_invalid_json_after_delimiter(self):
         raw = "Text\n<<<FEEDBACK_JSON>>>\nnot json"
-        text, feedback = _parse_response(raw)
+        text, feedback = parse_response(raw)
         assert text == "Text"
         assert feedback is None
 

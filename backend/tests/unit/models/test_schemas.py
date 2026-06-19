@@ -20,8 +20,6 @@ from models.schemas import (
 )
 
 
-#  UserCreate 
-
 class TestUserCreate:
     def test_valid(self):
         u = UserCreate(
@@ -42,17 +40,11 @@ class TestUserCreate:
             )
 
 
-
-
-# ChangePassword 
-
 class TestChangePassword:
     def test_valid(self):
         cp = ChangePassword(current_password="old", new_password="NewPass1!")
         assert cp.new_password == "NewPass1!"
 
-
-#  UpdateProfile
 
 class TestUpdateProfile:
     def test_all_none_valid(self):
@@ -71,8 +63,6 @@ class TestUpdateProfile:
         assert up.last_name == "Smith"
 
 
-# ChangeEmail
-
 class TestChangeEmail:
     def test_valid(self):
         ce = ChangeEmail(new_email="new@example.com", password="pass")
@@ -82,8 +72,6 @@ class TestChangeEmail:
         with pytest.raises(ValidationError):
             ChangeEmail(new_email="bad-email", password="pass")
 
-
-#  Other simple schemas 
 
 class TestSimpleSchemas:
     def test_user_login(self):
@@ -99,8 +87,6 @@ class TestSimpleSchemas:
             ForgotPassword(email="not-email")
 
 
-# SkillItem
-
 class TestSkillItem:
     def test_valid(self):
         s = SkillItem(skill_name="Python", category="Programming", proficiency="advanced")
@@ -114,9 +100,6 @@ class TestSkillItem:
     def test_invalid_proficiency(self):
         with pytest.raises(ValidationError):
             SkillItem(skill_name="Python", category="Programming", proficiency="expert")
-
-
-#  RoadmapGenerateRequest
 
 def _valid_generate_request(**overrides):
     defaults = dict(

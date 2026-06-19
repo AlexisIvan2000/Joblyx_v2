@@ -100,7 +100,7 @@ class TestSaveResetCode:
         mock_session.execute.return_value = mock_result
 
         await repo.save_reset_code("john@example.com", "hash123", "2026-01-01T00:00:00Z")
-        assert mock_session.execute.call_count == 2  # update + select
+        assert mock_session.execute.call_count == 2 
         mock_session.flush.assert_called_once()
 
 

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from core.exceptions import (
+    DisposableEmailNotAllowed,
     DomainError,
     EmailAlreadyRegistered,
     EmailNotVerified,
@@ -51,6 +52,21 @@ class TestRegisterUser:
         )
         with pytest.raises(EmailAlreadyRegistered):
             await auth_service.register_user(user)
+
+    @pytest.mark.asyncio
+    async def test_disposable_email_raises_400(self, auth_service, mock_auth_repo, mock_otp_service):
+        user = UserCreate(
+            first_name="John",
+            last_name="Doe",
+            email="throwaway@mailinator.com",
+            password="Secure1!x",
+        )
+        with pytest.raises(DisposableEmailNotAllowed):
+            await auth_service.register_user(user)
+
+        # Aucun compte créé ni OTP envoyé pour un email jetable
+        mock_auth_repo.create_user.assert_not_called()
+        mock_otp_service.send_verification_otp.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_calls_hash_password(self, auth_service, mock_auth_repo):

@@ -1,5 +1,3 @@
-
-
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -8,7 +6,6 @@ from argon2.exceptions import InvalidHashError
 from core.security import Security
 
 
-#  hash_password 
 
 class TestHashPassword:
     def test_returns_string(self):
@@ -25,7 +22,7 @@ class TestHashPassword:
         assert h1 != h2
 
 
-#  verify_password 
+
 
 class TestVerifyPassword:
     def test_correct_password_returns_true(self):
@@ -41,7 +38,6 @@ class TestVerifyPassword:
             Security.verify_password("not-a-hash", "anything")
 
 
-# create_access_token
 
 class TestCreateAccessToken:
     def test_contains_sub(self):
@@ -63,7 +59,6 @@ class TestCreateAccessToken:
         assert timedelta(minutes=55) < delta < timedelta(minutes=65)
 
 
-# create_refresh_token
 
 class TestCreateRefreshToken:
     def test_type_is_refresh(self):
@@ -80,7 +75,7 @@ class TestCreateRefreshToken:
         assert timedelta(days=29) < delta < timedelta(days=31)
 
 
-#  decode_token 
+
 
 class TestDecodeToken:
     def test_valid_token_returns_dict(self):

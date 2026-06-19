@@ -254,11 +254,13 @@ class InterviewListScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
     try {
       await ref.read(interviewHistoryProvider.notifier).deleteSession(id);
-      if (context.mounted)
+      if (context.mounted) {
         AppSnackbar.success(context, t.t('interview.session_deleted'));
+      }
     } catch (_) {
-      if (context.mounted)
+      if (context.mounted) {
         AppSnackbar.error(context, t.t('interview.delete_error'));
+      }
     }
   }
 
@@ -301,8 +303,9 @@ class InterviewListScreen extends ConsumerWidget {
         );
       }
     } catch (_) {
-      if (context.mounted)
+      if (context.mounted) {
         AppSnackbar.error(context, t.t('interview.delete_error'));
+      }
     }
   }
 }
