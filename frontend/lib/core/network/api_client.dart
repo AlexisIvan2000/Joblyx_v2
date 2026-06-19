@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/features/authentication/data/auth_storage.dart';
 
-const String _baseUrl = 'http://10.0.2.2:8000/v1';
+const String _baseUrl = 'https://api.joblyx.com/v1';
 
 typedef OnSessionExpired = void Function();
 
