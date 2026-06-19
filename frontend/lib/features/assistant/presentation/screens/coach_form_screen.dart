@@ -245,8 +245,9 @@ class _CoachFormScreenState extends ConsumerState<CoachFormScreen> {
               textInputAction: TextInputAction.next,
               decoration: _deco(t.t('assistant.job_title_hint'), cs),
               validator: (v) {
-                if (v == null || v.trim().isEmpty)
+                if (v == null || v.trim().isEmpty) {
                   return t.t('assistant.job_title_required');
+                }
                 return validateJobTitleField(v.trim(), t);
               },
             ),

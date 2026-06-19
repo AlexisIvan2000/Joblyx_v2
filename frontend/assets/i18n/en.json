@@ -221,6 +221,7 @@
 
     "auth_error": {
         "email_already_registered": "This email is already registered",
+        "disposable_email": "Disposable email addresses are not allowed",
         "invalid_credentials": "Invalid email or password",
         "email_not_verified": "Please verify your email before logging in",
         "invalid_verification_request": "Invalid verification request",

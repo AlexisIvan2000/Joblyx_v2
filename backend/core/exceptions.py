@@ -10,7 +10,6 @@ class DomainError(Exception):
         self.details = details or {}
 
 
-# Bases génériques  utilisées quand aucune classe spécifique ne correspond
 
 class NotFoundError(DomainError):
     status_code = 404
@@ -54,7 +53,7 @@ class ExternalServiceError(DomainError):
     default_message = "External service error"
 
 
-# Authentification login / register / refresh
+
 
 class InvalidCredentials(UnauthorizedError):
     default_message = "Invalid email or password"
@@ -62,6 +61,14 @@ class InvalidCredentials(UnauthorizedError):
 
 class EmailAlreadyRegistered(ConflictError):
     default_message = "Email already registered"
+
+    def __init__(self, message: str | None = None, *, details: dict | None = None):
+        super().__init__(message, details=details or {"field": "email"})
+
+
+class DisposableEmailNotAllowed(ValidationError):
+    error_code = "disposable_email"
+    default_message = "Disposable email addresses are not allowed"
 
     def __init__(self, message: str | None = None, *, details: dict | None = None):
         super().__init__(message, details=details or {"field": "email"})
@@ -75,7 +82,7 @@ class UserBanned(ForbiddenError):
     default_message = "Your account has been banned"
 
 
-# Admin  protection des endpoints /v1/admin/*
+
 
 class AdminAccessRequired(ForbiddenError):
     default_message = "Admin privileges required"

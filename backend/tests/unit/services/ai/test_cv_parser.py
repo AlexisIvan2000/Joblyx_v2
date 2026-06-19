@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
 
-#  Helpers
+
 
 def _mock_fitz_doc(pages_text: list[str]):
     
@@ -18,13 +18,9 @@ def _mock_fitz_doc(pages_text: list[str]):
     return mock_doc
 
 
-#  TestExtractTextFromPdf 
-
 class TestExtractTextFromPdf:
-    """Tests pour extract_text_from_pdf."""
 
     def test_extracts_text_from_single_page(self):
-        """Vérifie l'extraction de texte d'un PDF à une seule page."""
         with patch("services.utils.pdf.fitz") as mock_fitz:
             mock_fitz.open.return_value = _mock_fitz_doc(["Hello World"])
 
@@ -35,7 +31,6 @@ class TestExtractTextFromPdf:
             mock_fitz.open.assert_called_once_with(stream=b"fake-pdf-bytes", filetype="pdf")
 
     def test_extracts_text_from_multiple_pages(self):
-        """Vérifie la concaténation du texte de plusieurs pages."""
         with patch("services.utils.pdf.fitz") as mock_fitz:
             mock_fitz.open.return_value = _mock_fitz_doc([
                 "Page 1 content\n",
@@ -51,7 +46,6 @@ class TestExtractTextFromPdf:
             assert "Page 3 content" in result
 
     def test_returns_stripped_text(self):
-        """Vérifie que le résultat est strippé (pas d'espaces en début/fin)."""
         with patch("services.utils.pdf.fitz") as mock_fitz:
             mock_fitz.open.return_value = _mock_fitz_doc(["  some text  \n  "])
 
@@ -61,7 +55,6 @@ class TestExtractTextFromPdf:
             assert result == "some text"
 
     def test_returns_empty_for_blank_pdf(self):
-        """Vérifie le retour d'une chaîne vide pour un PDF sans texte."""
         with patch("services.utils.pdf.fitz") as mock_fitz:
             mock_fitz.open.return_value = _mock_fitz_doc(["   ", ""])
 
@@ -71,20 +64,18 @@ class TestExtractTextFromPdf:
             assert result == ""
 
 
-# TestValidateSkills 
-
 class TestValidateSkills:
-    """Tests pour _validate_skills (normalisation et filtrage)."""
+
 
     def test_normalizes_known_skill(self):
         """Vérifie que les skills connues sont normalisées via l'index."""
         from services.ai.cv_parser import _validate_skills, _SKILL_INDEX
 
-        # Prendre un skill existant dans l'index pour le test
+       
         if not _SKILL_INDEX:
             pytest.skip("Aucun skill dans l'index de référence")
 
-        # Récupérer un skill connu
+        
         sample_key = next(iter(_SKILL_INDEX))
         expected_name, expected_cat = _SKILL_INDEX[sample_key]
 
@@ -97,7 +88,6 @@ class TestValidateSkills:
         assert result[0]["proficiency"] == "advanced"
 
     def test_filters_unknown_skills(self):
-        """Vérifie que les skills inconnus sont filtrés."""
         from services.ai.cv_parser import _validate_skills
 
         raw = [{"skill_name": "UnknownSkillXYZ123", "category": "FakeCategory", "proficiency": "advanced"}]
@@ -106,7 +96,6 @@ class TestValidateSkills:
         assert len(result) == 0
 
     def test_defaults_proficiency_to_intermediate(self):
-        """Vérifie le proficiency par défaut à 'intermediate' pour les valeurs invalides."""
         from services.ai.cv_parser import _validate_skills, _SKILL_INDEX
 
         if not _SKILL_INDEX:
@@ -122,7 +111,6 @@ class TestValidateSkills:
         assert result[0]["proficiency"] == "intermediate"
 
     def test_deduplicates_skills(self):
-        """Vérifie qu'il n'y a pas de doublons dans les résultats."""
         from services.ai.cv_parser import _validate_skills, _SKILL_INDEX
 
         if not _SKILL_INDEX:
@@ -140,17 +128,13 @@ class TestValidateSkills:
         assert len(result) == 1
 
     def test_empty_input_returns_empty(self):
-        """Vérifie qu'une liste vide en entrée retourne une liste vide."""
         from services.ai.cv_parser import _validate_skills
 
         assert _validate_skills([]) == []
 
 
-#  TestExtractSkillsFromCv 
-
 class TestExtractSkillsFromCv:
-    """Tests pour extract_skills_from_cv (appel GPT mocké)."""
-
+    
     @pytest.mark.asyncio
     async def test_extracts_skills_successfully(self):
         """Vérifie l'extraction de skills avec un retour GPT valide."""
@@ -159,7 +143,6 @@ class TestExtractSkillsFromCv:
         if not _SKILL_INDEX:
             pytest.skip("Aucun skill dans l'index de référence")
 
-        # Choisir un skill connu pour le mock GPT
         sample_key = next(iter(_SKILL_INDEX))
         expected_name, expected_cat = _SKILL_INDEX[sample_key]
 
@@ -183,7 +166,6 @@ class TestExtractSkillsFromCv:
 
     @pytest.mark.asyncio
     async def test_returns_empty_for_blank_cv(self):
-        """Vérifie le retour d'une liste vide pour un CV sans texte."""
         from services.ai.cv_parser import extract_skills_from_cv
 
         with patch("services.utils.pdf.fitz") as mock_fitz:
@@ -195,7 +177,6 @@ class TestExtractSkillsFromCv:
 
     @pytest.mark.asyncio
     async def test_handles_gpt_error_gracefully(self):
-        """Vérifie que les erreurs GPT remontent proprement."""
         from services.ai.cv_parser import extract_skills_from_cv
 
         with patch("services.utils.pdf.fitz") as mock_fitz, \
@@ -210,7 +191,6 @@ class TestExtractSkillsFromCv:
 
     @pytest.mark.asyncio
     async def test_handles_invalid_json_from_gpt(self):
-        """Vérifie le comportement quand GPT retourne du JSON invalide."""
         from services.ai.cv_parser import extract_skills_from_cv
 
         mock_response = MagicMock()

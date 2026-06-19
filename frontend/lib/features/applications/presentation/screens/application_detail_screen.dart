@@ -76,8 +76,9 @@ class _ApplicationDetailScreenState
           .delete(widget.applicationId);
       if (mounted) Navigator.pop(context);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         AppSnackbar.error(context, t.t('applications_screen.delete_error'));
+      }
     }
   }
 

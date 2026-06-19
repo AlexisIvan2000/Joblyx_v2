@@ -5,6 +5,7 @@ from models.schemas import UserCreate, UserLogin
 from core.security import Security
 from core.password import validate_password
 from core.exceptions import (
+    DisposableEmailNotAllowed,
     EmailAlreadyRegistered,
     InvalidCredentials,
     LinkedInOnlyAccount,
@@ -19,6 +20,7 @@ from core.exceptions import (
 )
 from repositories.auth_repository import AuthRepository
 from repositories.refresh_token_repository import RefreshTokenRepository
+from services.auth.disposable_email import is_disposable_email
 from services.emailing.otp_service import OtpService
 from datetime import datetime, timedelta, timezone
 
@@ -33,6 +35,10 @@ class EmailPasswordAuth:
 
     async def register_user(self, user: UserCreate):
         validate_password(user.password)
+
+        if is_disposable_email(user.email):
+            logger.warning("Registration blocked: email=%s reason=disposable", user.email)
+            raise DisposableEmailNotAllowed()
 
         if await self.repo.get_user_by_email(user.email):
             raise EmailAlreadyRegistered()
@@ -58,7 +64,6 @@ class EmailPasswordAuth:
         if not db_user:
             logger.warning("Login failed: email=%s reason=not_found", user.email)
             raise InvalidCredentials()
-        # Compte créé via LinkedIn sans mot de passe
         if not db_user.password_hash:
             logger.warning("Login failed: user_id=%s reason=linkedin_only", db_user.id)
             raise LinkedInOnlyAccount()
@@ -146,11 +151,10 @@ class EmailPasswordAuth:
         if not db_token:
             raise InvalidRefreshToken()
 
-        # Rotate: revoke old, issue new
         await self.rt_repo.revoke(token_hash)
 
         user_id = payload.get("sub")
-        # Re-fetch le user pour avoir le role à jour (si promotion/demotion entre-temps)
+    
         db_user = await self.repo.get_user_by_id(user_id)
         role = db_user.role if db_user else "user"
         new_access_token = Security.create_access_token(user_id, role=role)

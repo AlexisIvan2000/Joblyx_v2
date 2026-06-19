@@ -19,7 +19,6 @@ class TestValidatePassword:
             validate_password("Ab1!")
 
     def test_too_long(self):
-        # 73 octets, au dessus de la limite bcrypt de 72
         with pytest.raises(PasswordTooLong):
             validate_password("Aa!" + "x" * 70)
 
@@ -36,6 +35,5 @@ class TestValidatePassword:
             validate_password("Abcdefg1")
 
     def test_length_checked_before_composition(self):
-        # Un mot de passe trop court sans majuscule remonte d'abord la longueur
         with pytest.raises(PasswordTooShort):
             validate_password("ab!")

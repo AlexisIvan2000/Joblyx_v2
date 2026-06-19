@@ -43,11 +43,11 @@ class TestGenerate:
         fake_roadmap.id = "roadmap-id"
         fake_roadmap.phases = []
 
-        with patch.object(service, '_get_career', return_value=career), \
-             patch.object(service, '_get_skills', return_value=[
+        with patch.object(service.career, 'get_career', return_value=career), \
+             patch.object(service.career, 'get_skills', return_value=[
                  {"skill_name": "Python", "category": "programming_languages", "proficiency": "advanced"}
              ]), \
-             patch.object(service, '_get_market_data', return_value=None), \
+             patch.object(service.career, 'get_market_data', return_value=None), \
              patch.object(service, '_get_completed_data', return_value=None), \
              patch("services.roadmap.roadmap_service.build_roadmap_prompt", return_value=("sys", "usr")), \
              patch("services.roadmap.roadmap_service.call_gpt", return_value={
@@ -68,9 +68,9 @@ class TestGenerate:
     @pytest.mark.asyncio
     async def test_sets_error_on_gpt_failure(self, service, mock_session):
         career = _mock_career()
-        with patch.object(service, '_get_career', return_value=career), \
-             patch.object(service, '_get_skills', return_value=[]), \
-             patch.object(service, '_get_market_data', return_value=None), \
+        with patch.object(service.career, 'get_career', return_value=career), \
+             patch.object(service.career, 'get_skills', return_value=[]), \
+             patch.object(service.career, 'get_market_data', return_value=None), \
              patch.object(service, '_get_completed_data', return_value=None), \
              patch("services.roadmap.roadmap_service.build_roadmap_prompt", return_value=("sys", "usr")), \
              patch("services.roadmap.roadmap_service.call_gpt", side_effect=Exception("GPT error")):
@@ -82,7 +82,7 @@ class TestGenerate:
 
     @pytest.mark.asyncio
     async def test_no_career_raises(self, service, mock_session):
-        with patch.object(service, '_get_career', return_value=None):
+        with patch.object(service.career, 'get_career', return_value=None):
             service.repo = AsyncMock()
             await service.generate(FAKE_USER_ID)
 
@@ -95,9 +95,9 @@ class TestGenerate:
         fake_roadmap.id = "roadmap-id"
         fake_roadmap.phases = []
 
-        with patch.object(service, '_get_career', return_value=career), \
-             patch.object(service, '_get_skills', return_value=[]), \
-             patch.object(service, '_get_market_data', return_value=None), \
+        with patch.object(service.career, 'get_career', return_value=career), \
+             patch.object(service.career, 'get_skills', return_value=[]), \
+             patch.object(service.career, 'get_market_data', return_value=None), \
              patch.object(service, '_get_completed_data', return_value=None), \
              patch("services.roadmap.roadmap_service.build_roadmap_prompt", return_value=("sys", "usr")), \
              patch("services.roadmap.roadmap_service.call_gpt", return_value={"phases": []}):
@@ -116,9 +116,9 @@ class TestGenerate:
         fake_roadmap.id = "roadmap-id"
         fake_roadmap.phases = []
 
-        with patch.object(service, '_get_career', return_value=career), \
-             patch.object(service, '_get_skills', return_value=[]), \
-             patch.object(service, '_get_market_data', return_value=market), \
+        with patch.object(service.career, 'get_career', return_value=career), \
+             patch.object(service.career, 'get_skills', return_value=[]), \
+             patch.object(service.career, 'get_market_data', return_value=market), \
              patch.object(service, '_get_completed_data', return_value=None), \
              patch("services.roadmap.roadmap_service.build_roadmap_prompt", return_value=("sys", "usr")) as mock_prompt, \
              patch("services.roadmap.roadmap_service.call_gpt", return_value={"phases": []}):

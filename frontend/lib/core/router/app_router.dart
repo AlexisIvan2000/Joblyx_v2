@@ -92,7 +92,7 @@ int _tabIndex(String path) {
   return 0; // dashboard
 }
 
-/// Route avec transition slide (pour les écrans hors shell)
+
 GoRoute _slideRoute(String path, Widget Function(GoRouterState) builder) {
   return GoRoute(
     path: path,
@@ -127,7 +127,7 @@ GoRoute _slideRoute(String path, Widget Function(GoRouterState) builder) {
   );
 }
 
-/// Route sans transition (pour les onglets du shell)
+
 GoRoute _noTransitionRoute(String path, Widget Function(GoRouterState) builder) {
   return GoRoute(
     path: path,

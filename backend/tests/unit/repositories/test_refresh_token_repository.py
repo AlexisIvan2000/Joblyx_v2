@@ -23,14 +23,10 @@ FAKE_TOKEN_HASH = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a
 FAKE_EXPIRES_AT = datetime.now(timezone.utc) + timedelta(days=30)
 
 
-#  create 
-
 class TestCreate:
     @pytest.mark.asyncio
     async def test_creates_and_flushes(self, repo, mock_session):
         result = await repo.create(FAKE_USER_ID, FAKE_TOKEN_HASH, FAKE_EXPIRES_AT)
-
-        # Vérifie que l'objet est ajouté à la session
         mock_session.add.assert_called_once()
         added_obj = mock_session.add.call_args[0][0]
         assert isinstance(added_obj, RefreshToken)
@@ -38,14 +34,10 @@ class TestCreate:
         assert added_obj.token_hash == FAKE_TOKEN_HASH
         assert added_obj.expires_at == FAKE_EXPIRES_AT
 
-        # Vérifie que flush est appelé
         mock_session.flush.assert_called_once()
 
-        # Le résultat doit être l'objet RefreshToken créé
         assert result is added_obj
 
-
-#  get_by_token_hash 
 
 class TestGetByTokenHash:
     @pytest.mark.asyncio
@@ -72,7 +64,6 @@ class TestGetByTokenHash:
 
     @pytest.mark.asyncio
     async def test_revoked_token_not_returned(self, repo, mock_session):
-        # Le filtre RevRefreshToken.revoked == False exclut les tokens révoqués
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
@@ -80,8 +71,6 @@ class TestGetByTokenHash:
         result = await repo.get_by_token_hash(FAKE_TOKEN_HASH)
         assert result is None
 
-
-#  revoke 
 
 class TestRevoke:
     @pytest.mark.asyncio
@@ -93,12 +82,9 @@ class TestRevoke:
 
     @pytest.mark.asyncio
     async def test_revoke_nonexistent_no_error(self, repo, mock_session):
-        # Révoquer un token qui n'existe pas ne lève pas d'erreur
         await repo.revoke("nonexistent-hash")
         mock_session.execute.assert_called_once()
 
-
-#  revoke_all_for_user 
 
 class TestRevokeAllForUser:
     @pytest.mark.asyncio
@@ -110,6 +96,5 @@ class TestRevokeAllForUser:
 
     @pytest.mark.asyncio
     async def test_revoke_all_no_tokens_no_error(self, repo, mock_session):
-        # Révoquer tous les tokens d'un utilisateur sans tokens ne lève pas d'erreur
         await repo.revoke_all_for_user("user-with-no-tokens")
         mock_session.execute.assert_called_once()

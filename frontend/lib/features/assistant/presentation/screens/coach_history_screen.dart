@@ -123,11 +123,13 @@ class CoachHistoryScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
     try {
       await ref.read(coachHistoryProvider.notifier).deleteSession(id);
-      if (context.mounted)
+      if (context.mounted) {
         AppSnackbar.success(context, t.t('assistant.session_deleted'));
+      }
     } catch (_) {
-      if (context.mounted)
+      if (context.mounted) {
         AppSnackbar.error(context, t.t('assistant.delete_error'));
+      }
     }
   }
 
@@ -168,8 +170,9 @@ class CoachHistoryScreen extends ConsumerWidget {
         );
       }
     } catch (_) {
-      if (context.mounted)
+      if (context.mounted) {
         AppSnackbar.error(context, t.t('assistant.delete_error'));
+      }
     }
   }
 }

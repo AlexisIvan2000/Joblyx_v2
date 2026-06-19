@@ -221,6 +221,7 @@
 
     "auth_error": {
         "email_already_registered": "Cet email est déjà enregistré",
+        "disposable_email": "Les adresses email jetables ne sont pas acceptées",
         "invalid_credentials": "Email ou mot de passe invalide",
         "email_not_verified": "Veuillez vérifier votre email avant de vous connecter",
         "invalid_verification_request": "Demande de vérification invalide",

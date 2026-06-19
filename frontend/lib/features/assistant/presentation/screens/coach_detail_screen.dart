@@ -27,11 +27,12 @@ class _CoachDetailScreenState extends ConsumerState<CoachDetailScreen> {
     try {
       final svc = ref.read(coachServiceProvider);
       final session = await svc.getSession(widget.sessionId);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _session = session;
           _isLoading = false;
         });
+      }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }

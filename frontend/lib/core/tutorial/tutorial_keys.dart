@@ -1,7 +1,5 @@
 import 'package:flutter/widgets.dart';
 
-/// Clés globales pour cibler les éléments du tour guidé.
-/// Partagées entre le shell (onglets) et le dashboard (cartes).
 class TutorialKeys {
   TutorialKeys._();
   static final instance = TutorialKeys._();
