@@ -1,201 +1,199 @@
 # Joblyx
 
-Assistant de carrière IA pour les professionnels de la tech : génération de **roadmaps de carrière** personnalisées, **coach CV** (analyse de compatibilité offre/CV), **simulateur d'entretien**, et **suivi de candidatures**  le tout propulsé par l'IA.
+AI career assistant for tech professionals: personalized **career roadmap** generation, **resume coach** (job offer/resume compatibility analysis), **interview simulator**, and **application tracking** — all powered by AI.
 
-Le projet est un **monorepo** à trois composants :
+The project is a **monorepo** with three components:
 
-| Dossier | Rôle | Stack | Déploiement |
+| Folder | Role | Stack | Deployment |
 |---|---|---|---|
-| [`backend/`](#backend--api-fastapi) | API REST versionnée | FastAPI · PostgreSQL · SQLAlchemy async | Railway |
-| [`frontend/`](#frontend--application-mobile) | Application mobile (utilisateurs) | Flutter · Riverpod | Google Play |
-| [`panel-admin/`](#panel-admin--console-dadministration) | Console d'administration | React · Vite | Vercel · `admin.joblyx.com` |
+| [`backend/`](#backend--fastapi-api) | Versioned REST API | FastAPI · PostgreSQL · SQLAlchemy async | Railway |
+| [`frontend/`](#frontend--mobile-app) | Mobile app (end users) | Flutter · Riverpod | Google Play |
+| [`panel-admin/`](#panel-admin--admin-console) | Admin console | React · Vite | Vercel · `admin.joblyx.com` |
 
 ```
 joblyx_v2/
-├── backend/        API FastAPI (auth, IA, roadmap, coach, interview, admin)
-├── frontend/       App mobile Flutter
-└── panel-admin/    Panel admin React
+├── backend/        FastAPI API (auth, AI, roadmap, coach, interview, admin)
+├── frontend/       Flutter mobile app
+└── panel-admin/    React admin panel
 ```
 
 ---
 
-## Architecture & flux
+## Architecture & flow
 
 ```
 Mobile (Flutter)  ─┐
-                   ├──►  API FastAPI  /v1/client/*  ──►  PostgreSQL
-Panel (React)     ─┘                  /v1/admin/*        Cloudflare R2 (fichiers)
+                   ├──►  FastAPI API  /v1/client/*  ──►  PostgreSQL
+Panel (React)     ─┘                  /v1/admin/*        Cloudflare R2 (files)
                                           │              OpenAI · Resend · Sentry
                                           └── require_admin / require_super_admin
 ```
 
-- L'API est **versionnée** sous `/v1`, séparée en deux routeurs :
-  - `/v1/client/*` — consommé par l'app mobile (auth, users, roadmap, applications, assistant).
-  - `/v1/admin/*` — consommé par le panel, protégé globalement par `require_admin`.
-- Le mobile et le panel sont **deux applications indépendantes** : aucun code partagé.
+- The API is **versioned** under `/v1`, split into two routers:
+  - `/v1/client/*` — consumed by the mobile app (auth, users, roadmap, applications, assistant).
+  - `/v1/admin/*` — consumed by the panel, globally protected by `require_admin`.
+- The mobile app and the panel are **two independent applications**: no shared code.
 
 ---
 
-## Rôles & accès
+## Roles & access
 
-Trois rôles, résolus depuis la base de données à **chaque requête** (jamais depuis le JWT) :
+Three roles, resolved from the database on **every request** (never from the JWT):
 
-| Rôle | Accès | Notes |
+| Role | Access | Notes |
 |---|---|---|
-| `user` | App mobile | Utilisateur standard. |
-| `admin` | Panel admin (permissions limitées) | Peut désactiver des comptes, gérer les users, consulter stats/audit/erreurs. |
-| `super_admin` | Panel admin (accès total) | **Unique**, immuable via l'API (récupération uniquement par SQL direct), **bloqué sur l'app mobile**. |
+| `user` | Mobile app | Standard user. |
+| `admin` | Admin panel (limited permissions) | Can deactivate accounts, manage users, view stats/audit/errors. |
+| `super_admin` | Admin panel (full access) | **Unique**, immutable via the API (recovery only through direct SQL), **blocked on the mobile app**. |
 
-La suppression définitive d'un compte est réservée au `super_admin`. L'`admin` ne peut que **désactiver** (réversible, révoque les sessions).
+Permanent account deletion is reserved for the `super_admin`. An `admin` can only **deactivate** (reversible, revokes sessions).
 
 ---
 
-## Backend — API FastAPI
+## Backend — FastAPI API
 
 ### Stack
 
 - **FastAPI** + **Uvicorn**, Python 3.13
-- **SQLAlchemy 2.0** (async) + **asyncpg**, **PostgreSQL**, migrations **Alembic**
-- **Auth** : JWT (access 24 h + refresh 30 j avec rotation), hachage **argon2**
-- **IA** : OpenAI — `gpt-4o` (génération roadmap), `gpt-4o-mini` (coach, entretien, extraction de compétences)
-- **Stockage** : Cloudflare **R2** (S3-compatible via boto3) pour CV et avatars
-- **Email** : **Resend** · **NLP** : spaCy (modèles fr/en) · **PDF** : PyMuPDF (extraction CV)
-- **Rate limiting** : slowapi · **Monitoring** : Sentry · **Cron** : APScheduler
+- **SQLAlchemy 2.0** (async) + **asyncpg**, **PostgreSQL**, **Alembic** migrations
+- **Auth**: JWT (24 h access + 30 d refresh with rotation), **argon2** hashing
+- **AI**: OpenAI — `gpt-4o` (roadmap generation), `gpt-4o-mini` (coach, interview, skill extraction)
+- **Storage**: Cloudflare **R2** (S3-compatible via boto3) for resumes and avatars
+- **Email**: **Resend** · **NLP**: spaCy (fr/en models) · **PDF**: PyMuPDF (resume extraction)
+- **Rate limiting**: slowapi · **Monitoring**: Sentry · **Cron**: APScheduler
 
 ### Architecture (clean)
 
 ```
-api/v1/{client,admin}/   Routeurs (validation, DTO) — fines couches HTTP
+api/v1/{client,admin}/   Routers (validation, DTOs) — thin HTTP layers
         │
-services/                Logique métier (auth, roadmap, coach, interview, admin, emailing, storage…)
+services/                Business logic (auth, roadmap, coach, interview, admin, emailing, storage…)
         │
-repositories/            Accès données (SQLAlchemy async)
+repositories/            Data access (SQLAlchemy async)
         │
-models/{db,api_schemas}  Modèles ORM & schémas Pydantic
+models/{db,api_schemas}  ORM models & Pydantic schemas
 core/                    config, security, database, exceptions, uploads, password
 ```
 
-Les erreurs métier sont des exceptions nommées centralisées dans `core/exceptions.py` (`DomainError` → `status_code` + `error_code`).
+Business errors are named exceptions centralized in `core/exceptions.py` (`DomainError` → `status_code` + `error_code`).
 
-### Lancer en local
+### Run locally
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate   # Windows : .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-# Crée un fichier .env (voir variables ci-dessous)
-alembic upgrade head                                 # applique les migrations
+# Create a .env file (see variables below)
+alembic upgrade head                                 # apply migrations
 python -m uvicorn app:app --reload --port 8080
 ```
 
-Au démarrage, l'app applique les migrations Alembic et garantit l'existence du compte `super_admin` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`, source de vérité — le mot de passe est resynchronisé à chaque boot).
+On startup, the app applies Alembic migrations and guarantees the existence of the `super_admin` account (`ADMIN_EMAIL` / `ADMIN_PASSWORD`, source of truth — the password is re-synced on every boot).
 
 ### Tests
 
 ```bash
 cd backend
-python -m pytest          # suite unitaire + intégration
+python -m pytest          # unit + integration suite
 ```
 
-### Variables d'environnement
+### Environment variables
 
-Les variables marquées **\*** sont obligatoires (l'app crash explicitement au démarrage si absentes).
+Variables marked with **\*** are required (the app crashes explicitly at startup if missing).
 
 | Variable | Description |
 |---|---|
-| `JWT_SECRET_KEY` * | Clé de signature des JWT |
-| `DATABASE_URL` * (ou `DB_URL`) | URL PostgreSQL (`postgresql://…`, convertie en asyncpg) |
-| `OPENAI_API_KEY` * | Clé OpenAI |
-| `RESEND_API_KEY` * | Clé Resend (envoi d'emails) |
-| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_ENDPOINT_URL` * | Identifiants Cloudflare R2 |
-| `CORS_ORIGINS` | Origines autorisées, séparées par virgules (ex. `https://admin.joblyx.com`). Vide = aucun navigateur autorisé |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Compte super_admin bootstrap |
-| `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_API_TOKEN`, `SENTRY_ORG_SLUG`, `SENTRY_PROJECT_SLUG` | Monitoring + page Erreurs du panel |
-| `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` / `LINKEDIN_REDIRECT_URI` | OAuth LinkedIn |
-| `RESEND_FROM_EMAIL`, `RESEND_FROM_NAME` | Expéditeur des emails (défauts fournis) |
-| `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS`, `JWT_ALGORITHM` | Réglages tokens (défauts : 1440, 30, HS256) |
-| `RAPIDAPI_KEY`, `FRONTEND_URL` | Optionnels (données marché, liens email) |
+| `JWT_SECRET_KEY` * | JWT signing key |
+| `DATABASE_URL` * (or `DB_URL`) | PostgreSQL URL (`postgresql://…`, converted to asyncpg) |
+| `OPENAI_API_KEY` * | OpenAI key |
+| `RESEND_API_KEY` * | Resend key (email sending) |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_ENDPOINT_URL` * | Cloudflare R2 credentials |
+| `CORS_ORIGINS` | Allowed origins, comma-separated (e.g. `https://admin.joblyx.com`). Empty = no browser allowed |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Bootstrap super_admin account |
+| `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_API_TOKEN`, `SENTRY_ORG_SLUG`, `SENTRY_PROJECT_SLUG` | Monitoring + panel Errors page |
+| `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` / `LINKEDIN_REDIRECT_URI` | LinkedIn OAuth |
+| `RESEND_FROM_EMAIL`, `RESEND_FROM_NAME` | Email sender (defaults provided) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS`, `JWT_ALGORITHM` | Token settings (defaults: 1440, 30, HS256) |
+| `RAPIDAPI_KEY`, `FRONTEND_URL` | Optional (market data, email links) |
 
-### Déploiement
+### Deployment
 
-Railway via `Procfile` (`uvicorn app:app`) ou `Dockerfile`. Les migrations s'appliquent au démarrage.
+Railway via `Procfile` (`uvicorn app:app`) or `Dockerfile`. Migrations are applied at startup.
 
 ---
 
-## Frontend — Application mobile
+## Frontend — Mobile app
 
 ### Stack
 
 - **Flutter** (Dart SDK ≥ 3.11)
 - **Riverpod 3** (state management) · **Dio** (HTTP + SSE via `CancelToken`)
 - **go_router** (navigation, shell + bottom nav) · **flutter_screenutil** (responsive)
-- i18n maison (JSON aplati `fr.json` / `en.json`) · **shared_preferences** · **flutter_secure_storage**
-- **cached_network_image** · **firebase_crashlytics** · **tutorial_coach_mark** (onboarding guidé)
-- **app_links** (deep link OAuth LinkedIn)
+- Custom i18n (flattened JSON `fr.json` / `en.json`) · **shared_preferences** · **flutter_secure_storage**
+- **cached_network_image** · **firebase_crashlytics** · **tutorial_coach_mark** (guided onboarding)
+- **app_links** (LinkedIn OAuth deep link)
 
-### Fonctionnalités (`lib/features/`)
+### Features (`lib/features/`)
 
-`authentication` · `onboarding` · `roadmap` (dashboard + roadmap IA) · `assistant` (coach CV + simulateur d'entretien) · `applications` (suivi candidatures) · `settings`
+`authentication` · `onboarding` · `roadmap` (dashboard + AI roadmap) · `assistant` (resume coach + interview simulator) · `applications` (application tracking) · `settings`
 
-> Toutes les fonctions IA affichent le résultat en **streaming textuel (SSE)**, pas un simple spinner.
+> All AI features display results via **text streaming (SSE)**, not just a spinner.
 
-### Lancer en local
+### Run locally
 
 ```bash
 cd frontend
 flutter pub get
-flutter run                         # appareil/émulateur connecté
-flutter test                        # tests unit + widget
+flutter run                         # connected device/emulator
+flutter test                        # unit + widget tests
 flutter analyze                     # lint
 ```
 
-L'URL d'API et les secrets sensibles passent par `--dart-define` (ex. `LINKEDIN_CLIENT_ID`).
+The API URL and sensitive secrets are passed via `--dart-define` (e.g. `LINKEDIN_CLIENT_ID`).
 
 ### Build & release (Google Play)
 
 ```bash
-flutter build appbundle --release   # AAB signé via android/key.properties
+flutter build appbundle --release   # AAB signed via android/key.properties
 ```
 
-Version courante : `1.0.2+7`. Le `super_admin` est refusé à la connexion sur mobile (réservé au panel).
+Current version: `1.0.2+7`. The `super_admin` is rejected at login on mobile (panel only).
 
 ---
 
-## Panel-admin  Console d'administration
+## Panel-admin — Admin console
 
 ### Stack
 
-- **React 19** + **Vite** · **react-router v7** · **axios** (intercepteurs JWT + auto-refresh)
-- **recharts** (graphiques) · **lucide-react** (icônes)
+- **React 19** + **Vite** · **react-router v7** · **axios** (JWT interceptors + auto-refresh)
+- **recharts** (charts) · **lucide-react** (icons)
 
 ### Pages (`src/pages/`)
 
-Dashboard (statistiques + coût OpenAI réel) · Utilisateurs (liste + détail + actions) · Journal d'audit · Erreurs (proxy Sentry)
+Dashboard (statistics + actual OpenAI cost) · Users (list + detail + actions) · Audit log · Errors (Sentry proxy)
 
-### Lancer en local
+### Run locally
 
 ```bash
 cd panel-admin
 npm install
 npm run dev        # http://localhost:5173
-npm run build      # build de production (code-splitting des pages)
+npm run build      # production build (per-page code splitting)
 npm run lint
 ```
 
-Configurer `VITE_API_URL` (ex. `https://api.joblyx.com`) — valeur figée au build par Vite.
+Set `VITE_API_URL` (e.g. `https://api.joblyx.com`) — value baked in at build time by Vite.
 
-### Déploiement
+### Deployment
 
-Vercel, domaine **`admin.joblyx.com`** (DNS Cloudflare en mode *DNS only*). L'origine du panel doit figurer dans `CORS_ORIGINS` du backend.
+Vercel, domain **`admin.joblyx.com`** (Cloudflare DNS in *DNS only* mode). The panel's origin must be included in the backend's `CORS_ORIGINS`.
 
 ---
 
-## Conventions du projet
+## Project conventions
 
-- **Commentaires de code en français**, concis, sans séparateurs décoratifs en longs tirets.
-- **Messages de log en anglais.**
-- **Exceptions métier nommées et centralisées** dans `core/exceptions.py` (jamais de message string brut dans les services).
-- **Images réseau** via `CachedNetworkImageProvider` côté mobile.
-- **Fonctions IA** en streaming SSE.
-```
-
+- **Code comments in French**, concise, no decorative long-dash separators.
+- **Log messages in English.**
+- **Named, centralized business exceptions** in `core/exceptions.py` (never raw string messages in services).
+- **Network images** via `CachedNetworkImageProvider` on mobile.
+- **AI features** streamed via SSE.
